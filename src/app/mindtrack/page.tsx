@@ -27,6 +27,7 @@ type Profile = {
 
 type Entry = {
   date: string // yyyy-mm-dd
+  dateTime?: string // ISO local datetime (retroactive)
   mood: number // 0-10
   energy: number // 0-10
   stress: number // 0-10
@@ -101,6 +102,11 @@ export default function MindTrackPage() {
 
   // Entry form
   const [date, setDate] = React.useState(todayISO())
+  const [dateTime, setDateTime] = React.useState<string>(() => {
+    const d = new Date();
+    const pad = (n:number)=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  })
   const [mood, setMood] = React.useState(5)
   const [energy, setEnergy] = React.useState(5)
   const [stress, setStress] = React.useState(5)
@@ -127,7 +133,8 @@ export default function MindTrackPage() {
 
   function saveEntry() {
     const e: Entry = {
-      date,
+      date: (dateTime ? dateTime.slice(0,10) : date),
+      dateTime: dateTime || undefined,
       mood: clamp(mood, 0, 10),
       energy: clamp(energy, 0, 10),
       stress: clamp(stress, 0, 10),
@@ -272,7 +279,7 @@ export default function MindTrackPage() {
             <CardDescription>Region, type, and intensity</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="space-y-1"><Label>Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Date & time</Label><Input type="datetime-local" value={dateTime} onChange={(e) => { setDateTime(e.target.value); setDate(e.target.value.slice(0,10)) }} /></div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label>Region</Label>

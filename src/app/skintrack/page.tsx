@@ -18,12 +18,14 @@ type LesionRecord = {
   label: string
   condition: string
   date: string // ISO date
+  dateTime?: string // retroactive precise time
   metrics?: {
-    area?: number
-    redness?: number
-    borderIrregularity?: number
-    asymmetry?: number
-    deltaE?: number
+    area?: number // cm^2 if calibrated
+    areaPx?: number
+    redness?: number // R/G mean
+    borderIrregularity?: number // perimeter^2/(4πA)
+    asymmetry?: number // |A_left - A_right| / A_total
+    deltaE?: number // CIEDE2000 lesion vs background
   }
   imageDataUrl?: string
   notes?: string
@@ -70,6 +72,10 @@ function simulateArea(
 export default function SkinTrackPage() {
   const [lesions, setLesions] = React.useState<LesionRecord[]>([])
   const [today, setToday] = React.useState(() => new Date().toISOString().slice(0, 10))
+  const [dateTime, setDateTime] = React.useState<string>(() => {
+    const d = new Date(); const pad=(n:number)=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  })
 
   // Lesion management
   const [label, setLabel] = React.useState("left forearm A")
@@ -78,6 +84,7 @@ export default function SkinTrackPage() {
   // Image inputs (placeholders; no CV processing here)
   const [useAruco, setUseAruco] = React.useState(false)
   const [markerCm, setMarkerCm] = React.useState(2.0)
+  const [pixelsPerCm, setPixelsPerCm] = React.useState<number | undefined>(undefined)
   const [imageDataUrl, setImageDataUrl] = React.useState<string | undefined>()
 
   // Symptoms
@@ -117,6 +124,7 @@ export default function SkinTrackPage() {
   // Segmentation (stubs)
   const [segMethod, setSegMethod] = React.useState<"kmeans" | "grabcut" | "unet">("kmeans")
   const [segResult, setSegResult] = React.useState<string>("")
+  const [segMetrics, setSegMetrics] = React.useState<LesionRecord["metrics"] | undefined>(undefined)
 
   React.useEffect(() => {
     setLesions(loadLesions())
@@ -125,7 +133,7 @@ export default function SkinTrackPage() {
   // exports
   function exportCSVLocal() {
     const headers = [
-      "id","date","label","condition","area_cm2","redness","border_irregularity","asymmetry","deltaE","notes"
+      "id","date","label","condition","area_cm2","area_px","redness","border_irregularity","asymmetry","deltaE","notes"
     ]
     const rows = lesions.map(l => [
       l.id,
@@ -133,6 +141,7 @@ export default function SkinTrackPage() {
       escape(l.label),
       l.condition,
       String(l.metrics?.area ?? ""),
+      String(l.metrics?.areaPx ?? ""),
       String(l.metrics?.redness ?? ""),
       String(l.metrics?.borderIrregularity ?? ""),
       String(l.metrics?.asymmetry ?? ""),
@@ -185,14 +194,16 @@ export default function SkinTrackPage() {
 
   function saveRecord() {
     const rec: LesionRecord = {
-      id: `${today}-${label}`,
+      id: `${(dateTime || `${today}T00:00`).slice(0,16)}-${label}`,
       label,
       condition,
-      date: today,
+      date: (dateTime ? dateTime.slice(0,10) : today),
+      dateTime: dateTime || undefined,
       imageDataUrl,
       notes,
-      metrics: {
-        area: startArea,
+      metrics: segMetrics ?? {
+        area: undefined,
+        areaPx: undefined,
         redness: undefined,
         borderIrregularity: undefined,
         asymmetry: undefined,
@@ -216,14 +227,215 @@ export default function SkinTrackPage() {
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
 
-  function runSegmentationStub() {
+  // --- Image processing utilities (client-side) ---
+  function rgb2xyz(r:number,g:number,b:number){
+    // sRGB to XYZ (D65)
+    r/=255; g/=255; b/=255
+    r = r<=0.04045? r/12.92 : Math.pow((r+0.055)/1.055,2.4)
+    g = g<=0.04045? g/12.92 : Math.pow((g+0.055)/1.055,2.4)
+    b = b<=0.04045? b/12.92 : Math.pow((b+0.055)/1.055,2.4)
+    const x = r*0.4124 + g*0.3576 + b*0.1805
+    const y = r*0.2126 + g*0.7152 + b*0.0722
+    const z = r*0.0193 + g*0.1192 + b*0.9505
+    return [x,y,z]
+  }
+  function xyz2lab(x:number,y:number,z:number){
+    const Xn=0.95047, Yn=1, Zn=1.08883
+    let fx = x/Xn, fy = y/Yn, fz = z/Zn
+    const f=(t:number)=> t>Math.pow(6/29,3)? Math.cbrt(t) : (t/(3*Math.pow(6/29,2)) + 4/29)
+    fx=f(fx); fy=f(fy); fz=f(fz)
+    const L = 116*fy - 16
+    const a = 500*(fx - fy)
+    const b = 200*(fy - fz)
+    return [L,a,b]
+  }
+  function rgb2lab(r:number,g:number,b:number){ const [x,y,z]=rgb2xyz(r,g,b); return xyz2lab(x,y,z) }
+  function deltaE2000(lab1:number[], lab2:number[]){
+    // Simplified CIEDE2000 (enough for relative contrast). Source: Sharma et al. 2005
+    const [L1,a1,b1]=lab1,[L2,a2,b2]=lab2
+    const avgLp=(L1+L2)/2
+    const C1=Math.hypot(a1,b1), C2=Math.hypot(a2,b2), avgC=(C1+C2)/2
+    const G=0.5*(1-Math.sqrt(Math.pow(avgC,7)/(Math.pow(avgC,7)+Math.pow(25,7))))
+    const a1p=(1+G)*a1, a2p=(1+G)*a2
+    const C1p=Math.hypot(a1p,b1), C2p=Math.hypot(a2p,b2)
+    const avgCp=(C1p+C2p)/2
+    const h1p=(Math.atan2(b1,a1p)+2*Math.PI)%(2*Math.PI)
+    const h2p=(Math.atan2(b2,a2p)+2*Math.PI)%(2*Math.PI)
+    const dLp=L2-L1
+    const dCp=C2p-C1p
+    let dhp=h2p-h1p; if(dhp>Math.PI) dhp-=2*Math.PI; if(dhp<-Math.PI) dhp+=2*Math.PI
+    const dHp=2*Math.sqrt(C1p*C2p)*Math.sin(dhp/2)
+    let avgHp=h1p+h2p; if(Math.abs(h1p-h2p)>Math.PI) avgHp += 2*Math.PI; avgHp/=2
+    const T=1-0.17*Math.cos(avgHp- Math.PI/6)+0.24*Math.cos(2*avgHp)+0.32*Math.cos(3*avgHp+Math.PI/30)-0.20*Math.cos(4*avgHp-21*Math.PI/60)
+    const Sl=1+0.015*Math.pow(avgLp-50,2)/Math.sqrt(20+Math.pow(avgLp-50,2))
+    const Sc=1+0.045*avgCp
+    const Sh=1+0.015*avgCp*T
+    const Rt = -2*Math.sqrt(Math.pow(avgCp,7)/(Math.pow(avgCp,7)+Math.pow(25,7))) * Math.sin((60*Math.PI/180)*Math.exp(-Math.pow((avgHp*180/Math.PI-275)/25,2)))
+    return Math.sqrt(Math.pow(dLp/Sl,2)+Math.pow(dCp/Sc,2)+Math.pow(dHp/Sh,2)+Rt*(dCp/Sc)*(dHp/Sh))
+  }
+
+  async function runSegmentation() {
     if (!imageDataUrl) { setSegResult("Upload an image first."); return }
-    // Stubbed computation: pretend to measure metrics based on method
-    const mockRedness = Number((0.4 + Math.random() * 0.4).toFixed(2))
-    const mockIrregularity = Number((1 + Math.random() * 0.8).toFixed(2))
-    const mockAsym = Number((0.1 + Math.random() * 0.3).toFixed(2))
-    const mockDeltaE = Number((5 + Math.random() * 10).toFixed(1))
-    setSegResult(`Segmentation (${segMethod}) complete · redness ${mockRedness}, border ${mockIrregularity}, asym ${mockAsym}, ΔE ${mockDeltaE}`)
+    setSegResult("Processing...")
+
+    const img = new Image()
+    img.src = imageDataUrl
+    await img.decode()
+
+    const canvas = document.createElement('canvas')
+    const w = (canvas.width = img.naturalWidth)
+    const h = (canvas.height = img.naturalHeight)
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0)
+    const data = ctx.getImageData(0, 0, w, h)
+    const px = data.data
+
+    // Define center-circle ROI and surrounding ring for background
+    const cx = Math.floor(w/2), cy = Math.floor(h/2)
+    const r = Math.floor(Math.min(w,h)*0.3)
+    const ringIn = Math.floor(r*1.15), ringOut = Math.floor(r*1.45)
+
+    // Collect samples inside circle for KMeans
+    const samples:number[] = [] // flattened RGB
+    const coords:number[] = [] // x,y pairs for mask later
+    for(let y=cy-r; y<=cy+r; y++){
+      if(y<0||y>=h) continue
+      for(let x=cx-r; x<=cx+r; x++){
+        if(x<0||x>=w) continue
+        const dx=x-cx, dy=y-cy
+        if(dx*dx+dy*dy<=r*r){
+          const i=(y*w+x)*4
+          samples.push(px[i], px[i+1], px[i+2])
+          coords.push(x,y)
+        }
+      }
+    }
+    if (samples.length<300) { setSegResult("Image too small; center ROI has insufficient pixels."); return }
+
+    // KMeans (K=3) on RGB
+    const K=3
+    // init means by simple picks
+    const means:number[][]=[]
+    for(let k=0;k<K;k++){ const idx = Math.floor((k+1)*samples.length/(K*3))*3; means.push([samples[idx]||0,samples[idx+1]||0,samples[idx+2]||0]) }
+    const assign = new Array(samples.length/3).fill(0)
+    for(let iter=0; iter<8; iter++){
+      // assign
+      for(let i=0;i<samples.length;i+=3){
+        let best=0, bestd=Infinity
+        for(let k=0;k<K;k++){
+          const dr=samples[i]-means[k][0], dg=samples[i+1]-means[k][1], db=samples[i+2]-means[k][2]
+          const d=dr*dr+dg*dg+db*db
+          if(d<bestd){bestd=d;best=k}
+        }
+        assign[i/3]=best
+      }
+      // update
+      const sum = Array.from({length:K},()=>[0,0,0,0])
+      for(let i=0, j=0;i<samples.length;i+=3, j++){
+        const a=assign[j]; sum[a][0]+=samples[i]; sum[a][1]+=samples[i+1]; sum[a][2]+=samples[i+2]; sum[a][3]++
+      }
+      for(let k=0;k<K;k++){
+        if(sum[k][3]>0){ means[k][0]=sum[k][0]/sum[k][3]; means[k][1]=sum[k][1]/sum[k][3]; means[k][2]=sum[k][2]/sum[k][3] }
+      }
+    }
+    // choose lesion cluster by redness & darkness score
+    const labMeans = means.map(m=>rgb2lab(m[0],m[1],m[2]))
+    const scores = means.map((m,idx)=>{
+      const R=m[0], G=m[1]; const rg = G>1? (R/G): 0
+      const L = labMeans[idx][0]
+      return 0.6*rg + 0.4*(1 - Math.min(100,Math.max(0,L))/100)
+    })
+    let lesionK=0, bestScore=-Infinity
+    for(let k=0;k<K;k++){ if(scores[k]>bestScore){bestScore=scores[k]; lesionK=k} }
+
+    // Build binary mask in circle
+    const mask = new Uint8Array(coords.length/2)
+    let mcount=0
+    for(let i=0, j=0; i<samples.length; i+=3, j++){
+      if(assign[i/3]===lesionK){ mask[j]=1; mcount++ } else { mask[j]=0 }
+    }
+
+    // Compute area (pixels) and perimeter via 4-neighborhood
+    let perimeter=0
+    const offsetIndex = (x:number,y:number)=> ( (y-(cy-r))*(2*r+1) + (x-(cx-r)) )
+    for(let y=cy-r; y<=cy+r; y++){
+      if(y<0||y>=h) continue
+      for(let x=cx-r; x<=cx+r; x++){
+        const dx=x-cx, dy=y-cy; if(dx*dx+dy*dy>r*r) continue
+        const iMask = offsetIndex(x,y)
+        if(mask[iMask]){
+          // neighbor check
+          const nbs=[[1,0],[-1,0],[0,1],[0,-1]]
+          for(const [dxn,dyn] of nbs){
+            const xn=x+dxn, yn=y+dyn
+            if(xn<cx-r||xn>cx+r||yn<cy-r||yn>cy+r || ( (xn-cx)*(xn-cx)+(yn-cy)*(yn-cy) > r*r)) { perimeter++; continue }
+            const jMask = offsetIndex(xn,yn)
+            if(!mask[jMask]) perimeter++
+          }
+        }
+      }
+    }
+
+    // Asymmetry by vertical split at center within circle
+    let left=0,right=0
+    for(let y=cy-r; y<=cy+r; y++){
+      if(y<0||y>=h) continue
+      for(let x=cx-r; x<=cx+r; x++){
+        const dx=x-cx, dy=y-cy; if(dx*dx+dy*dy>r*r) continue
+        const iMask = offsetIndex(x,y)
+        if(mask[iMask]){ if(x<cx) left++; else right++; }
+      }
+    }
+    const asym = mcount>0? Math.abs(left-right)/mcount : 0
+
+    // Redness: mean R/G over mask (clip to [0,3])
+    let sumRG=0, cntRG=0
+    for(let t=0; t<coords.length; t+=2){
+      const x=coords[t], y=coords[t+1]
+      const iMask = (y-(cy-r))*(2*r+1) + (x-(cx-r))
+      if(!mask[iMask]) continue
+      const idx=(y*w+x)*4
+      const R=px[idx], G=px[idx+1]
+      if(G>0){ sumRG += R/G; cntRG++ }
+    }
+    const redness = cntRG? Math.min(3, sumRG/cntRG) : 0
+
+    // Background Lab from ring annulus
+    const bgLabs:number[] = []
+    for(let y0=Math.max(0,cy-ringOut); y0<=Math.min(h-1,cy+ringOut); y0++){
+      for(let x0=Math.max(0,cx-ringOut); x0<=Math.min(w-1,cx+ringOut); x0++){
+        const dx=x0-cx, dy=y0-cy; const d2=dx*dx+dy*dy
+        if(d2>=ringIn*ringIn && d2<=ringOut*ringOut){
+          const ii=(y0*w+x0)*4; const R=px[ii], G=px[ii+1], B=px[ii+2]
+          const lab=rgb2lab(R,G,B); bgLabs.push(lab[0],lab[1],lab[2])
+        }
+      }
+    }
+    const mean = (arr:number[], step:number, k:number)=>{
+      let s=0,c=0; for(let i=k;i<arr.length;i+=step){ s+=arr[i]; c++ } return c? s/c : 0
+    }
+    const lesionLab = labMeans[lesionK]
+    const bgLab:[number,number,number] = [ mean(bgLabs,3,0), mean(bgLabs,3,1), mean(bgLabs,3,2) ]
+    const dE = deltaE2000(lesionLab, bgLab)
+
+    // Border irregularity: perimeter^2/(4πA) >=1
+    const irregularity = mcount>0? (perimeter*perimeter)/(4*Math.PI*mcount) : 0
+
+    // Area in cm^2 if calibrated
+    const areaPx = mcount
+    const areaCm2 = pixelsPerCm && pixelsPerCm>0? (areaPx / (pixelsPerCm*pixelsPerCm)) : undefined
+
+    const metrics: LesionRecord["metrics"] = {
+      area: areaCm2,
+      areaPx,
+      redness: Number(redness.toFixed(3)),
+      borderIrregularity: Number(irregularity.toFixed(3)),
+      asymmetry: Number(asym.toFixed(3)),
+      deltaE: Number(dE.toFixed(2)),
+    }
+
+    setSegMetrics(metrics)
+    setSegResult(`K-Means done • area ${areaCm2? areaCm2.toFixed(2)+" cm²" : areaPx+" px"}, R/G ${metrics.redness}, border ${metrics.borderIrregularity}, asym ${metrics.asymmetry}, ΔE ${metrics.deltaE}`)
   }
 
   return (
@@ -248,8 +460,8 @@ export default function SkinTrackPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
-              <Label>Date</Label>
-              <Input type="date" value={today} onChange={(e) => setToday(e.target.value)} />
+              <Label>Date & time</Label>
+              <Input type="datetime-local" value={dateTime} onChange={(e)=>{ setDateTime(e.target.value); setToday(e.target.value.slice(0,10)) }} />
             </div>
             <div className="space-y-1">
               <Label>Label</Label>
@@ -292,6 +504,10 @@ export default function SkinTrackPage() {
             <div className="space-y-1">
               <Label>Marker side length (cm)</Label>
               <Input type="number" min={0.5} max={10} step={0.1} value={markerCm} onChange={(e) => setMarkerCm(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1">
+              <Label>Pixels per cm (optional)</Label>
+              <Input type="number" min={1} step={1} value={pixelsPerCm ?? ""} onChange={(e)=> setPixelsPerCm(e.target.value? Number(e.target.value): undefined)} placeholder="e.g. 100" />
             </div>
             {imageDataUrl && (
               <div className="rounded border overflow-hidden">
@@ -348,8 +564,8 @@ export default function SkinTrackPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Segmentation (Stub)</CardTitle>
-            <CardDescription>K-Means, GrabCut, or U-Net</CardDescription>
+            <CardTitle>Segmentation</CardTitle>
+            <CardDescription>K-Means + ring background (centered ROI)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
@@ -363,11 +579,20 @@ export default function SkinTrackPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={runSegmentationStub} disabled={!imageDataUrl}>Run Segmentation</Button>
+            <Button onClick={runSegmentation} disabled={!imageDataUrl || segMethod!=="kmeans"}>Run Segmentation</Button>
             {segResult && (
               <p className="text-sm text-muted-foreground">{segResult}</p>
             )}
-            <p className="text-xs text-muted-foreground">Note: This is a placeholder without on-device CV. ArUco scale and ROI white-balance planned.</p>
+            {segMetrics && (
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div>Area: {segMetrics.area ? `${segMetrics.area.toFixed(2)} cm²` : `${segMetrics.areaPx} px`}</div>
+                <div>Redness (R/G): {segMetrics.redness}</div>
+                <div>Border irregularity: {segMetrics.borderIrregularity}</div>
+                <div>Asymmetry: {segMetrics.asymmetry}</div>
+                <div>ΔE (CIEDE2000): {segMetrics.deltaE}</div>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Center-circle ROI with surrounding ring as background. For accurate cm², provide pixels per cm or use a ruler/marker for manual calibration. Advanced methods (GrabCut/U‑Net/ArUco) are deferred.</p>
           </CardContent>
         </Card>
 

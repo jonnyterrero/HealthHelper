@@ -124,9 +124,67 @@ export default function GastroPage() {
   const [weather, setWeather] = React.useState<GastroLog["weather"]>("Clear")
   const [notes, setNotes] = React.useState("")
 
+  // Filters
+  const [range, setRange] = React.useState<"all" | "last7" | "last30" | "custom">("all")
+  const [startDate, setStartDate] = React.useState<string>("")
+  const [endDate, setEndDate] = React.useState<string>("")
+
   React.useEffect(() => {
     setLogs(loadLogs())
   }, [])
+
+  // exports
+  function escapeCSV(v: string) { return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v }
+  function triggerDownload(url: string, filename: string) { const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
+  function exportCSVLocal() {
+    const headers = [
+      "datetime","meal","pain","stress","remedy","condition","mealSize","mealTiming","sleepQuality","exercise","weather","symptoms","notes"
+    ]
+    const rows = logs.map(l => [
+      l.datetime,
+      escapeCSV(l.meal || ""),
+      String(l.pain),
+      String(l.stress),
+      escapeCSV(l.remedy || ""),
+      l.condition || "",
+      l.mealSize || "",
+      l.mealTiming || "",
+      l.sleepQuality ?? "",
+      l.exercise ?? "",
+      l.weather || "",
+      escapeCSV(Object.entries(l.symptoms).filter(([,v])=>v).map(([k])=>k).join("; ")),
+      escapeCSV(l.notes || ""),
+    ])
+    const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    triggerDownload(url, `gastro-${new Date().toISOString().slice(0,10)}.csv`)
+  }
+  async function exportPDFLocal() {
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    let y = 14
+    doc.setFontSize(16); doc.text("GastroGuard Report", pageWidth/2, y, { align: "center" }); y += 10
+    doc.setFontSize(11); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
+
+    doc.setFont(undefined, "bold"); doc.text("Top Remedies", 14, y); doc.setFont(undefined, "normal"); y += 6
+    const tops = effectivenessByRemedy(logs)
+    if (tops.length === 0) { doc.text("No remedy data yet.", 14, y); y += 8 } else {
+      for (const r of tops) { doc.text(`${r.remedy}: ${(r.effectiveness*100).toFixed(0)}% (${r.uses} uses)`, 14, y); y += 6 }
+    }
+
+    doc.setFont(undefined, "bold"); y += 4; doc.text("Recent Logs", 14, y); doc.setFont(undefined, "normal"); y += 6
+    const recent = logs.slice().sort((a,b)=>a.datetime.localeCompare(b.datetime)).slice(-12)
+    for (const l of recent) {
+      if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }
+      const line = `${l.datetime.replace('T',' ')} • pain ${l.pain}/10 • stress ${l.stress}/10 • ${l.meal || ''}`
+      const wrapped = doc.splitTextToSize(line, pageWidth - 28)
+      doc.text(wrapped, 14, y); y += wrapped.length * 6
+    }
+
+    doc.save(`gastro-report-${new Date().toISOString().slice(0,10)}.pdf`)
+  }
 
   function saveLog() {
     const id = `${datetime}-${meal || "meal"}`
@@ -151,14 +209,62 @@ export default function GastroPage() {
     saveLogs(next)
   }
 
+  // Derived filtered logs
+  const filteredLogs = React.useMemo(() => {
+    if (range === "all") return logs
+    const now = new Date()
+    let start: Date | null = null
+    if (range === "last7") start = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
+    if (range === "last30") start = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000)
+    if (range === "custom") {
+      const s = startDate ? new Date(startDate) : null
+      const e = endDate ? new Date(endDate) : null
+      return logs.filter((l) => {
+        const d = new Date(l.datetime)
+        if (s && d < s) return false
+        if (e && d > new Date(e.getTime() + 24*60*60*1000 - 1)) return false
+        return true
+      })
+    }
+    return logs.filter((l) => new Date(l.datetime) >= new Date(start!.getFullYear(), start!.getMonth(), start!.getDate()))
+  }, [logs, range, startDate, endDate])
+
   const series = React.useMemo(() => {
-    return logs
+    return filteredLogs
       .slice()
       .sort((a, b) => a.datetime.localeCompare(b.datetime))
       .map((l) => ({ time: l.datetime.slice(0, 16).replace("T", " "), pain: l.pain, stress: l.stress }))
-  }, [logs])
+  }, [filteredLogs])
 
-  const topRemedies = React.useMemo(() => effectivenessByRemedy(logs), [logs])
+  const topRemedies = React.useMemo(() => effectivenessByRemedy(filteredLogs), [filteredLogs])
+
+  // Smart suggestions (lightweight rules)
+  const suggestions = React.useMemo(() => {
+    const out: string[] = []
+    if (filteredLogs.length === 0) return out
+    const avgPain = filteredLogs.reduce((s, x) => s + x.pain, 0) / filteredLogs.length
+    const avgStress = filteredLogs.reduce((s, x) => s + x.stress, 0) / filteredLogs.length
+    if (avgPain >= 6) out.push("High average pain detected — consider smaller meals and avoid late-night eating.")
+    if (avgStress >= 6) out.push("Elevated stress correlates with pain for many — try brief breathing exercises before meals.")
+    const commonMeal = (() => {
+      const map = new Map<string, number>()
+      filteredLogs.forEach((l) => { const key = (l.meal || "").toLowerCase().trim(); if (!key) return; map.set(key, (map.get(key) || 0)+1) })
+      let best = ""; let cnt = 0
+      map.forEach((v,k)=>{ if(v>cnt){cnt=v;best=k} })
+      return best
+    })()
+    if (commonMeal) out.push(`Frequently logged food: "${commonMeal}" — watch for trigger patterns.`)
+    const conds = new Set(filteredLogs.map(l => l.condition).filter(Boolean) as string[])
+    if (conds.size) out.push(`Condition context: ${Array.from(conds).join(", ")}. Tailor remedies to your condition.`)
+    const timeOfDay = (() => {
+      const hour = new Date().getHours()
+      if (hour < 12) return "morning"
+      if (hour < 18) return "afternoon"
+      return "evening"
+    })()
+    if (timeOfDay === "evening") out.push("Evening tip: avoid large meals within 3 hours of sleep, elevate head if prone to reflux.")
+    return out
+  }, [filteredLogs])
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
@@ -167,10 +273,42 @@ export default function GastroPage() {
           <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
           <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
         </div>
-        <Button onClick={saveLog}>Save Log</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCSVLocal}>Export CSV</Button>
+          <Button onClick={exportPDFLocal}>Export PDF</Button>
+          <Button onClick={saveLog}>Save Log</Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Time Filters</CardTitle>
+            <CardDescription>Refine analytics</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1">
+              <Label>Range</Label>
+              <Select value={range} onValueChange={(v) => setRange(v as any)}>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Select range" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="last7">Last 7 Days</SelectItem>
+                  <SelectItem value="last30">Last 30 Days</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {range === "custom" && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1"><Label>Start</Label><Input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} /></div>
+                <div className="space-y-1"><Label>End</Label><Input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} /></div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Basic Logging</CardTitle>
@@ -204,7 +342,7 @@ export default function GastroPage() {
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <Label>Condition</Label>
-              <Select value={condition} onValueChange={(v) => setCondition(v as GastroLog["condition"])}>
+              <Select value={condition} onValueChange={(v) => setCondition(v as GastroLog["condition"]) }>
                 <SelectTrigger className="w-full"><SelectValue placeholder="Select condition" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gastritis">Gastritis</SelectItem>
@@ -237,7 +375,7 @@ export default function GastroPage() {
               </div>
               <div className="space-y-1">
                 <Label>Meal timing</Label>
-                <Select value={mealTiming} onValueChange={(v) => setMealTiming(v as GastroLog["mealTiming"])}>
+                <Select value={mealTiming} onValueChange={(v) => setMealTiming(v as GastroLog["mealTiming"]) }>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Select timing" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Breakfast">Breakfast</SelectItem>
@@ -254,7 +392,7 @@ export default function GastroPage() {
             </div>
             <div className="space-y-1">
               <Label>Weather</Label>
-              <Select value={weather} onValueChange={(v) => setWeather(v as GastroLog["weather"])}>
+              <Select value={weather} onValueChange={(v) => setWeather(v as GastroLog["weather"]) }>
                 <SelectTrigger className="w-full"><SelectValue placeholder="Select weather" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Clear">Clear</SelectItem>
@@ -275,20 +413,15 @@ export default function GastroPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Remedy Insights</CardTitle>
-            <CardDescription>Estimated effectiveness</CardDescription>
+            <CardTitle>Smart Suggestions</CardTitle>
+            <CardDescription>Based on filtered data</CardDescription>
           </CardHeader>
           <CardContent>
-            {topRemedies.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Log meals and remedies to see insights.</p>
+            {suggestions.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Add logs to see tailored suggestions.</p>
             ) : (
-              <ul className="text-sm space-y-1">
-                {topRemedies.map((r) => (
-                  <li key={r.remedy} className="flex items-center justify-between">
-                    <span className="truncate mr-2">{r.remedy}</span>
-                    <span className="text-muted-foreground">{(r.effectiveness * 100).toFixed(0)}% · {r.uses} uses</span>
-                  </li>
-                ))}
+              <ul className="text-sm space-y-1 list-disc pl-4">
+                {suggestions.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
             )}
           </CardContent>

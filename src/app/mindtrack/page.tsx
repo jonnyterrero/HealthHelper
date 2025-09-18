@@ -149,11 +149,59 @@ export default function MindTrackPage() {
     if (!chatInput.trim()) return
     const now = new Date().toISOString()
     const next: ChatMessage[] = [...chat, { role: "user", text: chatInput.trim(), time: now }]
-    const reply = respond(chatInput.trim(), profile)
+    const reply = respond(chatInput.trim(), profile, entries)
     next.push({ role: "assistant", text: reply, time: new Date().toISOString() })
     setChat(next)
     saveChat(next)
     setChatInput("")
+  }
+
+  // exports
+  function escapeCSV(v: string) { return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v }
+  function triggerDownload(url: string, filename: string) { const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
+  function exportCSVLocal() {
+    const headers = [
+      "date","mood","energy","stress","sleepHours","region","symptom","intensity","duration","notes"
+    ]
+    const rows = entries.map(e => [
+      e.date,
+      String(e.mood),
+      String(e.energy),
+      String(e.stress),
+      String(e.sleepHours),
+      e.body?.region || "",
+      e.body?.symptom || "",
+      e.body?.intensity ?? "",
+      e.body?.duration || "",
+      escapeCSV(e.body?.notes || ""),
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    triggerDownload(url, `mindtrack-${new Date().toISOString().slice(0,10)}.csv`)
+  }
+  async function exportPDFLocal() {
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    let y = 14
+    doc.setFontSize(16); doc.text("MindTrack Report", pageWidth/2, y, { align: "center" }); y += 10
+    doc.setFontSize(11); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
+
+    doc.setFont(undefined, "bold"); doc.text("Profile", 14, y); doc.setFont(undefined, "normal"); y += 6
+    const profileLine = `Name: ${profile.name || '-'} • Age: ${profile.age ?? '-'} • Gender: ${profile.gender || '-'}`
+    doc.text(doc.splitTextToSize(profileLine, pageWidth - 28), 14, y); y += 6
+
+    doc.setFont(undefined, "bold"); doc.text("Recent Entries", 14, y); doc.setFont(undefined, "normal"); y += 6
+    const recent = entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-12)
+    for (const e of recent) {
+      if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }
+      const line = `${e.date} • mood ${e.mood}/10 • energy ${e.energy}/10 • stress ${e.stress}/10 • sleep ${e.sleepHours}h`
+      const wrapped = doc.splitTextToSize(line, pageWidth - 28)
+      doc.text(wrapped, 14, y); y += wrapped.length * 6
+    }
+
+    doc.save(`mindtrack-report-${new Date().toISOString().slice(0,10)}.pdf`)
   }
 
   const series = React.useMemo(() => {
@@ -181,6 +229,8 @@ export default function MindTrackPage() {
           <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCSVLocal}>Export CSV</Button>
+          <Button onClick={exportPDFLocal}>Export PDF</Button>
           <Button onClick={saveProfileLocal} variant="outline">Save Profile</Button>
           <Button onClick={saveEntry}>Save Entry</Button>
         </div>
@@ -391,22 +441,31 @@ function calcStreak(entries: Entry[]) {
   return streak
 }
 
-function respond(q: string, profile: Profile): string {
+function respond(q: string, profile: Profile, entries: Entry[]): string {
   const t = q.toLowerCase()
+  const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0)
+  const lastN = (n: number) => entries.slice(-n)
+  const moodAvg7 = avg(lastN(7).map((e) => e.mood))
+  const sleepAvg7 = avg(lastN(7).map((e) => e.sleepHours))
+  const stressAvg7 = avg(lastN(7).map((e) => e.stress))
+  const recent = entries.slice(-2)
+  const stressTrend = recent.length === 2 ? recent[1].stress - recent[0].stress : 0
+
   if (t.includes("sleep")) {
-    return "Aim for consistent sleep and wind-down routines. Track sleep hours and note caffeine/late meals."
+    return `Past week sleep avg: ${sleepAvg7.toFixed(1)}h. Aim for a consistent wind-down, limit caffeine after 2pm, and keep devices out of bed.`
   }
   if (t.includes("stress")) {
-    return "Try brief breathing exercises (4-7-8), short walks, or journaling. Track stress vs mood in your entries."
+    const trendTxt = stressTrend > 0.5 ? "rising" : stressTrend < -0.5 ? "falling" : "stable"
+    return `Stress is ${trendTxt}; 7‑day avg: ${stressAvg7.toFixed(1)}/10. Try 4‑7‑8 breathing for 2 minutes and a short walk after meals.`
   }
   if (t.includes("mood")) {
-    return "Review recent entries for patterns: sleep and exercise often correlate with improved mood."
+    return `Your 7‑day mood average is ${moodAvg7.toFixed(1)}/10. Improve by aligning sleep (${sleepAvg7.toFixed(1)}h avg) and light exercise on low‑energy days.`
   }
   if (t.includes("medication") || t.includes("reminder")) {
-    return "Set reminders aligned to your routine (morning/afternoon/evening). Log meds in your entry notes."
+    return "Set reminders aligned to your routine (morning/afternoon/evening). Log any side effects in notes to spot patterns over time.";
   }
   if (profile.conditions.length) {
-    return `Consider your profile conditions (${profile.conditions.join(", ")}). Adjust activities and rest accordingly.`
+    return `Consider your profile conditions (${profile.conditions.join(", ")}). Pace activities and prioritize recovery on high‑stress days (${stressAvg7.toFixed(1)}/10 avg).`
   }
-  return "I can help with mood, sleep, stress, and symptom tracking. Ask me a question or add an entry."
+  return `Ask about mood, sleep, or stress. Tip: last 7 days — mood ${moodAvg7.toFixed(1)}, sleep ${sleepAvg7.toFixed(1)}h, stress ${stressAvg7.toFixed(1)}/10.`
 }

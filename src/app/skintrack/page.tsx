@@ -114,10 +114,59 @@ export default function SkinTrackPage() {
   const [adherence, setAdherence] = React.useState(0.8)
   const [triggerLoad, setTriggerLoad] = React.useState(3)
   const [startArea, setStartArea] = React.useState(6.0)
+  // Segmentation (stubs)
+  const [segMethod, setSegMethod] = React.useState<"kmeans" | "grabcut" | "unet">("kmeans")
+  const [segResult, setSegResult] = React.useState<string>("")
 
   React.useEffect(() => {
     setLesions(loadLesions())
   }, [])
+
+  // exports
+  function exportCSVLocal() {
+    const headers = [
+      "id","date","label","condition","area_cm2","redness","border_irregularity","asymmetry","deltaE","notes"
+    ]
+    const rows = lesions.map(l => [
+      l.id,
+      l.date,
+      escape(l.label),
+      l.condition,
+      String(l.metrics?.area ?? ""),
+      String(l.metrics?.redness ?? ""),
+      String(l.metrics?.borderIrregularity ?? ""),
+      String(l.metrics?.asymmetry ?? ""),
+      String(l.metrics?.deltaE ?? ""),
+      escape(l.notes ?? ""),
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    triggerDownload(url, `skintrack-${new Date().toISOString().slice(0,10)}.csv`)
+  }
+  async function exportPDFLocal() {
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    let y = 14
+    doc.setFontSize(16)
+    doc.text("SkinTrack+ Report", pageWidth/2, y, { align: "center" }); y += 10
+    doc.setFontSize(11)
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
+
+    doc.setFont(undefined, "bold");
+    doc.text("Recent Records", 14, y); y += 6; doc.setFont(undefined, "normal")
+    const recent = lesions.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-10)
+    for (const r of recent) {
+      if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }
+      const line = `${r.date} • ${r.label} • ${r.condition} • area: ${r.metrics?.area ?? "-"} cm²`
+      const wrapped = doc.splitTextToSize(line, pageWidth - 28)
+      doc.text(wrapped, 14, y); y += wrapped.length * 6
+    }
+    doc.save(`skintrack-report-${new Date().toISOString().slice(0,10)}.pdf`)
+  }
+  function escape(v: string) { return /[",\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v }
+  function triggerDownload(url: string, filename: string) { const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
 
   const simSeries = React.useMemo(
     () =>
@@ -167,6 +216,16 @@ export default function SkinTrackPage() {
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
 
+  function runSegmentationStub() {
+    if (!imageDataUrl) { setSegResult("Upload an image first."); return }
+    // Stubbed computation: pretend to measure metrics based on method
+    const mockRedness = Number((0.4 + Math.random() * 0.4).toFixed(2))
+    const mockIrregularity = Number((1 + Math.random() * 0.8).toFixed(2))
+    const mockAsym = Number((0.1 + Math.random() * 0.3).toFixed(2))
+    const mockDeltaE = Number((5 + Math.random() * 10).toFixed(1))
+    setSegResult(`Segmentation (${segMethod}) complete · redness ${mockRedness}, border ${mockIrregularity}, asym ${mockAsym}, ΔE ${mockDeltaE}`)
+  }
+
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
@@ -174,7 +233,11 @@ export default function SkinTrackPage() {
           <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
           <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
         </div>
-        <Button onClick={saveRecord}>Save Record</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCSVLocal}>Export CSV</Button>
+          <Button onClick={exportPDFLocal}>Export PDF</Button>
+          <Button onClick={saveRecord}>Save Record</Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -280,6 +343,31 @@ export default function SkinTrackPage() {
               <label className="flex items-center gap-2 text-sm"><Switch checked={timing.afternoon} onCheckedChange={(c) => setTiming((t) => ({ ...t, afternoon: c }))} />Afternoon</label>
               <label className="flex items-center gap-2 text-sm"><Switch checked={timing.evening} onCheckedChange={(c) => setTiming((t) => ({ ...t, evening: c }))} />Evening</label>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Segmentation (Stub)</CardTitle>
+            <CardDescription>K-Means, GrabCut, or U-Net</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1">
+              <Label>Method</Label>
+              <Select value={segMethod} onValueChange={(v) => setSegMethod(v as any)}>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="kmeans">K-Means (auto)</SelectItem>
+                  <SelectItem value="grabcut">GrabCut (from box)</SelectItem>
+                  <SelectItem value="unet">U-Net (if available)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={runSegmentationStub} disabled={!imageDataUrl}>Run Segmentation</Button>
+            {segResult && (
+              <p className="text-sm text-muted-foreground">{segResult}</p>
+            )}
+            <p className="text-xs text-muted-foreground">Note: This is a placeholder without on-device CV. ArUco scale and ROI white-balance planned.</p>
           </CardContent>
         </Card>
 

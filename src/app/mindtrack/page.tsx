@@ -168,10 +168,11 @@ export default function MindTrackPage() {
   function triggerDownload(url: string, filename: string) { const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
   function exportCSVLocal() {
     const headers = [
-      "date","mood","energy","stress","sleepHours","region","symptom","intensity","duration","notes"
+      "date","dateTime","mood","energy","stress","sleepHours","region","symptom","intensity","duration","notes"
     ]
     const rows = entries.map(e => [
       e.date,
+      e.dateTime || "",
       String(e.mood),
       String(e.energy),
       String(e.stress),

@@ -99,6 +99,7 @@ export default function GastroPage() {
   const [pain, setPain] = React.useState(0)
   const [stress, setStress] = React.useState(0)
   const [remedy, setRemedy] = React.useState("")
+  const [noRemedy, setNoRemedy] = React.useState(false)
   const [condition, setCondition] = React.useState<GastroLog["condition"]>("gastritis")
   const [symptoms, setSymptoms] = React.useState<GastroLog["symptoms"]>({
     stomach_pain: false,
@@ -194,7 +195,7 @@ export default function GastroPage() {
       meal,
       pain: Math.max(0, Math.min(10, Number(pain))),
       stress: Math.max(0, Math.min(10, Number(stress))),
-      remedy: remedy || undefined,
+      remedy: noRemedy ? undefined : (remedy || undefined),
       condition,
       symptoms,
       mealSize,
@@ -328,8 +329,14 @@ export default function GastroPage() {
               <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
             </div>
             <div className="space-y-1">
-              <Label>Remedy used</Label>
-              <Input value={remedy} onChange={(e) => setRemedy(e.target.value)} placeholder="e.g., antacid, ginger tea" />
+              <div className="flex items-center justify-between">
+                <Label>Remedy used</Label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch checked={noRemedy} onCheckedChange={(c)=>{ setNoRemedy(c); if(c) setRemedy("") }} />
+                  No remedy used
+                </label>
+              </div>
+              <Input value={remedy} onChange={(e) => { setRemedy(e.target.value); if(noRemedy && e.target.value) setNoRemedy(false) }} placeholder="e.g., antacid, ginger tea" disabled={noRemedy} />
             </div>
           </CardContent>
         </Card>

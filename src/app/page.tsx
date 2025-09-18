@@ -85,6 +85,9 @@ export default function HomePage() {
           <Button variant="outline" onClick={() => exportCSV(entries)}>Export CSV</Button>
           <Button onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
           <Button asChild variant="secondary"><Link href="/analytics">Open Analytics</Link></Button>
+          <Button asChild variant="secondary"><Link href="/skintrack">SkinTrack+</Link></Button>
+          <Button asChild variant="secondary"><Link href="/gastro">GastroGuard</Link></Button>
+          <Button asChild variant="secondary"><Link href="/mindtrack">MindTrack</Link></Button>
         </div>
       </header>
 

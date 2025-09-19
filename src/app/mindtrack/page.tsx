@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ProfileMenu } from "@/components/profile-menu"
+import { toast } from "sonner"
 
 // MindTrack - local storage + lightweight analytics
-const PROFILE_KEY = "orchids.mindtrack.profile.v1"
+const PROFILE_KEY = "orchids.profile.v1"
 const ENTRIES_KEY = "orchids.mindtrack.entries.v1"
 const CHAT_KEY = "orchids.mindtrack.chat.v1"
 
@@ -128,9 +129,24 @@ export default function MindTrackPage() {
     setChat(loadChat())
   }, [])
 
-  function saveProfileLocal() {
-    saveProfile(profile)
-  }
+  // Auto-prefill from shared profile (conditions/recurring symptoms)
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem("orchids.profile.v1")
+      if (!raw) return
+      const prof = JSON.parse(raw || "{}") || {}
+      // Prefill symptom from recurring list if current is generic
+      const rec: string[] = Array.isArray(prof.recurring)
+        ? prof.recurring
+        : (typeof prof.recurring === "string" ? prof.recurring.split(/[\,\n]/).map((s:string)=>s.trim()).filter(Boolean) : [])
+      if (rec.length && (symptom === "pain" || symptom === "other" || !symptom)) {
+        setSymptom(String(rec[0]).toLowerCase())
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // remove separate profile save; Profile is managed via shared ProfileMenu
 
   function saveEntry() {
     const e: Entry = {
@@ -151,6 +167,7 @@ export default function MindTrackPage() {
     const next = [e, ...entries.filter((x) => !(x.date === e.date))].sort((a, b) => a.date.localeCompare(b.date))
     setEntries(next)
     saveEntries(next)
+    toast.success("Mind entry saved")
   }
 
   function askAssistant() {
@@ -241,41 +258,13 @@ export default function MindTrackPage() {
           <ProfileMenu />
           <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
           <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
-          <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveProfileLocal}>Save Profile</Button>
           <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveEntry}>Save Entry</Button>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Personal & medical info</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-1"><Label>Name</Label><Input value={profile.name || ""} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Age</Label><Input type="number" min={0} value={profile.age ?? ""} onChange={(e) => setProfile((p) => ({ ...p, age: Number(e.target.value) }))} /></div>
-              <div className="space-y-1">
-                <Label>Gender</Label>
-                <Select value={profile.gender} onValueChange={(v) => setProfile((p) => ({ ...p, gender: v as Profile["gender"] }))}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="non-binary">Non-binary</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-1"><Label>Emergency contact</Label><Input value={profile.emergencyContact || ""} onChange={(e) => setProfile((p) => ({ ...p, emergencyContact: e.target.value }))} /></div>
-            <div className="space-y-1"><Label>Known conditions (comma-separated)</Label><Input value={profile.conditions.join(", ")} onChange={(e) => setProfile((p) => ({ ...p, conditions: splitCsv(e.target.value) }))} /></div>
-            <div className="space-y-1"><Label>Recurring symptoms (comma-separated)</Label><Input value={profile.recurring.join(", ")} onChange={(e) => setProfile((p) => ({ ...p, recurring: splitCsv(e.target.value) }))} /></div>
-            <div className="space-y-1"><Label>Allergies (one per line)</Label><Input value={profile.allergies || ""} onChange={(e) => setProfile((p) => ({ ...p, allergies: e.target.value }))} placeholder="e.g., penicillin\npeanuts" /></div>
-          </CardContent>
-        </Card>
-
+        {/* Removed duplicate Profile card; profile is managed via shared ProfileMenu */}
+        
         <Card>
           <CardHeader>
             <CardTitle>Interactive Body Map</CardTitle>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner"
 
 export type SharedProfile = {
   age?: number;
@@ -48,11 +49,14 @@ export const ProfileMenu: React.FC<{ buttonLabel?: string } & React.HTMLAttribut
   function save() {
     saveSharedProfile(profile);
     setOpen(false);
+    toast.success("Profile saved")
   }
 
   function clear() {
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
     setProfile({ conditions: [], medications: [] });
+    setOpen(false);
+    toast.success("Profile cleared")
   }
 
   return (

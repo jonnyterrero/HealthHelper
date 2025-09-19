@@ -68,6 +68,34 @@ export default function AnalyticsPage() {
     return Array.from(byDate.entries()).map(([date, area]) => ({ date, area }))
   }, [lesions])
 
+  // Overlay series from app logs (normalize where needed)
+  const overlaySeries = React.useMemo(() => {
+    // build daily gastro averages
+    const gMap = new Map<string, { painSum: number; stressSum: number; n: number }>()
+    gastroSeries.forEach(g => {
+      const d = String(g.time).slice(0,10)
+      const prev = gMap.get(d) || { painSum: 0, stressSum: 0, n: 0 }
+      gMap.set(d, { painSum: prev.painSum + (g.pain || 0), stressSum: prev.stressSum + (g.stress || 0), n: prev.n + 1 })
+    })
+    const dates = new Set<string>()
+    gMap.forEach((_, d) => dates.add(d))
+    mindSeries.forEach(m => dates.add(m.date))
+    skinSeries.forEach(s => dates.add(s.date))
+    const allDates = Array.from(dates).sort()
+    const maxArea = skinSeries.reduce((mx, s) => Math.max(mx, Number(s.area || 0)), 0) || 1
+    return allDates.map(d => {
+      const g = gMap.get(d)
+      const pain = g ? g.painSum / g.n : null
+      const gStress = g ? g.stressSum / g.n : null
+      const m = mindSeries.find(x => x.date === d)
+      const mood = m?.mood ?? null
+      const mStress = m?.stress ?? null
+      const s = skinSeries.find(x => x.date === d)
+      const skinN = s ? (Number(s.area) / maxArea) * 10 : null
+      return { date: d, gastroPain: pain, gastroStress: gStress, mood, mindStress: mStress, skinN }
+    })
+  }, [gastroSeries, mindSeries, skinSeries])
+
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -163,6 +191,33 @@ export default function AnalyticsPage() {
               <YAxis tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line type="monotone" dataKey="area" stroke="var(--color-area)" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>All Systems Overlay (App Logs)</CardTitle>
+          <CardDescription>Gastro pain/stress, Mind mood/stress, Skin area (normalized)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer className="w-full h-[320px]" config={{
+            gastroPain: { label: "Gastro Pain", color: "var(--chart-1)" },
+            mindStress: { label: "Mind Stress", color: "var(--chart-4)" },
+            mood: { label: "Mood", color: "var(--chart-3)" },
+            skinN: { label: "Skin (norm)", color: "var(--chart-2)" },
+          }}>
+            <LineChart data={overlaySeries}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+              <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
+              <Line type="monotone" dot={false} strokeWidth={2} dataKey="gastroPain" stroke="var(--color-stomach)" />
+              <Line type="monotone" dot={false} strokeWidth={2} dataKey="mindStress" stroke="var(--color-anxiety)" />
+              <Line type="monotone" dot={false} strokeWidth={2} dataKey="mood" stroke="var(--color-mood)" />
+              <Line type="monotone" dot={false} strokeWidth={2} dataKey="skinN" stroke="var(--color-skin)" />
             </LineChart>
           </ChartContainer>
         </CardContent>

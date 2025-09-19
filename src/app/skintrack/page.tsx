@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { CanvasRoi } from "@/components/canvas-rois"
 import { ProfileMenu } from "@/components/profile-menu"
+import { toast } from "sonner"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -132,6 +133,44 @@ export default function SkinTrackPage() {
     setLesions(loadLesions())
   }, [])
 
+  // Prefill from shared profile
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem("orchids.profile.v1")
+      if (!raw) return
+      const prof = JSON.parse(raw || "{}") || {}
+      // condition from profile.conditions
+      const conds: string[] = Array.isArray(prof.conditions)
+        ? prof.conditions
+        : (typeof prof.conditions === "string" ? prof.conditions.split(/[\,\n]/).map((s:string)=>s.trim()).filter(Boolean) : [])
+      const map: Record<string, string> = {
+        eczema: "eczema",
+        psoriasis: "psoriasis",
+        guttatepsoriasis: "guttate_psoriasis",
+        keratosispilaris: "keratosis_pilaris",
+        acne: "cystic_acne",
+        cysticacne: "cystic_acne",
+        melanoma: "melanoma",
+        vitiligo: "vitiligo",
+        dermatitis: "contact_dermatitis",
+        contactdermatitis: "contact_dermatitis",
+      }
+      for (const c of conds) {
+        const k = String(c).toLowerCase().replace(/[^a-z]/g, "")
+        if (map[k]) { setCondition(map[k]); break }
+      }
+      // medication name
+      const meds: string[] = Array.isArray(prof.medications)
+        ? prof.medications
+        : (typeof prof.medications === "string" ? prof.medications.split(/[\,\n]/).map((s:string)=>s.trim()).filter(Boolean) : [])
+      if (meds.length) {
+        setMedName((v) => v || meds[0])
+        setMedsTaken((v) => v || meds[0])
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // exports
   function exportCSVLocal() {
     const headers = [
@@ -215,6 +254,7 @@ export default function SkinTrackPage() {
     const next = [rec, ...lesions.filter((l) => l.id !== rec.id)].slice(0, 200)
     setLesions(next)
     saveLesions(next)
+    toast.success("Skin record saved")
   }
 
   function onImageChange(e: React.ChangeEvent<HTMLInputElement>) {

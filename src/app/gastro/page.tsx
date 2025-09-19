@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ProfileMenu } from "@/components/profile-menu"
+import { toast } from "sonner"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -161,6 +162,39 @@ export default function GastroPage() {
     setLogs(loadLogs())
   }, [])
 
+  // Prefill from shared profile (orchids.profile.v1)
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem("orchids.profile.v1")
+      if (!raw) return
+      const prof = JSON.parse(raw || "{}") || {}
+      // Prefill remedy from medications if empty
+      if (!remedy) {
+        const meds: string[] = Array.isArray(prof.medications)
+          ? prof.medications
+          : (typeof prof.medications === "string" ? prof.medications.split(/[,\n]/).map((s:string)=>s.trim()).filter(Boolean) : [])
+        if (meds.length) setRemedy((r) => r || meds[0])
+      }
+      // Prefill condition if profile conditions include a known option
+      const conds: string[] = Array.isArray(prof.conditions)
+        ? prof.conditions
+        : (typeof prof.conditions === "string" ? prof.conditions.split(/[,\n]/).map((s:string)=>s.trim()).filter(Boolean) : [])
+      const map: Record<string, GastroLog["condition"]> = {
+        gastritis: "gastritis",
+        gerd: "GERD",
+        ibs: "IBS",
+        dyspepsia: "dyspepsia",
+        "food sensitivity": "food_sensitivity",
+        foodsensitivity: "food_sensitivity",
+      }
+      for (const c of conds) {
+        const k = String(c).toLowerCase().replace(/[^a-z]/g, "")
+        if (map[k as keyof typeof map]) { setCondition(map[k as keyof typeof map]); break }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // exports
   function escapeCSV(v: string) { return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v }
   function triggerDownload(url: string, filename: string) { const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
@@ -235,6 +269,7 @@ export default function GastroPage() {
     const next = [rec, ...logs.filter((l) => l.id !== id)].slice(0, 1000)
     setLogs(next)
     saveLogs(next)
+    toast.success("Gastro log saved")
   }
 
   // Derived filtered logs

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts"
 import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
 
@@ -301,6 +301,15 @@ export default function GastroPage() {
 
   const topRemedies = React.useMemo(() => effectivenessByRemedy(filteredLogs), [filteredLogs])
 
+  // Meal timing frequency (bar data)
+  const mealTimingCounts = React.useMemo(() => {
+    const keys: Array<NonNullable<GastroLog["mealTiming"]>> = ["Breakfast", "Lunch", "Dinner", "Snack"]
+    const map = new Map<string, number>()
+    keys.forEach(k => map.set(k, 0))
+    filteredLogs.forEach(l => { if (l.mealTiming) map.set(l.mealTiming, (map.get(l.mealTiming) || 0) + 1) })
+    return keys.map(k => ({ timing: k, count: map.get(k) || 0 }))
+  }, [filteredLogs])
+
   // Smart suggestions (lightweight rules)
   const suggestions = React.useMemo(() => {
     const out: string[] = []
@@ -529,6 +538,44 @@ export default function GastroPage() {
                 {suggestions.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
             )}
+          </CardContent>
+        </Card>
+
+        {/* New: Meal Timing Frequency */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Meal Timing Frequency</CardTitle>
+            <CardDescription>Distribution across filtered logs</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer className="w-full h-[220px]" config={{ count: { label: "Count", color: "var(--chart-3)" } }}>
+              <BarChart data={mealTimingCounts}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timing" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-mood)" radius={[6,6,0,0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* New: Remedy Effectiveness */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Remedy Effectiveness</CardTitle>
+            <CardDescription>Top remedies by estimated effectiveness</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer className="w-full h-[220px]" config={{ effectiveness: { label: "Effectiveness %", color: "var(--chart-5)" } }}>
+              <BarChart data={topRemedies.map(r => ({ remedy: r.remedy, effectiveness: Math.round(r.effectiveness * 100) }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="remedy" tick={{ fontSize: 12 }} interval={0} angle={-20} height={50} textAnchor="end" />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="effectiveness" fill="var(--color-skin)" radius={[6,6,0,0]} />
+              </BarChart>
+            </ChartContainer>
           </CardContent>
         </Card>
 

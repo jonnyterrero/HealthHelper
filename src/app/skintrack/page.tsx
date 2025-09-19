@@ -269,6 +269,25 @@ export default function SkinTrackPage() {
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
 
+  // Build per-metric time series from saved lesions (by date)
+  const metricSeries = React.useMemo(() => {
+    const byDate = new Map<string, { date: string; area?: number; redness?: number; border?: number }>()
+    const sorted = lesions.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    for (const r of sorted) {
+      const d = String(r.date)
+      const prev = byDate.get(d) || { date: d }
+      const m = r.metrics || {}
+      const areaVal = typeof m.area === "number" ? m.area : (typeof m.areaPx === "number" ? m.areaPx : undefined)
+      byDate.set(d, {
+        date: d,
+        area: areaVal ?? prev.area,
+        redness: (typeof m.redness === "number" ? m.redness : prev.redness),
+        border: (typeof m.borderIrregularity === "number" ? m.borderIrregularity : prev.border),
+      })
+    }
+    return Array.from(byDate.values())
+  }, [lesions])
+
   // --- Image processing utilities (client-side) ---
   function rgb2xyz(r:number,g:number,b:number){
     // sRGB to XYZ (D65)
@@ -649,6 +668,61 @@ export default function SkinTrackPage() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="area" stroke="var(--color-area)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* New: Per-metric Trends from Saved Records */}
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle>Lesion Area Trend</CardTitle>
+            <CardDescription>Area (cm² or pixels) over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer className="w-full h-[220px]" config={{ area: { label: "Area", color: "var(--chart-5)" } }}>
+              <LineChart data={metricSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="area" stroke="var(--color-area)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Redness Trend</CardTitle>
+            <CardDescription>Mean R/G contrast over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer className="w-full h-[220px]" config={{ redness: { label: "Redness (R/G)", color: "var(--chart-2)" } }}>
+              <LineChart data={metricSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="redness" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Border Irregularity Trend</CardTitle>
+            <CardDescription>Perimeter²/(4πA) (≥1)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer className="w-full h-[220px]" config={{ border: { label: "Border", color: "var(--chart-1)" } }}>
+              <LineChart data={metricSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="border" stroke="var(--color-stomach)" strokeWidth={2} dot={false} />
               </LineChart>
             </ChartContainer>
           </CardContent>

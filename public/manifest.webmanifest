@@ -1,0 +1,26 @@
+{
+  "name": "Orchids Health Tracker",
+  "short_name": "Orchids",
+  "description": "Track stomach, skin, and mental health with insights and exports.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf5ff",
+  "theme_color": "#a855f7",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 72x72 96x96 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    { "name": "Log Today", "short_name": "Log", "url": "/" },
+    { "name": "Analytics", "short_name": "Analytics", "url": "/analytics" },
+    { "name": "SkinTrack+", "short_name": "Skin", "url": "/skintrack" },
+    { "name": "GastroGuard", "short_name": "Gastro", "url": "/gastro" },
+    { "name": "MindTrack", "short_name": "Mind", "url": "/mindtrack" }
+  ]
+}

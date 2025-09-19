@@ -13,6 +13,13 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
 import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights } from "@/lib/health";
 import { exportCSV, exportPDF } from "@/lib/export";
 import { ProfileMenu } from "@/components/profile-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -94,14 +101,14 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Health Dashboard</h1>
           <p className="text-muted-foreground">Daily tracking for stomach, skin, and mental health</p>
         </div>
         <div className="relative">
-          <div className="flex gap-2">
+          <div className="hidden md:flex gap-2">
             <ProfileMenu />
             <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={() => exportCSV(entries)}>Export CSV</Button>
             <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
@@ -109,6 +116,31 @@ export default function HomePage() {
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/skintrack">SkinTrack+</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/gastro">GastroGuard</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/mindtrack">MindTrack</Link></Button>
+          </div>
+          <div className="flex md:hidden items-center gap-2">
+            <ProfileMenu />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">Actions</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={() => exportCSV(entries)}>Export CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/analytics">Open Analytics</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/skintrack">SkinTrack+</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/gastro">GastroGuard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/mindtrack">MindTrack</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -256,7 +288,7 @@ export default function HomePage() {
             <CardTitle>Stomach Trend (14d)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="w-full h-[220px]" config={{ stomach: { label: "Severity", color: "var(--chart-1)" } }}>
+            <ChartContainer className="w-full h-[180px] md:h-[220px]" config={{ stomach: { label: "Severity", color: "var(--chart-1)" } }}>
               <LineChart data={series14.stomach}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -272,7 +304,7 @@ export default function HomePage() {
             <CardTitle>Skin Trend (14d)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="w-full h-[220px]" config={{ skin: { label: "Severity", color: "var(--chart-2)" } }}>
+            <ChartContainer className="w-full h-[180px] md:h-[220px]" config={{ skin: { label: "Severity", color: "var(--chart-2)" } }}>
               <LineChart data={series14.skin}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -288,7 +320,7 @@ export default function HomePage() {
             <CardTitle>Mental Trend (14d)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="w-full h-[220px]" config={{ mood: { label: "Mood", color: "var(--chart-3)" }, anxiety: { label: "Anxiety", color: "var(--chart-4)" } }}>
+            <ChartContainer className="w-full h-[180px] md:h-[220px]" config={{ mood: { label: "Mood", color: "var(--chart-3)" }, anxiety: { label: "Anxiety", color: "var(--chart-4)" } }}>
               <LineChart data={series14.mentalMood}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />

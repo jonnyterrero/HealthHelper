@@ -1,77 +1,77 @@
-"use client"
+"use client";
 
-import React from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
-import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights } from "@/lib/health"
-import { exportCSV, exportPDF } from "@/lib/export"
+import React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
+import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights } from "@/lib/health";
+import { exportCSV, exportPDF } from "@/lib/export";
 
 export default function HomePage() {
-  const [date, setDate] = React.useState(todayISO())
-  const [entries, setEntries] = React.useState(() => loadEntries())
+  const [date, setDate] = React.useState(todayISO());
+  const [entries, setEntries] = React.useState(() => loadEntries());
 
   const [stomach, setStomach] = React.useState({
     severity: 0,
     painLocation: "",
     bowelChanges: "",
     triggers: { dairy: false, gluten: false, spicy: false, alcohol: false, caffeine: false },
-    notes: "",
-  })
+    notes: ""
+  });
   const [skin, setSkin] = React.useState({
     severity: 0,
     area: "",
     rash: false,
     itch: false,
     triggers: { cosmetics: false, detergent: false, weather: false, sweat: false, dietSugar: false },
-    notes: "",
-  })
-  const [mental, setMental] = React.useState({ mood: 5, anxiety: 5, sleepHours: 7, stressLevel: 5, notes: "" })
+    notes: ""
+  });
+  const [mental, setMental] = React.useState({ mood: 5, anxiety: 5, sleepHours: 7, stressLevel: 5, notes: "" });
 
   React.useEffect(() => {
     // preload existing for selected date
-    const e = loadEntries().find((x) => x.date === date)
+    const e = loadEntries().find((x) => x.date === date);
     if (e?.stomach) setStomach({
       severity: e.stomach.severity,
       painLocation: e.stomach.painLocation ?? "",
       bowelChanges: e.stomach.bowelChanges ?? "",
       triggers: { ...e.stomach.triggers },
-      notes: e.stomach.notes ?? "",
-    })
+      notes: e.stomach.notes ?? ""
+    });
     if (e?.skin) setSkin({
       severity: e.skin.severity,
       area: e.skin.area ?? "",
       rash: !!e.skin.rash,
       itch: !!e.skin.itch,
       triggers: { ...e.skin.triggers },
-      notes: e.skin.notes ?? "",
-    })
+      notes: e.skin.notes ?? ""
+    });
     if (e?.mental) setMental({
       mood: e.mental.mood,
       anxiety: e.mental.anxiety,
       sleepHours: e.mental.sleepHours ?? 0,
       stressLevel: e.mental.stressLevel ?? 0,
-      notes: e.mental.notes ?? "",
-    })
-  }, [date])
+      notes: e.mental.notes ?? ""
+    });
+  }, [date]);
 
-  const series14 = toTimeSeries(lastNDays(entries, 14))
-  const insights = React.useMemo(() => generateInsights(entries), [entries])
+  const series14 = toTimeSeries(lastNDays(entries, 14));
+  const insights = React.useMemo(() => generateInsights(entries), [entries]);
 
   function saveAll() {
     const updated = upsertEntry({
       date,
       stomach: { date, severity: Number(stomach.severity), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
       skin: { date, severity: Number(skin.severity), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
-      mental: { date, mood: Number(mental.mood), anxiety: Number(mental.anxiety), sleepHours: Number(mental.sleepHours), stressLevel: Number(mental.stressLevel), notes: mental.notes || undefined },
-    })
-    setEntries(updated)
+      mental: { date, mood: Number(mental.mood), anxiety: Number(mental.anxiety), sleepHours: Number(mental.sleepHours), stressLevel: Number(mental.stressLevel), notes: mental.notes || undefined }
+    });
+    setEntries(updated);
   }
 
   return (
@@ -91,7 +91,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 !text-pink-300">
         <Card>
           <CardHeader>
             <CardTitle>General</CardTitle>
@@ -142,12 +142,12 @@ export default function HomePage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(stomach.triggers).map(([k, v]) => (
-                <label key={k} className="flex items-center gap-2 text-sm">
+              {Object.entries(stomach.triggers).map(([k, v]) =>
+              <label key={k} className="flex items-center gap-2 text-sm">
                   <Switch checked={v} onCheckedChange={(c) => setStomach({ ...stomach, triggers: { ...stomach.triggers, [k]: c } as any })} />
                   {capitalize(k)}
                 </label>
-              ))}
+              )}
             </div>
             <div className="space-y-1">
               <Label>Notes</Label>
@@ -184,12 +184,12 @@ export default function HomePage() {
               <label className="flex items-center gap-2 text-sm"><Switch checked={skin.itch} onCheckedChange={(c) => setSkin({ ...skin, itch: c })} />Itch</label>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(skin.triggers).map(([k, v]) => (
-                <label key={k} className="flex items-center gap-2 text-sm">
+              {Object.entries(skin.triggers).map(([k, v]) =>
+              <label key={k} className="flex items-center gap-2 text-sm">
                   <Switch checked={v} onCheckedChange={(c) => setSkin({ ...skin, triggers: { ...skin.triggers, [k]: c } as any })} />
                   {pretty(k)}
                 </label>
-              ))}
+              )}
             </div>
             <div className="space-y-1">
               <Label>Notes</Label>
@@ -234,11 +234,11 @@ export default function HomePage() {
             <CardTitle>Stomach Trend (14d)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="w-full h-[220px]" config={{ stomach: { label: "Severity", color: "var(--chart-1)" }}}>
+            <ChartContainer className="w-full h-[220px]" config={{ stomach: { label: "Severity", color: "var(--chart-1)" } }}>
               <LineChart data={series14.stomach}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="severity" stroke="var(--color-stomach)" strokeWidth={2} dot={false} />
               </LineChart>
@@ -250,11 +250,11 @@ export default function HomePage() {
             <CardTitle>Skin Trend (14d)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="w-full h-[220px]" config={{ skin: { label: "Severity", color: "var(--chart-2)" }}}>
+            <ChartContainer className="w-full h-[220px]" config={{ skin: { label: "Severity", color: "var(--chart-2)" } }}>
               <LineChart data={series14.skin}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="severity" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
               </LineChart>
@@ -270,7 +270,7 @@ export default function HomePage() {
               <LineChart data={series14.mentalMood}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
@@ -287,22 +287,22 @@ export default function HomePage() {
           <CardDescription>Adaptive suggestions based on your data</CardDescription>
         </CardHeader>
         <CardContent>
-          {insights.length === 0 ? (
-            <p className="text-muted-foreground">No strong patterns yet. Keep logging for better recommendations.</p>
-          ) : (
-            <ul className="space-y-2 list-disc pl-5">
-              {insights.slice(0, 5).map((ins, i) => (
-                <li key={i} className="leading-relaxed">
+          {insights.length === 0 ?
+          <p className="text-muted-foreground">No strong patterns yet. Keep logging for better recommendations.</p> :
+
+          <ul className="space-y-2 list-disc pl-5">
+              {insights.slice(0, 5).map((ins, i) =>
+            <li key={i} className="leading-relaxed">
                   <span className="font-medium">[{ins.area}]</span> {ins.description} <span className="text-muted-foreground">(score: {ins.score.toFixed(2)})</span>
                 </li>
-              ))}
+            )}
             </ul>
-          )}
+          }
         </CardContent>
       </Card>
-    </div>
-  )
+    </div>);
+
 }
 
-function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
-function pretty(s: string) { return s.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()) }
+function capitalize(s: string) {return s.charAt(0).toUpperCase() + s.slice(1);}
+function pretty(s: string) {return s.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());}

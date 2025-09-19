@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
+import { CanvasRoi } from "@/components/canvas-rois"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -446,9 +447,9 @@ export default function SkinTrackPage() {
           <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSVLocal}>Export CSV</Button>
-          <Button onClick={exportPDFLocal}>Export PDF</Button>
-          <Button onClick={saveRecord}>Save Record</Button>
+          <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
+          <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
+          <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveRecord}>Save Record</Button>
         </div>
       </header>
 
@@ -519,30 +520,19 @@ export default function SkinTrackPage() {
           </CardContent>
         </Card>
 
+        {/* Canvas ROI tools (color calibration / segmentation box) */}
         <Card>
           <CardHeader>
-            <CardTitle>Symptoms & Notes</CardTitle>
-            <CardDescription>Daily context</CardDescription>
+            <CardTitle>Canvas (ROI tools)</CardTitle>
+            <CardDescription>Draw a rectangle on the image preview</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Itch (0-10)</Label><Input type="number" min={0} max={10} value={itch} onChange={(e) => setItch(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Pain (0-10)</Label><Input type="number" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Sleep (hrs)</Label><Input type="number" min={0} max={12} step={0.5} value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(triggers).map(([k, v]) => (
-                <label key={k} className="flex items-center gap-2 text-sm">
-                  <Switch checked={v} onCheckedChange={(c) => setTriggers((t) => ({ ...t, [k]: c }))} />
-                  {k.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())}
-                </label>
-              ))}
-            </div>
-            <Input placeholder="New products used" value={newProductsUsed} onChange={(e) => setNewProductsUsed(e.target.value)} />
-            <Input placeholder="Medications taken" value={medsTaken} onChange={(e) => setMedsTaken(e.target.value)} />
-            <label className="flex items-center gap-2 text-sm"><Switch checked={adherenceToday} onCheckedChange={setAdherenceToday} />Took meds as planned today</label>
-            <Input placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            {/* lightweight canvas impl */}
+            {imageDataUrl ? (
+              <CanvasRoi imageDataUrl={imageDataUrl} onApplyCalibrated={(url)=>setImageDataUrl(url)} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Upload an image to enable canvas tools.</p>
+            )}
           </CardContent>
         </Card>
 

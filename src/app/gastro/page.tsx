@@ -46,6 +46,28 @@ export type GastroLog = {
   notes?: string
 }
 
+// Add gastritis simulator (adapted from MATLAB version)
+function simulateGastritisSeries(stress: number, lastMealHours: number) {
+  const k_s = 0.08
+  const k_f = 0.1
+  const k_h = 0.05
+  const mealThreshold = 4
+  const hunger = lastMealHours > mealThreshold ? 1 : 0
+  const D = k_s * stress + k_f * hunger
+
+  const dt = 0.5 // hours step
+  const hours = 48
+  let S = 0.4 // initial severity (0-1)
+  const series: { t: number; S: number }[] = []
+  for (let t = 0; t <= hours; t += dt) {
+    series.push({ t, S: Math.max(0, Math.min(1, Number(S.toFixed(4)))) })
+    const dSdt = D - k_h * (1 - S)
+    S = S + dSdt * dt
+  }
+  const finalSeverity = series[series.length - 1]?.S ?? S
+  return { series, finalSeverity }
+}
+
 function loadLogs(): GastroLog[] {
   if (typeof window === "undefined") return []
   try {
@@ -124,6 +146,10 @@ export default function GastroPage() {
   const [exercise, setExercise] = React.useState<number>(3)
   const [weather, setWeather] = React.useState<GastroLog["weather"]>("Clear")
   const [notes, setNotes] = React.useState("")
+
+  // Simulator inputs
+  const [simStress, setSimStress] = React.useState(5)
+  const [simLastMealHrs, setSimLastMealHrs] = React.useState(5)
 
   // Filters
   const [range, setRange] = React.useState<"all" | "last7" | "last30" | "custom">("all")
@@ -266,6 +292,11 @@ export default function GastroPage() {
     if (timeOfDay === "evening") out.push("Evening tip: avoid large meals within 3 hours of sleep, elevate head if prone to reflux.")
     return out
   }, [filteredLogs])
+
+  const { series: simSeries, finalSeverity } = React.useMemo(
+    () => simulateGastritisSeries(Math.max(0, Math.min(10, simStress)), Math.max(0, Math.min(24, simLastMealHrs))),
+    [simStress, simLastMealHrs]
+  )
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
@@ -415,6 +446,36 @@ export default function GastroPage() {
               <Label>Notes</Label>
               <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything notable" />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Gastritis Simulator */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Gastritis Simulator (48h)</CardTitle>
+            <CardDescription>Based on stress and time since last meal</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label>Stress (0-10)</Label>
+                <Input type="number" min={0} max={10} value={simStress} onChange={(e)=>setSimStress(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Hours since last meal</Label>
+                <Input type="number" min={0} max={24} value={simLastMealHrs} onChange={(e)=>setSimLastMealHrs(Number(e.target.value))} />
+              </div>
+            </div>
+            <ChartContainer className="w-full h-[220px]" config={{ severity: { label: "Severity (0–1)", color: "var(--chart-2)" } }}>
+              <LineChart data={simSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="t" tick={{ fontSize: 12 }} label={{ value: "hours", position: "insideBottomRight", offset: -4 }} />
+                <YAxis domain={[0,1]} tick={{ fontSize: 12 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="S" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+            <p className="text-sm text-muted-foreground">Final predicted severity: <span className="font-medium text-foreground">{finalSeverity.toFixed(2)}</span></p>
           </CardContent>
         </Card>
 

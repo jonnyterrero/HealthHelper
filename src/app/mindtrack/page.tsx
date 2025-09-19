@@ -237,10 +237,10 @@ export default function MindTrackPage() {
           <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSVLocal}>Export CSV</Button>
-          <Button onClick={exportPDFLocal}>Export PDF</Button>
-          <Button onClick={saveProfileLocal} variant="outline">Save Profile</Button>
-          <Button onClick={saveEntry}>Save Entry</Button>
+          <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
+          <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
+          <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveProfileLocal}>Save Profile</Button>
+          <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveEntry}>Save Entry</Button>
         </div>
       </header>
 
@@ -271,6 +271,35 @@ export default function MindTrackPage() {
             <div className="space-y-1"><Label>Known conditions (comma-separated)</Label><Input value={profile.conditions.join(", ")} onChange={(e) => setProfile((p) => ({ ...p, conditions: splitCsv(e.target.value) }))} /></div>
             <div className="space-y-1"><Label>Recurring symptoms (comma-separated)</Label><Input value={profile.recurring.join(", ")} onChange={(e) => setProfile((p) => ({ ...p, recurring: splitCsv(e.target.value) }))} /></div>
             <div className="space-y-1"><Label>Allergies (one per line)</Label><Input value={profile.allergies || ""} onChange={(e) => setProfile((p) => ({ ...p, allergies: e.target.value }))} placeholder="e.g., penicillin\npeanuts" /></div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Interactive Body Map</CardTitle>
+            <CardDescription>Tap a region to prefill selection</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("head")}>Head</Button>
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("neck")}>Neck</Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("shoulders")}>Shoulders</Button>
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("arms")}>Arms</Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("chest")}>Chest</Button>
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("stomach")}>Stomach</Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("back")}>Back</Button>
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("legs")}>Legs</Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("feet")}>Feet</Button>
+              <div className="text-muted-foreground self-center">Selected: <span className="font-medium text-foreground">{region}</span></div>
+            </div>
           </CardContent>
         </Card>
 

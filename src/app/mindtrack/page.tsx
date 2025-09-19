@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
+import { ProfileMenu } from "@/components/profile-menu"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.mindtrack.profile.v1"
@@ -237,6 +238,7 @@ export default function MindTrackPage() {
           <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
         </div>
         <div className="flex gap-2">
+          <ProfileMenu />
           <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
           <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
           <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveProfileLocal}>Save Profile</Button>

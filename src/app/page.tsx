@@ -12,6 +12,7 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
 import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights } from "@/lib/health";
 import { exportCSV, exportPDF } from "@/lib/export";
+import { ProfileMenu } from "@/components/profile-menu";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -101,7 +102,7 @@ export default function HomePage() {
         </div>
         <div className="relative">
           <div className="flex gap-2">
-            <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={() => setProfileOpen((o) => !o)}>Profile</Button>
+            <ProfileMenu />
             <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={() => exportCSV(entries)}>Export CSV</Button>
             <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/analytics">Open Analytics</Link></Button>
@@ -109,57 +110,6 @@ export default function HomePage() {
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/gastro">GastroGuard</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/mindtrack">MindTrack</Link></Button>
           </div>
-
-          {profileOpen && (
-            <div className="absolute right-0 mt-2 w-80 rounded-md border bg-card text-card-foreground shadow-lg p-4 z-50">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Profile</h3>
-                <Button variant="ghost" className="h-8 px-2" onClick={() => setProfileOpen(false)}>Close</Button>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="space-y-1">
-                  <Label>Age</Label>
-                  <Input type="number" min={0} value={profile.age ?? ""} onChange={(e) => setProfile((p: any) => ({ ...p, age: Number(e.target.value) }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Gender</Label>
-                  <Select value={profile.gender || undefined} onValueChange={(v) => setProfile((p: any) => ({ ...p, gender: v }))}>
-                    <SelectTrigger className="w-full"><SelectValue placeholder="Select gender" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="non-binary">Non-binary</SelectItem>
-                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label>Weight (kg or lb)</Label>
-                  <Input value={profile.weight || ""} onChange={(e) => setProfile((p: any) => ({ ...p, weight: e.target.value }))} placeholder="e.g., 70 kg" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Known conditions (comma-separated)</Label>
-                  <Input value={(profile.conditions || []).join(", ")} onChange={(e) => setProfile((p: any) => ({ ...p, conditions: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Medications (comma-separated)</Label>
-                  <Input value={(profile.medications || []).join(", ")} onChange={(e) => setProfile((p: any) => ({ ...p, medications: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Emergency contact</Label>
-                  <Input value={profile.emergencyContact || ""} onChange={(e) => setProfile((p: any) => ({ ...p, emergencyContact: e.target.value }))} placeholder="Name • relation • phone" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Other info</Label>
-                  <Input value={profile.notes || ""} onChange={(e) => setProfile((p: any) => ({ ...p, notes: e.target.value }))} placeholder="Allergies, physician, goals..." />
-                </div>
-                <div className="pt-2 flex gap-2">
-                  <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={saveProfileLocal}>Save</Button>
-                  <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={() => { try { localStorage.removeItem("orchids.profile.v1"); } catch {}; setProfile({ conditions: [], medications: [] } as any); }}>Clear</Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </header>
 

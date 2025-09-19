@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
+import { ProfileMenu } from "@/components/profile-menu"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -306,6 +307,7 @@ export default function GastroPage() {
           <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
         </div>
         <div className="flex gap-2">
+          <ProfileMenu />
           <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
           <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
           <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveLog}>Save Log</Button>

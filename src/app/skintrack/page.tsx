@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { CanvasRoi } from "@/components/canvas-rois"
+import { ProfileMenu } from "@/components/profile-menu"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -447,6 +448,7 @@ export default function SkinTrackPage() {
           <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
         </div>
         <div className="flex gap-2">
+          <ProfileMenu />
           <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
           <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
           <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveRecord}>Save Record</Button>

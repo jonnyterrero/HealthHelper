@@ -52,7 +52,7 @@
 :root {
   --radius: 0.625rem;
   /* Light pink/purple theme */
-  --background: oklch(0.985 0.03 320);
+  --background: oklch(0.985 0.035 305);
   --foreground: oklch(0.22 0.02 320);
   --card: oklch(0.992 0.02 320);
   --card-foreground: oklch(0.22 0.02 320);
@@ -139,8 +139,8 @@
     @apply bg-background text-foreground;
     /* Subtle top glow gradient to match pink/purple theme */
     background-image:
-      radial-gradient(1000px 400px at 10% -10%, oklch(0.95 0.04 320 / 0.6), transparent 60%),
-      radial-gradient(800px 300px at 90% -10%, oklch(0.94 0.05 300 / 0.5), transparent 60%);
+      radial-gradient(1000px 400px at 10% -10%, oklch(0.95 0.05 305 / 0.55), transparent 60%),
+      radial-gradient(800px 300px at 90% -10%, oklch(0.94 0.06 300 / 0.5), transparent 60%);
     background-attachment: fixed;
   }
 }

@@ -275,9 +275,9 @@ export default function GastroPage() {
           <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSVLocal}>Export CSV</Button>
-          <Button onClick={exportPDFLocal}>Export PDF</Button>
-          <Button onClick={saveLog}>Save Log</Button>
+          <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={exportCSVLocal}>Export CSV</Button>
+          <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={exportPDFLocal}>Export PDF</Button>
+          <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={saveLog}>Save Log</Button>
         </div>
       </header>
 

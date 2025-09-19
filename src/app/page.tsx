@@ -82,12 +82,12 @@ export default function HomePage() {
           <p className="text-muted-foreground">Daily tracking for stomach, skin, and mental health</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => exportCSV(entries)}>Export CSV</Button>
-          <Button onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
-          <Button asChild variant="secondary"><Link href="/analytics">Open Analytics</Link></Button>
-          <Button asChild variant="secondary"><Link href="/skintrack">SkinTrack+</Link></Button>
-          <Button asChild variant="secondary"><Link href="/gastro">GastroGuard</Link></Button>
-          <Button asChild variant="secondary"><Link href="/mindtrack">MindTrack</Link></Button>
+          <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={() => exportCSV(entries)}>Export CSV</Button>
+          <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
+          <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/analytics">Open Analytics</Link></Button>
+          <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/skintrack">SkinTrack+</Link></Button>
+          <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/gastro">GastroGuard</Link></Button>
+          <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/mindtrack">MindTrack</Link></Button>
         </div>
       </header>
 

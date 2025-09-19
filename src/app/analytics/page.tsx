@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { exportCSV, exportPDF } from "@/lib/export"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function AnalyticsPage() {
   const [entries, setEntries] = React.useState(() => loadEntries())
@@ -109,7 +110,108 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <Card>
+      {/* Mobile: charts in tabs to reduce clutter */}
+      <div className="md:hidden">
+        <Tabs defaultValue="all">
+          <TabsList className="grid grid-cols-4 w-full">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="stomach">Stomach</TabsTrigger>
+            <TabsTrigger value="skin">Skin</TabsTrigger>
+            <TabsTrigger value="mental">Mental</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Symptom Trends (30d)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[240px]" config={{
+                  stomach: { label: "Stomach", color: "var(--chart-1)" },
+                  skin: { label: "Skin", color: "var(--chart-2)" },
+                  mood: { label: "Mood", color: "var(--chart-3)" },
+                  anxiety: { label: "Anxiety", color: "var(--chart-4)" },
+                }}>
+                  <LineChart data={mergeForMulti(data14)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dot={false} strokeWidth={2} dataKey="stomach" stroke="var(--color-stomach)" />
+                    <Line type="monotone" dot={false} strokeWidth={2} dataKey="skin" stroke="var(--color-skin)" />
+                    <Line type="monotone" dot={false} strokeWidth={2} dataKey="mood" stroke="var(--color-mood)" />
+                    <Line type="monotone" dot={false} strokeWidth={2} dataKey="anxiety" stroke="var(--color-anxiety)" />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="stomach">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Gastro: Pain & Stress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ pain: { label: "Pain", color: "var(--chart-1)" }, stress: { label: "Stress", color: "var(--chart-4)" } }}>
+                  <LineChart data={gastroSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="pain" stroke="var(--color-pain)" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="skin">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">SkinTrack: Lesion Area</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ area: { label: "Area (cm²)", color: "var(--chart-5)" } }}>
+                  <LineChart data={skinSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="area" stroke="var(--color-area)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="mental">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">MindTrack: Mood, Stress, Sleep</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ mood: { label: "Mood", color: "var(--chart-3)" }, stress: { label: "Stress", color: "var(--chart-5)" }, sleep: { label: "Sleep (h)", color: "var(--chart-2)" } }}>
+                  <LineChart data={mindSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis yAxisId="left" domain={[0,10]} tick={{ fontSize: 12 }} />
+                    <YAxis yAxisId="right" orientation="right" domain={[0,24]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line yAxisId="left" type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
+                    <Line yAxisId="left" type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
+                    <Line yAxisId="right" type="monotone" dataKey="sleep" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop charts stack */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Symptom Trends (Last 30 Days)</CardTitle>
           <CardDescription>Track changes across areas</CardDescription>
@@ -136,7 +238,7 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Gastro: Pain & Stress Timeline</CardTitle>
           <CardDescription>From GastroGuard logs</CardDescription>
@@ -156,7 +258,7 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>MindTrack: Mood, Stress, Sleep</CardTitle>
           <CardDescription>From MindTrack entries</CardDescription>
@@ -178,7 +280,7 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>SkinTrack: Lesion Area Trend</CardTitle>
           <CardDescription>Area (cm²) over saved records</CardDescription>
@@ -196,7 +298,7 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>All Systems Overlay (App Logs)</CardTitle>
           <CardDescription>Gastro pain/stress, Mind mood/stress, Skin area (normalized)</CardDescription>

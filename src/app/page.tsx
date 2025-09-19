@@ -20,6 +20,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -160,7 +162,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hidden md:block">
           <CardHeader>
             <CardTitle>Stomach</CardTitle>
             <CardDescription>Symptoms and triggers</CardDescription>
@@ -210,7 +212,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hidden md:block">
           <CardHeader>
             <CardTitle>Skin</CardTitle>
             <CardDescription>Symptoms and triggers</CardDescription>
@@ -252,7 +254,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-3">
+        <Card className="hidden md:block md:col-span-3">
           <CardHeader>
             <CardTitle>Mental Health</CardTitle>
             <CardDescription>Mood, anxiety, sleep, stress</CardDescription>
@@ -280,9 +282,131 @@ export default function HomePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Mobile: Accordion for Stomach/Skin/Mental */}
+        <div className="md:hidden">
+          <Accordion type="single" collapsible defaultValue="stomach">
+            <AccordionItem value="stomach">
+              <AccordionTrigger>Stomach</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-1">
+                    <Label>Severity (0-10)</Label>
+                    <Input type="number" min={0} max={10} value={stomach.severity} onChange={(e) => setStomach({ ...stomach, severity: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Pain Location</Label>
+                    <Select value={stomach.painLocation || undefined} onValueChange={(v) => setStomach({ ...stomach, painLocation: v })}>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select location" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="upper-abdomen">Upper Abdomen</SelectItem>
+                        <SelectItem value="lower-abdomen">Lower Abdomen</SelectItem>
+                        <SelectItem value="left-side">Left Side</SelectItem>
+                        <SelectItem value="right-side">Right Side</SelectItem>
+                        <SelectItem value="generalized">Generalized</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Bowel Changes</Label>
+                    <Select value={stomach.bowelChanges || undefined} onValueChange={(v) => setStomach({ ...stomach, bowelChanges: v })}>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select change" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="constipation">Constipation</SelectItem>
+                        <SelectItem value="diarrhea">Diarrhea</SelectItem>
+                        <SelectItem value="alternating">Alternating</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(stomach.triggers).map(([k, v]) => (
+                      <label key={k} className="flex items-center gap-2 text-sm">
+                        <Switch checked={v} onCheckedChange={(c) => setStomach({ ...stomach, triggers: { ...stomach.triggers, [k]: c } as any })} />
+                        {capitalize(k)}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Notes</Label>
+                    <Input value={stomach.notes} onChange={(e) => setStomach({ ...stomach, notes: e.target.value })} placeholder="Anything notable..." />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="skin">
+              <AccordionTrigger>Skin</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-1">
+                    <Label>Severity (0-10)</Label>
+                    <Input type="number" min={0} max={10} value={skin.severity} onChange={(e) => setSkin({ ...skin, severity: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Affected Area</Label>
+                    <Select value={skin.area || undefined} onValueChange={(v) => setSkin({ ...skin, area: v })}>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select area" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="face">Face</SelectItem>
+                        <SelectItem value="scalp">Scalp</SelectItem>
+                        <SelectItem value="arms">Arms</SelectItem>
+                        <SelectItem value="torso">Torso</SelectItem>
+                        <SelectItem value="legs">Legs</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm"><Switch checked={skin.rash} onCheckedChange={(c) => setSkin({ ...skin, rash: c })} />Rash</label>
+                    <label className="flex items-center gap-2 text-sm"><Switch checked={skin.itch} onCheckedChange={(c) => setSkin({ ...skin, itch: c })} />Itch</label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(skin.triggers).map(([k, v]) => (
+                      <label key={k} className="flex items-center gap-2 text-sm">
+                        <Switch checked={v} onCheckedChange={(c) => setSkin({ ...skin, triggers: { ...skin.triggers, [k]: c } as any })} />
+                        {pretty(k)}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Notes</Label>
+                    <Input value={skin.notes} onChange={(e) => setSkin({ ...skin, notes: e.target.value })} placeholder="Care routine, weather, etc." />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="mental">
+              <AccordionTrigger>Mental Health</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-1">
+                    <Label>Mood (0-10)</Label>
+                    <Input type="number" min={0} max={10} value={mental.mood} onChange={(e) => setMental({ ...mental, mood: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Anxiety (0-10)</Label>
+                    <Input type="number" min={0} max={10} value={mental.anxiety} onChange={(e) => setMental({ ...mental, anxiety: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Sleep Hours</Label>
+                    <Input type="number" min={0} max={24} value={mental.sleepHours} onChange={(e) => setMental({ ...mental, sleepHours: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Stress Level (0-10)</Label>
+                    <Input type="number" min={0} max={10} value={mental.stressLevel} onChange={(e) => setMental({ ...mental, stressLevel: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Notes</Label>
+                    <Input value={mental.notes} onChange={(e) => setMental({ ...mental, notes: e.target.value })} placeholder="What influenced your mood?" />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Desktop charts grid */}
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Stomach Trend (14d)</CardTitle>
@@ -333,6 +457,112 @@ export default function HomePage() {
             </ChartContainer>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Mobile charts in tabs */}
+      <div className="md:hidden">
+        <Tabs defaultValue="all">
+          <TabsList className="grid grid-cols-4 w-full">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="stomach">Stomach</TabsTrigger>
+            <TabsTrigger value="skin">Skin</TabsTrigger>
+            <TabsTrigger value="mental">Mental</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Stomach Trend (14d)</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[180px]" config={{ stomach: { label: "Severity", color: "var(--chart-1)" } }}>
+                  <LineChart data={series14.stomach}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="severity" stroke="var(--color-stomach)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Skin Trend (14d)</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[180px]" config={{ skin: { label: "Severity", color: "var(--chart-2)" } }}>
+                  <LineChart data={series14.skin}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="severity" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Mental Trend (14d)</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[180px]" config={{ mood: { label: "Mood", color: "var(--chart-3)" }, anxiety: { label: "Anxiety", color: "var(--chart-4)" } }}>
+                  <LineChart data={series14.mentalMood}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="anxiety" stroke="var(--color-anxiety)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="stomach">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Stomach Trend (14d)</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[200px]" config={{ stomach: { label: "Severity", color: "var(--chart-1)" } }}>
+                  <LineChart data={series14.stomach}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="severity" stroke="var(--color-stomach)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="skin">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Skin Trend (14d)</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[200px]" config={{ skin: { label: "Severity", color: "var(--chart-2)" } }}>
+                  <LineChart data={series14.skin}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="severity" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="mental">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Mental Trend (14d)</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[200px]" config={{ mood: { label: "Mood", color: "var(--chart-3)" }, anxiety: { label: "Anxiety", color: "var(--chart-4)" } }}>
+                  <LineChart data={series14.mentalMood}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="anxiety" stroke="var(--color-anxiety)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Card>

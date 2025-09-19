@@ -10,6 +10,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.profile.v1"
@@ -262,10 +263,117 @@ export default function MindTrackPage() {
         </div>
       </header>
 
+      {/* Mobile: collapse form sections into accordion */}
+      <div className="md:hidden">
+        <Accordion type="multiple" defaultValue={["bodymap","symptom"]}>
+          <AccordionItem value="bodymap">
+            <AccordionTrigger>Interactive Body Map</AccordionTrigger>
+            <AccordionContent>
+              <Card className="mt-2">
+                <CardContent className="space-y-3 pt-4 text-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("head")}>Head</Button>
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("neck")}>Neck</Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("shoulders")}>Shoulders</Button>
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("arms")}>Arms</Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("chest")}>Chest</Button>
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("stomach")}>Stomach</Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("back")}>Back</Button>
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("legs")}>Legs</Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => setRegion("feet")}>Feet</Button>
+                    <div className="text-muted-foreground self-center">Selected: <span className="font-medium text-foreground">{region}</span></div>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="symptom">
+            <AccordionTrigger>Body Map Symptom</AccordionTrigger>
+            <AccordionContent>
+              <Card className="mt-2">
+                <CardContent className="space-y-3 pt-4">
+                  <div className="space-y-1"><Label>Date & time</Label><Input type="datetime-local" value={dateTime} onChange={(e) => { setDateTime(e.target.value); setDate(e.target.value.slice(0,10)) }} /></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label>Region</Label>
+                      <Select value={region} onValueChange={setRegion}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Select region" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="head">Head</SelectItem>
+                          <SelectItem value="neck">Neck</SelectItem>
+                          <SelectItem value="shoulders">Shoulders</SelectItem>
+                          <SelectItem value="arms">Arms</SelectItem>
+                          <SelectItem value="chest">Chest</SelectItem>
+                          <SelectItem value="stomach">Stomach</SelectItem>
+                          <SelectItem value="back">Back</SelectItem>
+                          <SelectItem value="legs">Legs</SelectItem>
+                          <SelectItem value="feet">Feet</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Symptom</Label>
+                      <Select value={symptom} onValueChange={setSymptom}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pain">Pain</SelectItem>
+                          <SelectItem value="headache">Headache</SelectItem>
+                          <SelectItem value="nausea">Nausea</SelectItem>
+                          <SelectItem value="fatigue">Fatigue</SelectItem>
+                          <SelectItem value="dizziness">Dizziness</SelectItem>
+                          <SelectItem value="swelling">Swelling</SelectItem>
+                          <SelectItem value="itching">Itching</SelectItem>
+                          <SelectItem value="burning">Burning</SelectItem>
+                          <SelectItem value="numbness">Numbness</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={intensity} onChange={(e) => setIntensity(Number(e.target.value))} /></div>
+                    <div className="space-y-1">
+                      <Label>Duration</Label>
+                      <Select value={duration} onValueChange={setDuration}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Select duration" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="just started">Just started</SelectItem>
+                          <SelectItem value="few minutes">Few minutes</SelectItem>
+                          <SelectItem value="few hours">Few hours</SelectItem>
+                          <SelectItem value="all day">All day</SelectItem>
+                          <SelectItem value="few days">Few days</SelectItem>
+                          <SelectItem value="week+">Week+</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-1"><Label>Notes</Label><Input value={bodyNotes} onChange={(e) => setBodyNotes(e.target.value)} placeholder="Context, triggers, relief..." /></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1"><Label>Mood (0-10)</Label><Input type="number" min={0} max={10} value={mood} onChange={(e) => setMood(Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Energy (0-10)</Label><Input type="number" min={0} max={10} value={energy} onChange={(e) => setEnergy(Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Sleep hours</Label><Input type="number" min={0} max={24} step={0.5} value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))} /></div>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Removed duplicate Profile card; profile is managed via shared ProfileMenu */}
         
-        <Card>
+        <Card className="hidden md:block">
           <CardHeader>
             <CardTitle>Interactive Body Map</CardTitle>
             <CardDescription>Tap a region to prefill selection</CardDescription>
@@ -294,7 +402,7 @@ export default function MindTrackPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hidden md:block">
           <CardHeader>
             <CardTitle>Body Map Symptom</CardTitle>
             <CardDescription>Region, type, and intensity</CardDescription>

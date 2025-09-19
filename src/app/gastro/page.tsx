@@ -11,6 +11,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts"
 import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -358,7 +360,221 @@ export default function GastroPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Mobile: Accordion for form sections */}
+      <div className="md:hidden space-y-4">
+        <Accordion type="multiple" defaultValue={["filters","basic","enhanced"]}>
+          <AccordionItem value="filters">
+            <AccordionTrigger>Time Filters</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1">
+                  <Label>Range</Label>
+                  <Select value={range} onValueChange={(v) => setRange(v as any)}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select range" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="last7">Last 7 Days</SelectItem>
+                      <SelectItem value="last30">Last 30 Days</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {range === "custom" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1"><Label>Start</Label><Input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} /></div>
+                    <div className="space-y-1"><Label>End</Label><Input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} /></div>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="basic">
+            <AccordionTrigger>Basic Logging</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1">
+                  <Label>Date & time</Label>
+                  <Input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Meal/Food</Label>
+                  <Input value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="e.g., pasta, spicy curry" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1"><Label>Pain (0-10)</Label><Input type="number" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label>Remedy used</Label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Switch checked={noRemedy} onCheckedChange={(c)=>{ setNoRemedy(c); if(c) setRemedy("") }} />
+                      No remedy used
+                    </label>
+                  </div>
+                  <Input value={remedy} onChange={(e) => { setRemedy(e.target.value); if(noRemedy && e.target.value) setNoRemedy(false) }} placeholder="e.g., antacid, ginger tea" disabled={noRemedy} />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="enhanced">
+            <AccordionTrigger>Enhanced Tracking</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1">
+                  <Label>Condition</Label>
+                  <Select value={condition} onValueChange={(v) => setCondition(v as GastroLog["condition"]) }>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select condition" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gastritis">Gastritis</SelectItem>
+                      <SelectItem value="GERD">GERD</SelectItem>
+                      <SelectItem value="IBS">IBS</SelectItem>
+                      <SelectItem value="dyspepsia">Dyspepsia</SelectItem>
+                      <SelectItem value="food_sensitivity">Food Sensitivity</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(symptoms).map(([k, v]) => (
+                    <label key={k} className="flex items-center gap-2 text-xs">
+                      <Switch checked={v} onCheckedChange={(c) => setSymptoms((s) => ({ ...s, [k]: c }))} />
+                      {k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}
+                    </label>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label>Meal size</Label>
+                    <Select value={mealSize} onValueChange={(v) => setMealSize(v as GastroLog["mealSize"]) }>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select size" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Small">Small</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Large">Large</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Meal timing</Label>
+                    <Select value={mealTiming} onValueChange={(v) => setMealTiming(v as GastroLog["mealTiming"]) }>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select timing" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Breakfast">Breakfast</SelectItem>
+                        <SelectItem value="Lunch">Lunch</SelectItem>
+                        <SelectItem value="Dinner">Dinner</SelectItem>
+                        <SelectItem value="Snack">Snack</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1"><Label>Sleep quality (0-10)</Label><Input type="number" min={0} max={10} value={sleepQuality} onChange={(e) => setSleepQuality(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Exercise (0-10)</Label><Input type="number" min={0} max={10} value={exercise} onChange={(e) => setExercise(Number(e.target.value))} /></div>
+                </div>
+                <div className="space-y-1">
+                  <Label>Weather</Label>
+                  <Select value={weather} onValueChange={(v) => setWeather(v as GastroLog["weather"]) }>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select weather" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Clear">Clear</SelectItem>
+                      <SelectItem value="Cloudy">Cloudy</SelectItem>
+                      <SelectItem value="Rainy">Rainy</SelectItem>
+                      <SelectItem value="Stormy">Stormy</SelectItem>
+                      <SelectItem value="Hot">Hot</SelectItem>
+                      <SelectItem value="Cold">Cold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Notes</Label>
+                  <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything notable" />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="sim">
+            <AccordionTrigger>Gastritis Simulator</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label>Stress (0-10)</Label>
+                    <Input type="number" min={0} max={10} value={simStress} onChange={(e)=>setSimStress(Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Hours since last meal</Label>
+                    <Input type="number" min={0} max={24} value={simLastMealHrs} onChange={(e)=>setSimLastMealHrs(Number(e.target.value))} />
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Mobile: Charts in Tabs */}
+        <Tabs defaultValue="timeline" className="mt-2">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+            <TabsTrigger value="meals">Meals</TabsTrigger>
+            <TabsTrigger value="remedies">Remedies</TabsTrigger>
+          </TabsList>
+          <TabsContent value="timeline">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Pain & Stress Timeline</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ pain: { label: "Pain", color: "var(--chart-1)" }, stress: { label: "Stress", color: "var(--chart-4)" } }}>
+                  <LineChart data={series}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="pain" stroke="var(--color-pain)" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="meals">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Meal Timing Frequency</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ count: { label: "Count", color: "var(--chart-3)" } }}>
+                  <BarChart data={mealTimingCounts}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="timing" tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" fill="var(--color-mood)" radius={[6,6,0,0]} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="remedies">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Remedy Effectiveness</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ effectiveness: { label: "Effectiveness %", color: "var(--chart-5)" } }}>
+                  <BarChart data={topRemedies.map(r => ({ remedy: r.remedy, effectiveness: Math.round(r.effectiveness * 100) }))}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="remedy" tick={{ fontSize: 12 }} interval={0} angle={-20} height={50} textAnchor="end" />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="effectiveness" fill="var(--color-skin)" radius={[6,6,0,0]} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop grid: forms + charts */}
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Filters */}
         <Card>
           <CardHeader>

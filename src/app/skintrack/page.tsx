@@ -12,6 +12,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts"
 import { CanvasRoi } from "@/components/canvas-rois"
 import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -514,7 +516,220 @@ export default function SkinTrackPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Mobile: Accordion for form sections */}
+      <div className="md:hidden space-y-4">
+        <Accordion type="multiple" defaultValue={["lesion","image","canvas","meds","seg","sim"]}>
+          <AccordionItem value="lesion">
+            <AccordionTrigger>Lesion</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1">
+                  <Label>Date & time</Label>
+                  <Input type="datetime-local" value={dateTime} onChange={(e)=>{ setDateTime(e.target.value); setToday(e.target.value.slice(0,10)) }} />
+                </div>
+                <div className="space-y-1"><Label>Label</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="left forearm A" /></div>
+                <div className="space-y-1">
+                  <Label>Condition</Label>
+                  <Select value={condition} onValueChange={setCondition}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select condition" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="eczema">Eczema</SelectItem>
+                      <SelectItem value="psoriasis">Psoriasis</SelectItem>
+                      <SelectItem value="guttate_psoriasis">Guttate Psoriasis</SelectItem>
+                      <SelectItem value="keratosis_pilaris">Keratosis Pilaris</SelectItem>
+                      <SelectItem value="cystic_acne">Cystic/Hormonal Acne</SelectItem>
+                      <SelectItem value="melanoma">Melanoma</SelectItem>
+                      <SelectItem value="vitiligo">Vitiligo</SelectItem>
+                      <SelectItem value="contact_dermatitis">Contact Dermatitis</SelectItem>
+                      <SelectItem value="cold_sores">Cold Sores</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="image">
+            <AccordionTrigger>Image</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1"><Label>Photo</Label><Input type="file" accept="image/*" onChange={onImageChange} /></div>
+                <div className="flex items-center gap-2 text-sm"><Switch checked={useAruco} onCheckedChange={setUseAruco} /><span>ArUco marker (DICT_4X4_50)</span></div>
+                <div className="space-y-1"><Label>Marker side length (cm)</Label><Input type="number" min={0.5} max={10} step={0.1} value={markerCm} onChange={(e) => setMarkerCm(Number(e.target.value))} /></div>
+                <div className="space-y-1"><Label>Pixels per cm (optional)</Label><Input type="number" min={1} step={1} value={pixelsPerCm ?? ""} onChange={(e)=> setPixelsPerCm(e.target.value? Number(e.target.value): undefined)} placeholder="e.g. 100" /></div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="canvas">
+            <AccordionTrigger>Canvas (ROI tools)</AccordionTrigger>
+            <AccordionContent>
+              {imageDataUrl ? (
+                <CanvasRoi imageDataUrl={imageDataUrl} onApplyCalibrated={(url)=>setImageDataUrl(url)} />
+              ) : (
+                <p className="text-sm text-muted-foreground">Upload an image to enable canvas tools.</p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="meds">
+            <AccordionTrigger>Medication Schedule</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1"><Label>Name</Label><Input value={medName} onChange={(e) => setMedName(e.target.value)} /></div>
+                <div className="space-y-1"><Label>Dose</Label><Input value={dose} onChange={(e) => setDose(e.target.value)} /></div>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 text-sm"><Switch checked={timing.morning} onCheckedChange={(c) => setTiming((t) => ({ ...t, morning: c }))} />Morning</label>
+                  <label className="flex items-center gap-2 text-sm"><Switch checked={timing.afternoon} onCheckedChange={(c) => setTiming((t) => ({ ...t, afternoon: c }))} />Afternoon</label>
+                  <label className="flex items-center gap-2 text-sm"><Switch checked={timing.evening} onCheckedChange={(c) => setTiming((t) => ({ ...t, evening: c }))} />Evening</label>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="seg">
+            <AccordionTrigger>Segmentation</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1">
+                  <Label>Method</Label>
+                  <Select value={segMethod} onValueChange={(v) => setSegMethod(v as any)}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kmeans">K-Means (auto)</SelectItem>
+                      <SelectItem value="grabcut">GrabCut (from box)</SelectItem>
+                      <SelectItem value="unet">U-Net (if available)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={runSegmentation} disabled={!imageDataUrl || segMethod!=="kmeans"}>Run Segmentation</Button>
+                {segResult && (<p className="text-sm text-muted-foreground">{segResult}</p>)}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="sim">
+            <AccordionTrigger>Simulation</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1"><Label>Start area (cm²)</Label><Input type="number" min={0} step={0.1} value={startArea} onChange={(e) => setStartArea(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Days</Label><Input type="number" min={7} max={90} value={days} onChange={(e) => setDays(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Natural healing rate</Label><Input type="number" min={0} max={0.05} step={0.001} value={baseDecay} onChange={(e) => setBaseDecay(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Medication potency</Label><Input type="number" min={0} max={0.1} step={0.001} value={medPotency} onChange={(e) => setMedPotency(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Adherence (0-1)</Label><Input type="number" min={0} max={1} step={0.05} value={adherence} onChange={(e) => setAdherence(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Trigger load (0-10)</Label><Input type="number" min={0} max={10} value={triggerLoad} onChange={(e) => setTriggerLoad(Number(e.target.value))} /></div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Mobile: Charts in Tabs */}
+        <Tabs defaultValue="all" className="mt-2">
+          <TabsList className="grid grid-cols-4 w-full">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="area">Area</TabsTrigger>
+            <TabsTrigger value="redness">Redness</TabsTrigger>
+            <TabsTrigger value="border">Border</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Lesion Area Trend</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[200px]" config={{ area: { label: "Area", color: "var(--chart-5)" } }}>
+                  <LineChart data={metricSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="area" stroke="var(--color-area)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Redness Trend</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[200px]" config={{ redness: { label: "Redness (R/G)", color: "var(--chart-2)" } }}>
+                  <LineChart data={metricSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="redness" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Border Irregularity Trend</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[200px]" config={{ border: { label: "Border", color: "var(--chart-1)" } }}>
+                  <LineChart data={metricSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="border" stroke="var(--color-stomach)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="area">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Lesion Area Trend</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ area: { label: "Area", color: "var(--chart-5)" } }}>
+                  <LineChart data={metricSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="area" stroke="var(--color-area)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="redness">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Redness Trend</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ redness: { label: "Redness (R/G)", color: "var(--chart-2)" } }}>
+                  <LineChart data={metricSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="redness" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="border">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Border Irregularity Trend</CardTitle></CardHeader>
+              <CardContent>
+                <ChartContainer className="w-full h-[220px]" config={{ border: { label: "Border", color: "var(--chart-1)" } }}>
+                  <LineChart data={metricSeries}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="border" stroke="var(--color-stomach)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop grid remains as-is */}
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Lesion</CardTitle>

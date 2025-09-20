@@ -11,6 +11,7 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { ChatPanel } from "@/components/chat/chat-panel"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.profile.v1"
@@ -173,13 +174,53 @@ export default function MindTrackPage() {
 
   function askAssistant() {
     if (!chatInput.trim()) return
+    const userText = chatInput.trim()
     const now = new Date().toISOString()
-    const next: ChatMessage[] = [...chat, { role: "user", text: chatInput.trim(), time: now }]
-    const reply = respond(chatInput.trim(), profile, entries)
-    next.push({ role: "assistant", text: reply, time: new Date().toISOString() })
-    setChat(next)
-    saveChat(next)
+    // optimistic append user + placeholder assistant
+    const base: ChatMessage[] = [...chat, { role: "user", text: userText, time: now }]
+    const placeholder: ChatMessage = { role: "assistant", text: "", time: new Date().toISOString() }
+    setChat([...base, placeholder])
     setChatInput("")
+
+    // stream from LLM endpoint; fallback to local respond()
+    ;(async () => {
+      try {
+        const res = await fetch("/api/chat/mind", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: base.map(m => ({ role: m.role, content: m.text })),
+            model: undefined, // use server default
+            provider: undefined, // use server default
+          }),
+        })
+        if (!res.ok || !res.body) throw new Error("no-stream")
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let acc = ""
+        let cur = ""
+        for (;;) {
+          const { value, done } = await reader.read()
+          if (done) break
+          acc += decoder.decode(value, { stream: true })
+          cur += decoder.decode(value, { stream: true })
+          // update last assistant message progressively
+          setChat(prev => {
+            const copy = [...prev]
+            copy[copy.length - 1] = { ...copy[copy.length - 1], text: copy[copy.length - 1].text + decoder.decode(value, { stream: true }) }
+            return copy
+          })
+        }
+        // persist
+        setChat(prev => { saveChat(prev); return prev })
+      } catch {
+        // graceful fallback to local keyword responder
+        const reply = respond(userText, profile, entries)
+        const next = [...base, { role: "assistant", text: reply, time: new Date().toISOString() }]
+        setChat(next)
+        saveChat(next)
+      }
+    })()
   }
 
   // exports
@@ -532,29 +573,14 @@ export default function MindTrackPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Chat Assistant</CardTitle>
-            <CardDescription>Keyword-based guidance</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="max-h-60 overflow-auto rounded border p-2 text-sm space-y-2 bg-secondary/30">
-              {chat.length === 0 ? (
-                <p className="text-muted-foreground">Ask about mood, sleep, stress, or medication reminders.</p>
-              ) : (
-                chat.map((m, i) => (
-                  <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
-                    <span className={m.role === "user" ? "inline-block rounded bg-primary text-primary-foreground px-2 py-1" : "inline-block rounded bg-secondary px-2 py-1"}>{m.text}</span>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask a question..." />
-              <Button onClick={askAssistant}>Send</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <ChatPanel
+          title="Chat Assistant"
+          description="Ask about mood, sleep, stress, or routines"
+          messages={chat}
+          input={chatInput}
+          setInput={setChatInput}
+          onSend={askAssistant}
+        />
       </div>
     </div>
   )

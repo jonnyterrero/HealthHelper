@@ -381,7 +381,7 @@ export default function MindTrackPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={intensity} onChange={(e) => setIntensity(Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
                     <div className="space-y-1">
                       <Label>Duration</Label>
                       <Select value={duration} onValueChange={setDuration}>
@@ -399,10 +399,10 @@ export default function MindTrackPage() {
                   </div>
                   <div className="space-y-1"><Label>Notes</Label><Input value={bodyNotes} onChange={(e) => setBodyNotes(e.target.value)} placeholder="Context, triggers, relief..." /></div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1"><Label>Mood (0-10)</Label><Input type="number" min={0} max={10} value={mood} onChange={(e) => setMood(Number(e.target.value))} /></div>
-                    <div className="space-y-1"><Label>Energy (0-10)</Label><Input type="number" min={0} max={10} value={energy} onChange={(e) => setEnergy(Number(e.target.value))} /></div>
-                    <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
-                    <div className="space-y-1"><Label>Sleep hours</Label><Input type="number" min={0} max={24} step={0.5} value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Mood (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(mood as any) ? "" : mood} onChange={(e) => setMood(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Energy (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(energy as any) ? "" : energy} onChange={(e) => setEnergy(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(stress as any) ? "" : stress} onChange={(e) => setStress(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Sleep hours</Label><Input type="number" min={0} max={24} step={0.5} value={Number.isNaN(sleepHours as any) ? "" : sleepHours} onChange={(e) => setSleepHours(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
                   </div>
                 </CardContent>
               </Card>
@@ -488,7 +488,7 @@ export default function MindTrackPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={intensity} onChange={(e) => setIntensity(Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
               <div className="space-y-1">
                 <Label>Duration</Label>
                 <Select value={duration} onValueChange={setDuration}>
@@ -506,10 +506,10 @@ export default function MindTrackPage() {
             </div>
             <div className="space-y-1"><Label>Notes</Label><Input value={bodyNotes} onChange={(e) => setBodyNotes(e.target.value)} placeholder="Context, triggers, relief..." /></div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Mood (0-10)</Label><Input type="number" min={0} max={10} value={mood} onChange={(e) => setMood(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Energy (0-10)</Label><Input type="number" min={0} max={10} value={energy} onChange={(e) => setEnergy(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Sleep hours</Label><Input type="number" min={0} max={24} step={0.5} value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Mood (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(mood as any) ? "" : mood} onChange={(e) => setMood(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Energy (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(energy as any) ? "" : energy} onChange={(e) => setEnergy(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(stress as any) ? "" : stress} onChange={(e) => setStress(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Sleep hours</Label><Input type="number" min={0} max={24} step={0.5} value={Number.isNaN(sleepHours as any) ? "" : sleepHours} onChange={(e) => setSleepHours(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
             </div>
           </CardContent>
         </Card>

@@ -655,12 +655,12 @@ export default function SkinTrackPage() {
             <AccordionContent>
               <div className="space-y-3 pt-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>Start area (cm²)</Label><Input type="number" min={0} step={0.1} value={startArea} onChange={(e) => setStartArea(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Days</Label><Input type="number" min={7} max={90} value={days} onChange={(e) => setDays(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Natural healing rate</Label><Input type="number" min={0} max={0.05} step={0.001} value={baseDecay} onChange={(e) => setBaseDecay(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Medication potency</Label><Input type="number" min={0} max={0.1} step={0.001} value={medPotency} onChange={(e) => setMedPotency(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Adherence (0-1)</Label><Input type="number" min={0} max={1} step={0.05} value={adherence} onChange={(e) => setAdherence(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Trigger load (0-10)</Label><Input type="number" min={0} max={10} value={triggerLoad} onChange={(e) => setTriggerLoad(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Start area (cm²)</Label><Input type="number" min={0} step={0.1} value={Number.isNaN(startArea as any) ? "" : startArea} onChange={(e) => setStartArea(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Days</Label><Input type="number" min={7} max={90} value={Number.isNaN(days as any) ? "" : days} onChange={(e) => setDays(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Natural healing rate</Label><Input type="number" min={0} max={0.05} step={0.001} value={Number.isNaN(baseDecay as any) ? "" : baseDecay} onChange={(e) => setBaseDecay(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Medication potency</Label><Input type="number" min={0} max={0.1} step={0.001} value={Number.isNaN(medPotency as any) ? "" : medPotency} onChange={(e) => setMedPotency(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Adherence (0-1)</Label><Input type="number" min={0} max={1} step={0.05} value={Number.isNaN(adherence as any) ? "" : adherence} onChange={(e) => setAdherence(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Trigger load (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(triggerLoad as any) ? "" : triggerLoad} onChange={(e) => setTriggerLoad(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
                 </div>
               </div>
             </AccordionContent>
@@ -911,12 +911,12 @@ export default function SkinTrackPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Start area (cm²)</Label><Input type="number" min={0} step={0.1} value={startArea} onChange={(e) => setStartArea(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Days</Label><Input type="number" min={7} max={90} value={days} onChange={(e) => setDays(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Natural healing rate</Label><Input type="number" min={0} max={0.05} step={0.001} value={baseDecay} onChange={(e) => setBaseDecay(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Medication potency</Label><Input type="number" min={0} max={0.1} step={0.001} value={medPotency} onChange={(e) => setMedPotency(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Adherence (0-1)</Label><Input type="number" min={0} max={1} step={0.05} value={adherence} onChange={(e) => setAdherence(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Trigger load (0-10)</Label><Input type="number" min={0} max={10} value={triggerLoad} onChange={(e) => setTriggerLoad(Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Start area (cm²)</Label><Input type="number" min={0} step={0.1} value={Number.isNaN(startArea as any) ? "" : startArea} onChange={(e) => setStartArea(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Days</Label><Input type="number" min={7} max={90} value={Number.isNaN(days as any) ? "" : days} onChange={(e) => setDays(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Natural healing rate</Label><Input type="number" min={0} max={0.05} step={0.001} value={Number.isNaN(baseDecay as any) ? "" : baseDecay} onChange={(e) => setBaseDecay(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Medication potency</Label><Input type="number" min={0} max={0.1} step={0.001} value={Number.isNaN(medPotency as any) ? "" : medPotency} onChange={(e) => setMedPotency(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Adherence (0-1)</Label><Input type="number" min={0} max={1} step={0.05} value={Number.isNaN(adherence as any) ? "" : adherence} onChange={(e) => setAdherence(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Trigger load (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(triggerLoad as any) ? "" : triggerLoad} onChange={(e) => setTriggerLoad(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
             </div>
             <ChartContainer className="w-full h-[220px]" config={{ area: { label: "Area (cm²)", color: "var(--chart-5)" }}}>
               <LineChart data={simSeries}>

@@ -444,8 +444,8 @@ export default function GastroPage() {
                   <Input value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="e.g., pasta, spicy curry" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>Pain (0-10)</Label><Input type="number" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Pain (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(pain as any) ? "" : pain} onChange={(e) => setPain(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(stress as any) ? "" : stress} onChange={(e) => setStress(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -512,8 +512,8 @@ export default function GastroPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label>Sleep quality (0-10)</Label><Input type="number" min={0} max={10} value={sleepQuality} onChange={(e) => setSleepQuality(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Exercise (0-10)</Label><Input type="number" min={0} max={10} value={exercise} onChange={(e) => setExercise(Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Sleep quality (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(sleepQuality as any) ? "" : sleepQuality} onChange={(e) => setSleepQuality(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                  <div className="space-y-1"><Label>Exercise (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(exercise as any) ? "" : exercise} onChange={(e) => setExercise(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
                 </div>
                 <div className="space-y-1">
                   <Label>Weather</Label>
@@ -660,8 +660,8 @@ export default function GastroPage() {
               <Input value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="e.g., pasta, spicy curry" />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Pain (0-10)</Label><Input type="number" min={0} max={10} value={pain} onChange={(e) => setPain(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={stress} onChange={(e) => setStress(Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Pain (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(pain as any) ? "" : pain} onChange={(e) => setPain(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Stress (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(stress as any) ? "" : stress} onChange={(e) => setStress(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -729,8 +729,8 @@ export default function GastroPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Sleep quality (0-10)</Label><Input type="number" min={0} max={10} value={sleepQuality} onChange={(e) => setSleepQuality(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label>Exercise (0-10)</Label><Input type="number" min={0} max={10} value={exercise} onChange={(e) => setExercise(Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Sleep quality (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(sleepQuality as any) ? "" : sleepQuality} onChange={(e) => setSleepQuality(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Exercise (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(exercise as any) ? "" : exercise} onChange={(e) => setExercise(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
             </div>
             <div className="space-y-1">
               <Label>Weather</Label>

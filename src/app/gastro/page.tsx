@@ -13,6 +13,7 @@ import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -118,6 +119,8 @@ function effectivenessByRemedy(logs: GastroLog[]) {
 
 export default function GastroPage() {
   const [logs, setLogs] = React.useState<GastroLog[]>([])
+  const [chat, setChat] = React.useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = React.useState("")
 
   // Form state
   const [datetime, setDatetime] = React.useState(nowLocalISO())
@@ -344,6 +347,16 @@ export default function GastroPage() {
     () => simulateGastritisSeries(Math.max(0, Math.min(10, simStress)), Math.max(0, Math.min(24, simLastMealHrs))),
     [simStress, simLastMealHrs]
   )
+
+  function onSendChat() {
+    const q = chatInput.trim()
+    if (!q) return
+    const next: ChatMessage[] = [...chat, { role: "user", text: q, time: new Date().toISOString() }]
+    const reply = generateGastroResponse(q)
+    next.push({ role: "assistant", text: reply, time: new Date().toISOString() })
+    setChat(next)
+    setChatInput("")
+  }
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
@@ -813,7 +826,53 @@ export default function GastroPage() {
             </ChartContainer>
           </CardContent>
         </Card>
+
+        <ChatPanel
+          title="GastroGuard AI Assistant"
+          description="Ask about food triggers, pain, stress, or medications"
+          messages={chat}
+          input={chatInput}
+          setInput={setChatInput}
+          onSend={onSendChat}
+          actions={
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => { setChatInput("Analyze my recent food intake and suggest improvements"); }}>🍽️ Food Analysis</Button>
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => { setChatInput("Help me with medication timing and side effects"); }}>💊 Medication Help</Button>
+              <Button variant="secondary" className="bg-pink-50 text-pink-700 hover:bg-pink-100" onClick={() => { setChatInput("Analyze my symptom patterns and suggest triggers"); }}>📊 Symptom Patterns</Button>
+            </div>
+          }
+        />
       </div>
     </div>
   )
+}
+
+// --- GastroGuard rule-based responses (specialized) ---
+function generateGastroResponse(prompt: string): string {
+  const p = prompt.toLowerCase()
+  if (["food", "eat", "meal", "diet", "nutrition"].some(w => p.includes(w))) {
+    if (p.includes("trigger") || p.includes("avoid")) {
+      return "🍽️ Food Trigger Analysis\n\nHigh‑risk foods to consider limiting: spicy, acidic (citrus/tomato), fatty/fried, caffeine, alcohol, carbonated drinks.\n\nTips: keep a 2‑week food diary, try a short elimination, smaller frequent meals, avoid eating 3h before bed."
+    }
+    if (p.includes("recommend") || p.includes("suggest")) {
+      return "🥗 Digestive‑friendly picks: oatmeal, rice, bananas, applesauce, boiled veg, lean proteins, probiotic yogurt/kefir. Eat every 3–4h, smaller portions, chew slowly, hydrate between meals."
+    }
+    return "🍎 I can help identify triggers, plan meals, and advise timing/portions. What aspect of diet would you like to discuss?"
+  }
+  if (["pain", "hurt", "ache", "discomfort", "cramp"].some(w => p.includes(w))) {
+    if (p.includes("stomach") || p.includes("abdominal")) {
+      return "🤕 Stomach pain relief: warm compress, deep breathing, warm water/herbal tea, avoid lying flat. Seek care if severe/persistent, with fever/vomit, blood, or sudden sharp pain."
+    }
+    return "💊 Pain guidance: track timing/patterns, simple relief strategies, when to seek care, and medication timing. What pain type are you experiencing?"
+  }
+  if (["medication", "medicine", "drug", "pill", "prescription"].some(w => p.includes(w))) {
+    return "💊 Medication management: take with food unless told otherwise, set reminders, log adherence. Antacids ~1h after meals; PPIs ~30m before breakfast; H2 blockers flexible; probiotics with meals. Manage side effects (nausea: with food/ginger; diarrhea: hydrate/bland foods; constipation: fiber/activity)."
+  }
+  if (["stress", "anxiety", "worry", "nervous"].some(w => p.includes(w))) {
+    return "🧘 Stress & gut: try 4‑7‑8 breathing, progressive relaxation, regular walks, 7–9h sleep, mindfulness. Benefits: less inflammation, improved motility/absorption, healthier microbiome. Quick relief: 5‑min breathing, warm tea, short walk."
+  }
+  if (["symptom", "pattern", "trend", "analysis"].some(w => p.includes(w))) {
+    return "📊 Pattern analysis: relate food → pain timing, stress → symptom flares, medication effectiveness, lifestyle impacts. Track pain (0–10), meals, stress, sleep, and adherence for clearer correlations."
+  }
+  return `🤖 GastroGuard Assistant\nTell me about "${prompt}". I can help with food analysis, symptom tracking, medication timing/side effects, lifestyle impacts, and pain management.`
 }

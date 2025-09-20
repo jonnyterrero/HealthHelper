@@ -63,7 +63,9 @@ export const ProfileMenu: React.FC<{ buttonLabel?: string } & React.HTMLAttribut
     <div className={className + " relative"}>
       <Button className="bg-pink-100 text-pink-700 hover:bg-pink-200" onClick={() => setOpen((o) => !o)}>{buttonLabel}</Button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 rounded-md border bg-card text-card-foreground shadow-lg p-4 z-50">
+        <div className="z-50 p-4 shadow-lg rounded-md border bg-card text-card-foreground
+        fixed left-1/2 -translate-x-1/2 top-20 w-[calc(100vw-2rem)] max-w-sm
+        md:absolute md:left-auto md:right-0 md:translate-x-0 md:top-auto md:mt-2 md:w-80">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Profile</h3>
             <Button variant="ghost" className="h-8 px-2" onClick={() => setOpen(false)}>Close</Button>

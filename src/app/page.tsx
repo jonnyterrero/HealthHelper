@@ -95,9 +95,9 @@ export default function HomePage() {
   function saveAll() {
     const updated = upsertEntry({
       date,
-      stomach: { date, severity: Number(stomach.severity), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
-      skin: { date, severity: Number(skin.severity), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
-      mental: { date, mood: Number(mental.mood), anxiety: Number(mental.anxiety), sleepHours: Number(mental.sleepHours), stressLevel: Number(mental.stressLevel), notes: mental.notes || undefined }
+      stomach: { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
+      skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
+      mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined }
     });
     setEntries(updated);
   }
@@ -178,7 +178,10 @@ export default function HomePage() {
                 onChange={(e) =>
                   setStomach({
                     ...stomach,
-                    severity: e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value),
+                    severity:
+                      e.target.value === ""
+                        ? ((NaN as unknown) as number)
+                        : clamp010(Number(e.target.value) as any),
                   })
                 }
               />
@@ -311,7 +314,10 @@ export default function HomePage() {
                       onChange={(e) =>
                         setStomach({
                           ...stomach,
-                          severity: e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value),
+                          severity:
+                            e.target.value === ""
+                              ? ((NaN as unknown) as number)
+                              : clamp010(Number(e.target.value) as any),
                         })
                       }
                     />
@@ -612,3 +618,11 @@ export default function HomePage() {
 
 function capitalize(s: string) {return s.charAt(0).toUpperCase() + s.slice(1);}
 function pretty(s: string) {return s.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());}
+
+function clamp010(x: any) {
+  return Math.max(0, Math.min(10, x));
+}
+
+function clamp024(x: any) {
+  return Math.max(0, Math.min(24, x));
+}

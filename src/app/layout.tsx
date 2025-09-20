@@ -11,6 +11,27 @@ export const metadata: Metadata = {
   applicationName: "Orchids Health Tracker",
   manifest: "/manifest.webmanifest",
   themeColor: "#a855f7",
+  // Apple specific install experience
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Orchids",
+  },
+  icons: {
+    icon: [{ url: "/favicon.ico" }],
+    // Add apple-touch-icon (iOS homescreen)
+    apple: [
+      {
+        url:
+          "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/2c387a36-22e8-4090-af90-b8a7e04d1517/generated_images/apple-touch-icon-for-ios-homescreen.-min-76569025-20250920041137.jpg",
+        sizes: "180x180",
+      },
+    ],
+    // Safari pinned tab mask icon (uses monochrome SVG)
+    other: [
+      { rel: "mask-icon", url: "/next.svg", color: "#a855f7" },
+    ],
+  },
 };
 
 export default function RootLayout({

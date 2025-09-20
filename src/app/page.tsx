@@ -174,6 +174,7 @@ export default function HomePage() {
                 type="number"
                 min={0}
                 max={10}
+                step={1}
                 value={Number.isNaN(stomach.severity as any) ? "" : stomach.severity}
                 onChange={(e) =>
                   setStomach({
@@ -185,6 +186,9 @@ export default function HomePage() {
                   })
                 }
               />
+              {Number.isNaN(stomach.severity as any) && (
+                <p className="text-xs text-muted-foreground">Please enter a value from 0 to 10.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Pain Location</Label>
@@ -234,7 +238,10 @@ export default function HomePage() {
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <Label>Severity (0-10)</Label>
-              <Input type="number" min={0} max={10} value={skin.severity} onChange={(e) => setSkin({ ...skin, severity: Number(e.target.value) })} />
+              <Input type="number" min={0} max={10} step={1} value={skin.severity} onChange={(e) => setSkin({ ...skin, severity: Number(e.target.value) })} />
+              {(skin.severity < 0 || skin.severity > 10) && (
+                <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Affected Area</Label>
@@ -276,19 +283,34 @@ export default function HomePage() {
           <CardContent className="grid md:grid-cols-4 gap-3">
             <div className="space-y-1">
               <Label>Mood (0-10)</Label>
-              <Input type="number" min={0} max={10} value={mental.mood} onChange={(e) => setMental({ ...mental, mood: Number(e.target.value) })} />
+              <Input type="number" min={0} max={10} step={1} value={mental.mood} onChange={(e) => setMental({ ...mental, mood: Number(e.target.value) })} />
+              {(mental.mood < 0 || mental.mood > 10) && (
+                <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Anxiety (0-10)</Label>
-              <Input type="number" min={0} max={10} value={mental.anxiety} onChange={(e) => setMental({ ...mental, anxiety: Number(e.target.value) })} />
+              <Input type="number" min={0} max={10} step={1} value={mental.anxiety} onChange={(e) => setMental({ ...mental, anxiety: Number(e.target.value) })} />
+              {(mental.anxiety < 0 || mental.anxiety > 10) && (
+                <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Sleep Hours</Label>
-              <Input type="number" min={0} max={24} value={mental.sleepHours} onChange={(e) => setMental({ ...mental, sleepHours: Number(e.target.value) })} />
+              <Input type="number" min={0} max={24} step={0.5} value={mental.sleepHours} onChange={(e) => setMental({ ...mental, sleepHours: Number(e.target.value) })} />
+              {(mental.sleepHours < 0 || mental.sleepHours > 24) && (
+                <p className="text-xs text-muted-foreground">Value must be between 0 and 24.</p>
+              )}
+              {Number.isFinite(mental.sleepHours) && mental.sleepHours >= 0 && mental.sleepHours <= 24 && (mental.sleepHours * 2) % 1 !== 0 && (
+                <p className="text-xs text-muted-foreground">Use increments of 0.5 hours.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Stress Level (0-10)</Label>
-              <Input type="number" min={0} max={10} value={mental.stressLevel} onChange={(e) => setMental({ ...mental, stressLevel: Number(e.target.value) })} />
+              <Input type="number" min={0} max={10} step={1} value={mental.stressLevel} onChange={(e) => setMental({ ...mental, stressLevel: Number(e.target.value) })} />
+              {(mental.stressLevel < 0 || mental.stressLevel > 10) && (
+                <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+              )}
             </div>
             <div className="md:col-span-4 space-y-1">
               <Label>Notes</Label>
@@ -310,6 +332,7 @@ export default function HomePage() {
                       type="number"
                       min={0}
                       max={10}
+                      step={1}
                       value={Number.isNaN(stomach.severity as any) ? "" : stomach.severity}
                       onChange={(e) =>
                         setStomach({
@@ -321,6 +344,9 @@ export default function HomePage() {
                         })
                       }
                     />
+                    {Number.isNaN(stomach.severity as any) && (
+                      <p className="text-xs text-muted-foreground">Please enter a value from 0 to 10.</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Pain Location</Label>
@@ -368,7 +394,10 @@ export default function HomePage() {
                 <div className="space-y-3 pt-2">
                   <div className="space-y-1">
                     <Label>Severity (0-10)</Label>
-                    <Input type="number" min={0} max={10} value={skin.severity} onChange={(e) => setSkin({ ...skin, severity: Number(e.target.value) })} />
+                    <Input type="number" min={0} max={10} step={1} value={skin.severity} onChange={(e) => setSkin({ ...skin, severity: Number(e.target.value) })} />
+                    {(skin.severity < 0 || skin.severity > 10) && (
+                      <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Affected Area</Label>
@@ -408,19 +437,34 @@ export default function HomePage() {
                 <div className="space-y-3 pt-2">
                   <div className="space-y-1">
                     <Label>Mood (0-10)</Label>
-                    <Input type="number" min={0} max={10} value={mental.mood} onChange={(e) => setMental({ ...mental, mood: Number(e.target.value) })} />
+                    <Input type="number" min={0} max={10} step={1} value={mental.mood} onChange={(e) => setMental({ ...mental, mood: Number(e.target.value) })} />
+                    {(mental.mood < 0 || mental.mood > 10) && (
+                      <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Anxiety (0-10)</Label>
-                    <Input type="number" min={0} max={10} value={mental.anxiety} onChange={(e) => setMental({ ...mental, anxiety: Number(e.target.value) })} />
+                    <Input type="number" min={0} max={10} step={1} value={mental.anxiety} onChange={(e) => setMental({ ...mental, anxiety: Number(e.target.value) })} />
+                    {(mental.anxiety < 0 || mental.anxiety > 10) && (
+                      <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Sleep Hours</Label>
-                    <Input type="number" min={0} max={24} value={mental.sleepHours} onChange={(e) => setMental({ ...mental, sleepHours: Number(e.target.value) })} />
+                    <Input type="number" min={0} max={24} step={0.5} value={mental.sleepHours} onChange={(e) => setMental({ ...mental, sleepHours: Number(e.target.value) })} />
+                    {(mental.sleepHours < 0 || mental.sleepHours > 24) && (
+                      <p className="text-xs text-muted-foreground">Value must be between 0 and 24.</p>
+                    )}
+                    {Number.isFinite(mental.sleepHours) && mental.sleepHours >= 0 && mental.sleepHours <= 24 && (mental.sleepHours * 2) % 1 !== 0 && (
+                      <p className="text-xs text-muted-foreground">Use increments of 0.5 hours.</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Stress Level (0-10)</Label>
-                    <Input type="number" min={0} max={10} value={mental.stressLevel} onChange={(e) => setMental({ ...mental, stressLevel: Number(e.target.value) })} />
+                    <Input type="number" min={0} max={10} step={1} value={mental.stressLevel} onChange={(e) => setMental({ ...mental, stressLevel: Number(e.target.value) })} />
+                    {(mental.stressLevel < 0 || mental.stressLevel > 10) && (
+                      <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Notes</Label>

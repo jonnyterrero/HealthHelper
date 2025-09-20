@@ -351,11 +351,40 @@ export default function GastroPage() {
   function onSendChat() {
     const q = chatInput.trim()
     if (!q) return
-    const next: ChatMessage[] = [...chat, { role: "user", text: q, time: new Date().toISOString() }]
-    const reply = generateGastroResponse(q)
-    next.push({ role: "assistant", text: reply, time: new Date().toISOString() })
-    setChat(next)
+    const base: ChatMessage[] = [...chat, { role: "user", text: q, time: new Date().toISOString() }]
+    const placeholder: ChatMessage = { role: "assistant", text: "", time: new Date().toISOString() }
+    setChat([...base, placeholder])
     setChatInput("")
+
+    ;(async () => {
+      try {
+        const res = await fetch("/api/chat/gastro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: base.map(m => ({ role: m.role, content: m.text })),
+            model: undefined,
+            provider: undefined,
+          }),
+        })
+        if (!res.ok || !res.body) throw new Error("no-stream")
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        for (;;) {
+          const { value, done } = await reader.read()
+          if (done) break
+          setChat(prev => {
+            const copy = [...prev]
+            copy[copy.length - 1] = { ...copy[copy.length - 1], text: copy[copy.length - 1].text + decoder.decode(value, { stream: true }) }
+            return copy
+          })
+        }
+      } catch {
+        // fallback to local responder
+        const reply = generateGastroResponse(q)
+        setChat(prev => [...base, { role: "assistant", text: reply, time: new Date().toISOString() }])
+      }
+    })()
   }
 
   return (

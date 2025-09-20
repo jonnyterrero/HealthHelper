@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "edge"; // better streaming latency
+export const runtime = "edge";
 
-// Types coming from the client
 interface ClientMessage { role: "user" | "assistant" | "system"; content: string }
 
 function buildSystemPrompt() {
-  return `You are MindTrack, a supportive mental health assistant embedded in a personal health tracker.
-- Be concise, warm, and practical.
-- Prefer small steps: sleep hygiene, breathing, light movement, journaling.
-- Never provide diagnoses or emergency instructions. If the user mentions self-harm or crisis, encourage contacting local emergency services or hotlines.
-- You can reference recent metrics when the user shares them (mood, stress, sleep).`;
+  return `You are GastroGuard, a supportive digestive health assistant in a personal tracker.
+- Be concise, practical, and non-alarmist.
+- Focus on diet timing/portions, common triggers (spicy, acidic, fatty, caffeine, alcohol, carbonation), stress management, sleep, and gentle remedies.
+- Never provide diagnoses or medical orders. Encourage seeing a clinician for red flags (bleeding, severe persistent pain, fever, chest pain, weight loss).
+- Use user-provided context when present (pain, stress, meals, remedies) and offer stepwise suggestions.`
 }
 
 function chooseProvider(explicit?: string) {
@@ -19,7 +18,6 @@ function chooseProvider(explicit?: string) {
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
   if (p === "openai" && hasOpenAI) return "openai" as const;
   if (p === "anthropic" && hasAnthropic) return "anthropic" as const;
-  // default preference order
   if (hasOpenAI) return "openai" as const;
   if (hasAnthropic) return "anthropic" as const;
   return null;
@@ -28,7 +26,6 @@ function chooseProvider(explicit?: string) {
 async function streamOpenAI(messages: ClientMessage[], model?: string) {
   const apiKey = process.env.OPENAI_API_KEY!;
   const sys = buildSystemPrompt();
-  // Map to OpenAI format
   const payload = {
     model: model || "gpt-4o-mini",
     stream: true,
@@ -41,15 +38,11 @@ async function streamOpenAI(messages: ClientMessage[], model?: string) {
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify(payload),
   });
   if (!res.ok || !res.body) throw new Error("openai_failed");
 
-  // Convert SSE -> raw text stream
   const transform = new TransformStream();
   const writer = transform.writable.getWriter();
   const reader = res.body.getReader();
@@ -73,9 +66,7 @@ async function streamOpenAI(messages: ClientMessage[], model?: string) {
             try {
               const json = JSON.parse(data);
               const delta = json.choices?.[0]?.delta?.content;
-              if (delta) {
-                await writer.write(new TextEncoder().encode(delta));
-              }
+              if (delta) await writer.write(new TextEncoder().encode(delta));
             } catch {}
           }
         }
@@ -86,19 +77,13 @@ async function streamOpenAI(messages: ClientMessage[], model?: string) {
   })();
 
   return new Response(transform.readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
 
 async function streamAnthropic(messages: ClientMessage[], model?: string) {
   const apiKey = process.env.ANTHROPIC_API_KEY!;
   const sys = buildSystemPrompt();
-
-  // Anthropic Messages API with streaming
-  // We'll concatenate multi-turn context as an array as-is (Anthropic supports role user/assistant)
   const payload = {
     model: model || "claude-3-5-haiku-latest",
     max_tokens: 1024,
@@ -110,11 +95,7 @@ async function streamAnthropic(messages: ClientMessage[], model?: string) {
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
+    headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify(payload),
   });
   if (!res.ok || !res.body) throw new Error("anthropic_failed");
@@ -141,7 +122,6 @@ async function streamAnthropic(messages: ClientMessage[], model?: string) {
             if (data === "[DONE]") continue;
             try {
               const json = JSON.parse(data);
-              // Look for text deltas
               if (json.type === "content_block_delta" && json.delta?.type === "text_delta" && json.delta.text) {
                 await writer.write(new TextEncoder().encode(json.delta.text));
               }
@@ -155,10 +135,7 @@ async function streamAnthropic(messages: ClientMessage[], model?: string) {
   })();
 
   return new Response(transform.readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
 
@@ -181,9 +158,9 @@ export async function POST(req: Request) {
     const safeMessages: ClientMessage[] = messages
       .filter((m) => m && m.role && m.content)
       .map((m) => ({ role: m.role as any, content: String(m.content) }))
-      .slice(-30); // cap history
+      .slice(-30);
 
-    // Try chosen provider first, then automatic fallback to the other one if available
+    // try chosen, then fallback automatically
     try {
       if (chosen === "openai") {
         return await streamOpenAI(safeMessages, model);

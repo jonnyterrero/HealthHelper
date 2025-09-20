@@ -4,6 +4,7 @@ import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import SwRegister from "@/components/pwa/sw-register";
+import { MobileTabs } from "@/components/mobile-tabs";
 
 export const metadata: Metadata = {
   title: "Orchids Health Tracker",
@@ -53,7 +54,8 @@ export default function RootLayout({
           data-debug="true"
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
-        {children}
+        <div className="pb-16 md:pb-0">{children}</div>
+        <MobileTabs />
         <SwRegister />
         <VisualEditsMessenger />
       </body>

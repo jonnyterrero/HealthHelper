@@ -381,7 +381,7 @@ export default function MindTrackPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1"><Label>Intensity (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Math.max(0, Math.min(10, Number(e.target.value))))} /></div>
+                    <div className="space-y-1"><Label>Intensity (0-10)</Label><Input type="number" min={0} max={10} step={1} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Math.max(0, Math.min(10, Number(e.target.value))))} />{Number.isNaN(intensity as any) && (<p className="text-xs text-muted-foreground">Please enter 0–10.</p>)}</div>
                     <div className="space-y-1">
                       <Label>Duration</Label>
                       <Select value={duration} onValueChange={setDuration}>
@@ -488,7 +488,7 @@ export default function MindTrackPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Intensity (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Math.max(0, Math.min(10, Number(e.target.value))))} /></div>
+              <div className="space-y-1"><Label>Intensity (0-10)</Label><Input type="number" min={0} max={10} step={1} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Math.max(0, Math.min(10, Number(e.target.value))))} />{Number.isNaN(intensity as any) && (<p className="text-xs text-muted-foreground">Please enter 0–10.</p>)}</div>
               <div className="space-y-1">
                 <Label>Duration</Label>
                 <Select value={duration} onValueChange={setDuration}>

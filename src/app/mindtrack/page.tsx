@@ -161,7 +161,7 @@ export default function MindTrackPage() {
       body: {
         region,
         symptom,
-        intensity: clamp(intensity, 1, 10),
+        intensity: clamp(intensity, 0, 10),
         duration,
         notes: bodyNotes || undefined,
       },
@@ -381,7 +381,7 @@ export default function MindTrackPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+                    <div className="space-y-1"><Label>Intensity (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
                     <div className="space-y-1">
                       <Label>Duration</Label>
                       <Select value={duration} onValueChange={setDuration}>
@@ -488,7 +488,7 @@ export default function MindTrackPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label>Intensity (1-10)</Label><Input type="number" min={1} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
+              <div className="space-y-1"><Label>Intensity (0-10)</Label><Input type="number" min={0} max={10} value={Number.isNaN(intensity as any) ? "" : intensity} onChange={(e) => setIntensity(e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value))} /></div>
               <div className="space-y-1">
                 <Label>Duration</Label>
                 <Select value={duration} onValueChange={setDuration}>

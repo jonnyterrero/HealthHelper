@@ -170,7 +170,18 @@ export default function HomePage() {
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <Label>Severity (0-10)</Label>
-              <Input type="number" min={0} max={10} value={stomach.severity} onChange={(e) => setStomach({ ...stomach, severity: Number(e.target.value) })} />
+              <Input
+                type="number"
+                min={0}
+                max={10}
+                value={Number.isNaN(stomach.severity as any) ? "" : stomach.severity}
+                onChange={(e) =>
+                  setStomach({
+                    ...stomach,
+                    severity: e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value),
+                  })
+                }
+              />
             </div>
             <div className="space-y-1">
               <Label>Pain Location</Label>
@@ -292,7 +303,18 @@ export default function HomePage() {
                 <div className="space-y-3 pt-2">
                   <div className="space-y-1">
                     <Label>Severity (0-10)</Label>
-                    <Input type="number" min={0} max={10} value={stomach.severity} onChange={(e) => setStomach({ ...stomach, severity: Number(e.target.value) })} />
+                    <Input
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={Number.isNaN(stomach.severity as any) ? "" : stomach.severity}
+                      onChange={(e) =>
+                        setStomach({
+                          ...stomach,
+                          severity: e.target.value === "" ? (NaN as unknown as number) : Number(e.target.value),
+                        })
+                      }
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Pain Location</Label>

@@ -112,6 +112,7 @@ export default function HomePage() {
         <div className="relative">
           <div className="hidden md:flex gap-2">
             <ProfileMenu />
+            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/api/export-zip">Download ZIP</Link></Button>
             <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={() => exportCSV(entries)}>Export CSV</Button>
             <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/analytics">Open Analytics</Link></Button>
@@ -126,6 +127,9 @@ export default function HomePage() {
                 <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">Actions</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem asChild>
+                  <Link href="/api/export-zip">Download ZIP</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => exportCSV(entries)}>Export CSV</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
                 <DropdownMenuSeparator />

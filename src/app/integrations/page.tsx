@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Key, Webhook, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
+import { Copy, Key, Webhook, ExternalLink, RefreshCw, Trash2, Smartphone, QrCode, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -43,6 +43,15 @@ interface Webhook {
   status: "active" | "inactive";
 }
 
+interface ConnectedApp {
+  id: string;
+  name: string;
+  appType: string;
+  connected: string;
+  lastSync?: string;
+  permissions: string[];
+}
+
 export default function IntegrationsPage() {
   const [apiKeys, setApiKeys] = React.useState<ApiKey[]>(() => {
     if (typeof window === "undefined") return [];
@@ -62,6 +71,17 @@ export default function IntegrationsPage() {
     }
   });
 
+  const [connectedApps, setConnectedApps] = React.useState<ConnectedApp[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(localStorage.getItem("orchids.connectedApps") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const [authCode, setAuthCode] = React.useState<string>("");
+  const [showAuthDialog, setShowAuthDialog] = React.useState(false);
   const [newKeyName, setNewKeyName] = React.useState("");
   const [newWebhookName, setNewWebhookName] = React.useState("");
   const [newWebhookUrl, setNewWebhookUrl] = React.useState("");
@@ -159,6 +179,31 @@ export default function IntegrationsPage() {
     toast.success("Webhook status updated");
   }
 
+  function generateAuthCode() {
+    const code = Array.from({ length: 6 }, () => 
+      Math.floor(Math.random() * 10)
+    ).join("");
+    setAuthCode(code);
+    setShowAuthDialog(true);
+    
+    // Store the code temporarily (expires in 10 minutes)
+    const expiry = Date.now() + 10 * 60 * 1000;
+    localStorage.setItem("orchids.pendingAuth", JSON.stringify({ code, expiry }));
+    
+    toast.success("Authorization code generated");
+  }
+
+  function disconnectApp(id: string) {
+    const updated = connectedApps.filter((app) => app.id !== id);
+    setConnectedApps(updated);
+    localStorage.setItem("orchids.connectedApps", JSON.stringify(updated));
+    toast.success("App disconnected");
+  }
+
+  const authorizationUrl = typeof window !== "undefined" 
+    ? `${window.location.origin}/api/auth/authorize?client_id=YOUR_APP_ID&redirect_uri=YOUR_CALLBACK_URL&scope=read:entries,write:entries`
+    : "";
+
   return (
     <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
@@ -172,6 +217,94 @@ export default function IntegrationsPage() {
       </header>
 
       <div className="grid gap-6">
+        {/* Mobile App Connections */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-pink-600" />
+              <CardTitle>Mobile App Connections</CardTitle>
+            </div>
+            <CardDescription>
+              Connect your other health tracking PWAs (GastroGuard, Sleep Tracker, etc.) to sync data with HealthHelper
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+              <h4 className="font-medium text-sm">Connect a Mobile App</h4>
+              <ol className="text-sm space-y-2 text-muted-foreground">
+                <li className="flex gap-2">
+                  <span className="font-semibold text-foreground">1.</span>
+                  Open your other PWA (e.g., GastroGuard, Sleep Tracker)
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold text-foreground">2.</span>
+                  Go to Settings → Connect to HealthHelper
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold text-foreground">3.</span>
+                  Click "Generate Code" below and enter the 6-digit code in your app
+                </li>
+              </ol>
+              <Button 
+                onClick={generateAuthCode} 
+                className="w-full bg-pink-600 hover:bg-pink-700"
+              >
+                <QrCode className="w-4 h-4 mr-2" />
+                Generate Connection Code
+              </Button>
+            </div>
+
+            {connectedApps.length > 0 ? (
+              <div className="space-y-3">
+                {connectedApps.map((app) => (
+                  <Card key={app.id}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <h4 className="font-medium">{app.name}</h4>
+                            <Badge variant="outline" className="text-xs">
+                              {app.appType}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Connected {new Date(app.connected).toLocaleDateString()}
+                          </p>
+                          {app.lastSync && (
+                            <p className="text-xs text-muted-foreground">
+                              Last synced {new Date(app.lastSync).toLocaleString()}
+                            </p>
+                          )}
+                          <div className="flex gap-1 flex-wrap mt-2">
+                            {app.permissions.map((perm) => (
+                              <Badge key={perm} variant="secondary" className="text-xs">
+                                {perm}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => disconnectApp(app.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No apps connected yet. Generate a code to connect your first app.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* API Keys Section */}
         <Card>
           <CardHeader>
@@ -405,6 +538,28 @@ export default function IntegrationsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <h4 className="font-medium text-sm">Mobile App Authorization Flow</h4>
+              <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
+{`// In your PWA (GastroGuard, Sleep Tracker, etc.)
+// Step 1: User enters the 6-digit code from HealthHelper
+const authCode = "123456";
+
+// Step 2: Exchange code for access token
+const response = await fetch('${authorizationUrl}', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ code: authCode })
+});
+
+const { access_token } = await response.json();
+
+// Step 3: Use token to sync data
+fetch('/api/health/entries', {
+  headers: { 'Authorization': \`Bearer \${access_token}\` }
+});`}
+              </pre>
+            </div>
+            <div className="space-y-2">
               <h4 className="font-medium text-sm">Fetch Health Entries (JavaScript)</h4>
               <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
 {`fetch('${typeof window !== "undefined" ? window.location.origin : ""}/api/health/entries', {
@@ -438,6 +593,36 @@ print(response.json())`}
           </CardContent>
         </Card>
       </div>
+
+      {/* Authorization Code Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Connection Code</DialogTitle>
+            <DialogDescription>
+              Enter this code in your mobile app to connect it to HealthHelper
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="bg-muted/50 p-8 rounded-lg text-center">
+              <p className="text-4xl font-bold tracking-widest text-pink-600 mb-2">
+                {authCode}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Code expires in 10 minutes
+              </p>
+            </div>
+            <Button 
+              onClick={() => copyToClipboard(authCode)} 
+              variant="outline" 
+              className="w-full"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

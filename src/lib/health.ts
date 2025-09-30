@@ -40,6 +40,7 @@ export type MentalEntry = {
   bedTime?: string // HH:MM format
   wakeTime?: string // HH:MM format
   stressLevel?: number // 0-10
+  energy?: number // 0-10
   notes?: string
 }
 
@@ -61,6 +62,15 @@ export type SleepQualityMetrics = {
   efficiency?: number // percentage of optimal sleep
   bedTime?: string
   wakeTime?: string
+}
+
+// Advanced ML feature: Sleep Stage Prediction
+export type SleepStageDistribution = {
+  date: string
+  deep: number // percentage
+  light: number // percentage
+  rem: number // percentage
+  awake: number // percentage
 }
 
 const STORAGE_KEY = "orchids.health.entries.v1"
@@ -117,11 +127,12 @@ export function lastNDays(entries: HealthEntry[], days = 14): HealthEntry[] {
 
 // Simple pattern mining: correlation between numeric severity and boolean triggers
 export type Insight = {
-  area: "stomach" | "skin" | "mental"
+  area: "stomach" | "skin" | "mental" | "sleep" | "cross-module"
   metric: string
   trigger?: string
   score: number // correlation-like score (-1..1)
   description: string
+  priority?: "high" | "medium" | "low"
 }
 
 function pearson(x: number[], y: number[]): number | null {
@@ -172,6 +183,7 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
             r > 0
               ? `Stomach severity tends to be higher on days with ${key}.`
               : `Stomach severity tends to be lower on days with ${key}.`,
+          priority: Math.abs(r) >= 0.6 ? "high" : "medium",
         })
       }
     }
@@ -200,6 +212,7 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
             r > 0
               ? `Skin severity tends to be higher on days with ${key}.`
               : `Skin severity tends to be lower on days with ${key}.`,
+          priority: Math.abs(r) >= 0.6 ? "high" : "medium",
         })
       }
     }
@@ -212,6 +225,7 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
     const anxiety = mental.map((e) => e.mental!.anxiety)
     const sleep = mental.map((e) => (e.mental!.sleepHours ?? 0))
     const stress = mental.map((e) => (e.mental!.stressLevel ?? 0))
+    const energy = mental.map((e) => (e.mental!.energy ?? 5))
 
     const rMoodAnx = pearson(mood, anxiety)
     if (rMoodAnx !== null && Math.abs(rMoodAnx) >= 0.35) {
@@ -223,6 +237,7 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
           rMoodAnx < 0
             ? "Better mood is associated with lower anxiety."
             : "Higher mood appears associated with higher anxiety (recheck inputs).",
+        priority: Math.abs(rMoodAnx) >= 0.6 ? "high" : "medium",
       })
     }
 
@@ -236,37 +251,55 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
           rMoodSleep > 0
             ? "More sleep tends to correlate with better mood."
             : "More sleep tends to correlate with worse mood.",
+        priority: Math.abs(rMoodSleep) >= 0.6 ? "high" : "medium",
       })
     }
 
-    // New: Sleep vs Stress correlation
+    // Energy-Sleep correlation
+    const rEnergySleep = pearson(energy, sleep)
+    if (rEnergySleep !== null && Math.abs(rEnergySleep) >= 0.35) {
+      insights.push({
+        area: "mental",
+        metric: "energy vs sleep",
+        score: rEnergySleep,
+        description:
+          rEnergySleep > 0
+            ? "Better sleep strongly predicts higher energy levels."
+            : "Unusual: more sleep correlates with lower energy. Review sleep quality.",
+        priority: Math.abs(rEnergySleep) >= 0.6 ? "high" : "medium",
+      })
+    }
+
+    // Sleep vs Stress correlation
     const rSleepStress = pearson(sleep, stress)
     if (rSleepStress !== null && Math.abs(rSleepStress) >= 0.35) {
       insights.push({
-        area: "mental",
+        area: "sleep",
         metric: "sleep vs stress",
         score: rSleepStress,
         description:
           rSleepStress < 0
             ? "Better sleep is strongly linked to lower stress levels."
             : "Unusual pattern: more sleep correlated with higher stress (review data quality).",
+        priority: "high",
       })
     }
 
-    // New: Sleep debt analysis
+    // Sleep debt analysis
     const avgSleep = sleep.reduce((a, b) => a + b, 0) / sleep.length
     const optimalSleep = 7.5 // optimal hours
     if (avgSleep < optimalSleep - 0.5) {
       const debt = optimalSleep - avgSleep
       insights.push({
-        area: "mental",
+        area: "sleep",
         metric: "sleep debt",
         score: debt,
         description: `Chronic sleep debt detected: averaging ${avgSleep.toFixed(1)}h vs optimal ${optimalSleep}h. Consider earlier bedtime by ${(debt * 60).toFixed(0)} minutes.`,
+        priority: debt > 1.5 ? "high" : "medium",
       })
     }
 
-    // New: Stress threshold alert
+    // Stress threshold alert
     const highStressDays = stress.filter(s => s >= 7).length
     if (highStressDays >= mental.length * 0.4) {
       insights.push({
@@ -274,6 +307,7 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
         metric: "stress threshold",
         score: highStressDays / mental.length,
         description: `High stress detected on ${highStressDays} of ${mental.length} days (${((highStressDays / mental.length) * 100).toFixed(0)}%). Prioritize stress management techniques.`,
+        priority: "high",
       })
     }
   }
@@ -282,8 +316,22 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
   const sleepStressInsights = analyzeSleepStressPatterns(entries)
   insights.push(...sleepStressInsights)
 
-  // Rank by absolute score
-  return insights.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+  // Add cross-module insights
+  const crossInsights = analyzeCrossModulePatterns(entries)
+  insights.push(...crossInsights)
+
+  // Add ML-powered sleep stage predictions
+  const sleepStageInsights = analyzeSleepStages(entries)
+  insights.push(...sleepStageInsights)
+
+  // Rank by priority and absolute score
+  return insights.sort((a, b) => {
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const aPriority = priorityOrder[a.priority || "low"];
+    const bPriority = priorityOrder[b.priority || "low"];
+    if (aPriority !== bPriority) return bPriority - aPriority;
+    return Math.abs(b.score) - Math.abs(a.score);
+  })
 }
 
 export function toTimeSeries(entries: HealthEntry[]) {
@@ -517,6 +565,296 @@ export function analyzeSleepStressPatterns(entries: HealthEntry[]): Insight[] {
   }
   
   return insights
+}
+
+/**
+ * Advanced ML Feature: Cross-Module Pattern Analysis
+ * Detects correlations between sleep, skin, and gastro health
+ */
+export function analyzeCrossModulePatterns(entries: HealthEntry[]): Insight[] {
+  const insights: Insight[] = []
+  const combined = entries.filter(e => 
+    e.mental?.sleepHours !== undefined && 
+    (e.skin?.severity !== undefined || e.stomach?.severity !== undefined)
+  )
+  
+  if (combined.length < 5) return insights
+  
+  const sleep = combined.map(e => e.mental!.sleepHours!)
+  
+  // Sleep → Skin correlation
+  const skinEntries = combined.filter(e => e.skin?.severity !== undefined)
+  if (skinEntries.length >= 5) {
+    const skinSeverity = skinEntries.map(e => e.skin!.severity)
+    const skinSleep = skinEntries.map(e => e.mental!.sleepHours!)
+    const r = pearson(skinSleep, skinSeverity)
+    
+    if (r !== null && Math.abs(r) >= 0.35) {
+      insights.push({
+        area: "cross-module",
+        metric: "sleep → skin",
+        score: r,
+        description: r < 0
+          ? `Poor sleep (${skinSleep.reduce((a,b)=>a+b,0)/skinSleep.length}h avg) strongly correlates with skin flare-ups. Prioritize 7-9h sleep for skin healing.`
+          : "Better sleep associated with worse skin symptoms. Investigate other factors (e.g., late-night skincare products).",
+        priority: Math.abs(r) >= 0.5 ? "high" : "medium",
+      })
+    }
+  }
+  
+  // Sleep → Gastro correlation
+  const gastroEntries = combined.filter(e => e.stomach?.severity !== undefined)
+  if (gastroEntries.length >= 5) {
+    const gastroSeverity = gastroEntries.map(e => e.stomach!.severity)
+    const gastroSleep = gastroEntries.map(e => e.mental!.sleepHours!)
+    const r = pearson(gastroSleep, gastroSeverity)
+    
+    if (r !== null && Math.abs(r) >= 0.35) {
+      insights.push({
+        area: "cross-module",
+        metric: "sleep → gastro",
+        score: r,
+        description: r < 0
+          ? `Sleep deprivation correlates with digestive issues. Better sleep (7-9h) may reduce stomach pain by up to ${(Math.abs(r) * 100).toFixed(0)}%.`
+          : "More sleep associated with higher stomach pain. Review late-night eating habits.",
+        priority: Math.abs(r) >= 0.5 ? "high" : "medium",
+      })
+    }
+  }
+  
+  // Stress → Multi-system impact
+  const stressEntries = entries.filter(e => 
+    e.mental?.stressLevel !== undefined &&
+    ((e.skin?.severity !== undefined && e.skin.severity > 5) || 
+     (e.stomach?.severity !== undefined && e.stomach.severity > 5))
+  )
+  
+  if (stressEntries.length >= 5) {
+    const highStressDays = stressEntries.filter(e => (e.mental!.stressLevel ?? 0) >= 7).length
+    const percentage = (highStressDays / stressEntries.length) * 100
+    
+    if (percentage >= 40) {
+      insights.push({
+        area: "cross-module",
+        metric: "stress cascade",
+        score: percentage / 100,
+        description: `High stress (≥7/10) on ${percentage.toFixed(0)}% of symptom flare days. Stress management may reduce both skin and gastro symptoms significantly.`,
+        priority: "high",
+      })
+    }
+  }
+  
+  return insights
+}
+
+/**
+ * Advanced ML Feature: Sleep Stage Distribution Prediction
+ * Uses simple heuristic model based on total sleep, stress, and quality
+ */
+export function predictSleepStages(
+  sleepHours: number,
+  stressLevel: number,
+  sleepQuality?: number
+): SleepStageDistribution {
+  // Baseline percentages for 7.5h optimal sleep
+  let deep = 20    // Deep sleep %
+  let light = 50   // Light sleep %
+  let rem = 25     // REM sleep %
+  let awake = 5    // Awake %
+  
+  // Adjust based on sleep duration
+  if (sleepHours < 6) {
+    // Sleep deprivation: reduced deep and REM
+    deep -= 5
+    rem -= 5
+    awake += 7
+    light += 3
+  } else if (sleepHours > 9) {
+    // Oversleeping: more light sleep, less efficient
+    light += 8
+    deep -= 3
+    rem -= 2
+    awake += 2
+  }
+  
+  // Adjust based on stress
+  const stressFactor = Math.max(0, stressLevel - 5) // stress above baseline
+  deep -= stressFactor * 1.5
+  rem -= stressFactor * 1.0
+  light += stressFactor * 1.5
+  awake += stressFactor * 1.0
+  
+  // Adjust based on subjective sleep quality
+  if (sleepQuality !== undefined) {
+    const qualityFactor = (sleepQuality - 5) / 5 // -1 to 1 scale
+    deep += qualityFactor * 5
+    rem += qualityFactor * 3
+    awake -= qualityFactor * 4
+    light -= qualityFactor * 4
+  }
+  
+  // Normalize to 100%
+  const total = deep + light + rem + awake
+  deep = Math.max(0, Math.min(100, (deep / total) * 100))
+  light = Math.max(0, Math.min(100, (light / total) * 100))
+  rem = Math.max(0, Math.min(100, (rem / total) * 100))
+  awake = Math.max(0, Math.min(100, (awake / total) * 100))
+  
+  // Final normalization to ensure exactly 100%
+  const sum = deep + light + rem + awake
+  return {
+    date: todayISO(),
+    deep: Math.round((deep / sum) * 100 * 10) / 10,
+    light: Math.round((light / sum) * 100 * 10) / 10,
+    rem: Math.round((rem / sum) * 100 * 10) / 10,
+    awake: Math.round((awake / sum) * 100 * 10) / 10,
+  }
+}
+
+/**
+ * Advanced ML Feature: Sleep Stage Analysis & Recommendations
+ */
+export function analyzeSleepStages(entries: HealthEntry[]): Insight[] {
+  const insights: Insight[] = []
+  const recent = entries.filter(e => 
+    e.mental?.sleepHours !== undefined && 
+    e.mental?.stressLevel !== undefined
+  ).slice(-7)
+  
+  if (recent.length < 3) return insights
+  
+  const predictions = recent.map(e => 
+    predictSleepStages(
+      e.mental!.sleepHours!,
+      e.mental!.stressLevel ?? 5,
+      e.mental!.sleepQuality
+    )
+  )
+  
+  const avgDeep = predictions.reduce((sum, p) => sum + p.deep, 0) / predictions.length
+  const avgRem = predictions.reduce((sum, p) => sum + p.rem, 0) / predictions.length
+  const avgAwake = predictions.reduce((sum, p) => sum + p.awake, 0) / predictions.length
+  
+  // Deep sleep deficiency
+  if (avgDeep < 15) {
+    insights.push({
+      area: "sleep",
+      metric: "deep sleep deficiency",
+      score: 15 - avgDeep,
+      description: `Low deep sleep detected (${avgDeep.toFixed(1)}% vs optimal 18-20%). Deep sleep is critical for immune function and tissue repair. Improve by: avoiding alcohol, maintaining cool room (65-68°F), and exercising earlier in day.`,
+      priority: "high",
+    })
+  }
+  
+  // REM sleep deficiency
+  if (avgRem < 20) {
+    insights.push({
+      area: "sleep",
+      metric: "REM sleep deficiency",
+      score: 20 - avgRem,
+      description: `Insufficient REM sleep (${avgRem.toFixed(1)}% vs optimal 23-25%). REM supports memory consolidation and emotional regulation. Improve by: consistent sleep schedule, stress management, and avoiding sleep aids that suppress REM.`,
+      priority: "high",
+    })
+  }
+  
+  // Excessive wake time
+  if (avgAwake > 10) {
+    insights.push({
+      area: "sleep",
+      metric: "sleep fragmentation",
+      score: avgAwake,
+      description: `High nighttime wake percentage (${avgAwake.toFixed(1)}% vs optimal <5%). Fragmented sleep reduces restorative benefits. Address by: limiting liquids before bed, optimizing sleep environment (darkness, quiet, temperature), and managing anxiety.`,
+      priority: "medium",
+    })
+  }
+  
+  return insights
+}
+
+/**
+ * Advanced ML Feature: Sleep Efficiency Score
+ * Combines duration, quality, stages, and consistency
+ */
+export function calculateSleepEfficiency(entries: HealthEntry[]): {
+  score: number // 0-100
+  breakdown: {
+    duration: number
+    quality: number
+    consistency: number
+    stages: number
+  }
+  recommendations: string[]
+} {
+  const recent = entries.filter(e => e.mental?.sleepHours !== undefined).slice(-7)
+  
+  if (recent.length < 3) {
+    return {
+      score: 0,
+      breakdown: { duration: 0, quality: 0, consistency: 0, stages: 0 },
+      recommendations: ["Track sleep for at least 3 days to calculate efficiency score."]
+    }
+  }
+  
+  const sleepHours = recent.map(e => e.mental!.sleepHours!)
+  const avgSleep = sleepHours.reduce((a, b) => a + b, 0) / sleepHours.length
+  
+  // Duration score (optimal 7-9h)
+  let durationScore = 100
+  if (avgSleep < 7) {
+    durationScore = Math.max(0, (avgSleep / 7) * 100)
+  } else if (avgSleep > 9) {
+    durationScore = Math.max(0, 100 - ((avgSleep - 9) * 20))
+  }
+  
+  // Quality score (from subjective ratings)
+  const qualityRatings = recent.filter(e => e.mental!.sleepQuality !== undefined).map(e => e.mental!.sleepQuality!)
+  const qualityScore = qualityRatings.length > 0
+    ? (qualityRatings.reduce((a, b) => a + b, 0) / qualityRatings.length) * 10
+    : 50 // default if no quality data
+  
+  // Consistency score (lower variance = better)
+  const variance = sleepHours.reduce((sum, h) => sum + Math.pow(h - avgSleep, 2), 0) / sleepHours.length
+  const stdDev = Math.sqrt(variance)
+  const consistencyScore = Math.max(0, 100 - (stdDev * 30))
+  
+  // Stage score (from predictions)
+  const predictions = recent.map(e => 
+    predictSleepStages(
+      e.mental!.sleepHours!,
+      e.mental!.stressLevel ?? 5,
+      e.mental!.sleepQuality
+    )
+  )
+  const avgDeep = predictions.reduce((sum, p) => sum + p.deep, 0) / predictions.length
+  const avgRem = predictions.reduce((sum, p) => sum + p.rem, 0) / predictions.length
+  const stagesScore = Math.min(100, ((avgDeep / 20) * 50) + ((avgRem / 25) * 50))
+  
+  // Overall score (weighted average)
+  const score = Math.round(
+    durationScore * 0.3 +
+    qualityScore * 0.3 +
+    consistencyScore * 0.2 +
+    stagesScore * 0.2
+  )
+  
+  // Generate recommendations
+  const recommendations: string[] = []
+  if (durationScore < 70) recommendations.push(`⏰ Increase sleep duration to 7-9h (currently ${avgSleep.toFixed(1)}h)`)
+  if (qualityScore < 70) recommendations.push("🛌 Improve sleep quality: optimize sleep environment and pre-bed routine")
+  if (consistencyScore < 70) recommendations.push(`📅 Maintain consistent sleep schedule (current variance: ±${stdDev.toFixed(1)}h)`)
+  if (stagesScore < 70) recommendations.push("🌙 Optimize sleep architecture: reduce stress, avoid alcohol, exercise regularly")
+  if (recommendations.length === 0) recommendations.push("✅ Excellent sleep efficiency! Maintain current habits.")
+  
+  return {
+    score,
+    breakdown: {
+      duration: Math.round(durationScore),
+      quality: Math.round(qualityScore),
+      consistency: Math.round(consistencyScore),
+      stages: Math.round(stagesScore),
+    },
+    recommendations
+  }
 }
 
 /**

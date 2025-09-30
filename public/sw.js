@@ -21,6 +21,13 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Listen for skip waiting message from client
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 // Helpers
 const isStaticAsset = (req) => {
   const d = req.destination;

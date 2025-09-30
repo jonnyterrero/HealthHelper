@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -111,7 +111,7 @@ export default function HomePage() {
           <p className="text-muted-foreground">Daily tracking for stomach, skin, and mental health</p>
         </div>
         <div className="relative">
-          <div className="hidden md:flex gap-2">
+          <div className="flex gap-2">
             <ProfileMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -128,45 +128,45 @@ export default function HomePage() {
                 <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/analytics">Open Analytics</Link></Button>
-            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/skintrack">SkinTrack+</Link></Button>
-            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/gastro">GastroGuard</Link></Button>
-            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/mindtrack">MindTrack</Link></Button>
-            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/integrations">Integrations</Link></Button>
-          </div>
-          <div className="flex md:hidden items-center gap-2">
-            <ProfileMenu />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">Actions</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem asChild>
-                  <Link href="/api/export-zip">Download ZIP</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportCSV(entries)}>Export CSV</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/analytics">Open Analytics</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/skintrack">SkinTrack+</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/gastro">GastroGuard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/mindtrack">MindTrack</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/integrations">Integrations</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </header>
+
+      {/* Desktop Navigation Tabs */}
+      <nav className="hidden md:block">
+        <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+            <Link href="/analytics" className="flex items-center justify-center gap-2">
+              <Activity className="w-4 h-4" />
+              Analytics
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+            <Link href="/skintrack" className="flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              SkinTrack+
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+            <Link href="/gastro" className="flex items-center justify-center gap-2">
+              <HeartPulse className="w-4 h-4" />
+              GastroGuard
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+            <Link href="/mindtrack" className="flex items-center justify-center gap-2">
+              <Brain className="w-4 h-4" />
+              MindTrack
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+            <Link href="/integrations" className="flex items-center justify-center gap-2">
+              <Plug className="w-4 h-4" />
+              Integrations
+            </Link>
+          </Button>
+        </div>
+      </nav>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 !text-pink-300">
         <Card>

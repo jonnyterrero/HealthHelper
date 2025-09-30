@@ -119,6 +119,7 @@ export default function HomePage() {
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/skintrack">SkinTrack+</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/gastro">GastroGuard</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/mindtrack">MindTrack</Link></Button>
+            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/integrations">Integrations</Link></Button>
           </div>
           <div className="flex md:hidden items-center gap-2">
             <ProfileMenu />
@@ -144,6 +145,9 @@ export default function HomePage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/mindtrack">MindTrack</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/integrations">Integrations</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

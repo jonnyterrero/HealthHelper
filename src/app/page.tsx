@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -63,6 +63,9 @@ export default function HomePage() {
   });
   const [mental, setMental] = React.useState({ mood: 5, anxiety: 5, sleepHours: 7, stressLevel: 5, notes: "" });
 
+  // Quick sleep check-in state
+  const [quickSleep, setQuickSleep] = React.useState({ hours: 7, stress: 5 });
+
   React.useEffect(() => {
     // preload existing for selected date
     const e = loadEntries().find((x) => x.date === date);
@@ -93,12 +96,37 @@ export default function HomePage() {
   const series14 = toTimeSeries(lastNDays(entries, 14));
   const insights = React.useMemo(() => generateInsights(entries), [entries]);
 
+  // Calculate sleep stats for quick view
+  const sleepStats = React.useMemo(() => {
+    const recent = lastNDays(entries, 7);
+    const avgSleep = recent.reduce((acc, e) => acc + (e.mental?.sleepHours ?? 0), 0) / Math.max(recent.length, 1);
+    const avgStress = recent.reduce((acc, e) => acc + (e.mental?.stressLevel ?? 5), 0) / Math.max(recent.length, 1);
+    return { avgSleep: avgSleep.toFixed(1), avgStress: avgStress.toFixed(1) };
+  }, [entries]);
+
   function saveAll() {
     const updated = upsertEntry({
       date,
       stomach: { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined }
+    });
+    setEntries(updated);
+  }
+
+  function saveQuickSleep() {
+    const updated = upsertEntry({
+      date: todayISO(),
+      stomach: entries.find(e => e.date === todayISO())?.stomach,
+      skin: entries.find(e => e.date === todayISO())?.skin,
+      mental: { 
+        date: todayISO(), 
+        mood: entries.find(e => e.date === todayISO())?.mental?.mood ?? 5, 
+        anxiety: entries.find(e => e.date === todayISO())?.mental?.anxiety ?? 5, 
+        sleepHours: clamp024(quickSleep.hours), 
+        stressLevel: clamp010(quickSleep.stress),
+        notes: entries.find(e => e.date === todayISO())?.mental?.notes
+      }
     });
     setEntries(updated);
   }
@@ -186,6 +214,79 @@ export default function HomePage() {
               <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
             <Button onClick={saveAll}>Save Today</Button>
+          </CardContent>
+        </Card>
+
+        {/* Quick Sleep Check-in Card */}
+        <Card className="md:col-span-2 border-purple-200 dark:border-purple-900/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Moon className="w-5 h-5 text-purple-500" />
+                <CardTitle>Quick Sleep Check-in</CardTitle>
+              </div>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/sleeptrack" className="flex items-center gap-1 text-xs">
+                  Full Tracker <ArrowRight className="w-3 h-3" />
+                </Link>
+              </Button>
+            </div>
+            <CardDescription>Log your sleep & stress quickly</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Sleep Hours (0-24)</Label>
+                  <Input 
+                    type="number" 
+                    min={0} 
+                    max={24} 
+                    step={0.5} 
+                    value={quickSleep.hours} 
+                    onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Stress Level (0-10)</Label>
+                  <Input 
+                    type="number" 
+                    min={0} 
+                    max={10} 
+                    step={1} 
+                    value={quickSleep.stress} 
+                    onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} 
+                  />
+                </div>
+                <Button onClick={saveQuickSleep} className="w-full bg-purple-600 hover:bg-purple-700">
+                  <Moon className="w-4 h-4 mr-2" />
+                  Save Sleep Log
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="text-sm font-medium">7-Day Average</div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-sm text-muted-foreground">Avg Sleep</span>
+                    <span className="text-lg font-semibold">{sleepStats.avgSleep}h</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-sm text-muted-foreground">Avg Stress</span>
+                    <span className="text-lg font-semibold">{sleepStats.avgStress}/10</span>
+                  </div>
+                  <div className={`p-3 rounded-lg text-sm ${
+                    Number(sleepStats.avgSleep) >= 7 && Number(sleepStats.avgStress) < 6 
+                      ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' 
+                      : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                  }`}>
+                    {Number(sleepStats.avgSleep) >= 7 && Number(sleepStats.avgStress) < 6 
+                      ? '✓ Sleep on track' 
+                      : '⚠ Consider improving sleep'}
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

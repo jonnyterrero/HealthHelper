@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -157,6 +157,12 @@ export default function HomePage() {
             <Link href="/mindtrack" className="flex items-center justify-center gap-2">
               <Brain className="w-4 h-4" />
               MindTrack
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+            <Link href="/sleeptrack" className="flex items-center justify-center gap-2">
+              <Moon className="w-4 h-4" />
+              SleepTrack
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">

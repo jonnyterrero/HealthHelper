@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -112,9 +113,21 @@ export default function HomePage() {
         <div className="relative">
           <div className="hidden md:flex gap-2">
             <ProfileMenu />
-            <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/api/export-zip">Download ZIP</Link></Button>
-            <Button variant="outline" className="border-pink-300 text-pink-700 hover:bg-pink-50" onClick={() => exportCSV(entries)}>Export CSV</Button>
-            <Button className="bg-pink-200 text-pink-900 hover:bg-pink-300" onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Data
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link href="/api/export-zip">Download ZIP</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportCSV(entries)}>Export CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/analytics">Open Analytics</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/skintrack">SkinTrack+</Link></Button>
             <Button asChild variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200"><Link href="/gastro">GastroGuard</Link></Button>

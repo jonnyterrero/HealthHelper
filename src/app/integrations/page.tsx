@@ -206,12 +206,12 @@ export default function IntegrationsPage() {
 
   return (
     <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
-      <header className="flex items-center justify-between gap-4 flex-wrap">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Integrations</h1>
-          <p className="text-muted-foreground">Connect this app with your other applications</p>
+          <p className="text-sm text-muted-foreground">Connect this app with your other applications</p>
         </div>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="w-full sm:w-auto">
           <Link href="/">← Back to Dashboard</Link>
         </Button>
       </header>
@@ -221,28 +221,28 @@ export default function IntegrationsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-pink-600" />
-              <CardTitle>Mobile App Connections</CardTitle>
+              <Smartphone className="w-5 h-5 text-pink-600 shrink-0" />
+              <CardTitle className="text-lg">Mobile App Connections</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Connect your other health tracking PWAs (GastroGuard, Sleep Tracker, etc.) to sync data with HealthHelper
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+            <div className="bg-muted/50 p-3 md:p-4 rounded-lg space-y-3">
               <h4 className="font-medium text-sm">Connect a Mobile App</h4>
-              <ol className="text-sm space-y-2 text-muted-foreground">
+              <ol className="text-xs md:text-sm space-y-2 text-muted-foreground">
                 <li className="flex gap-2">
-                  <span className="font-semibold text-foreground">1.</span>
-                  Open your other PWA (e.g., GastroGuard, Sleep Tracker)
+                  <span className="font-semibold text-foreground shrink-0">1.</span>
+                  <span>Open your other PWA (e.g., GastroGuard, Sleep Tracker)</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="font-semibold text-foreground">2.</span>
-                  Go to Settings → Connect to HealthHelper
+                  <span className="font-semibold text-foreground shrink-0">2.</span>
+                  <span>Go to Settings → Connect to HealthHelper</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="font-semibold text-foreground">3.</span>
-                  Click "Generate Code" below and enter the 6-digit code in your app
+                  <span className="font-semibold text-foreground shrink-0">3.</span>
+                  <span>Click "Generate Code" below and enter the 6-digit code in your app</span>
                 </li>
               </ol>
               <Button 
@@ -258,12 +258,12 @@ export default function IntegrationsPage() {
               <div className="space-y-3">
                 {connectedApps.map((app) => (
                   <Card key={app.id}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            <h4 className="font-medium">{app.name}</h4>
+                    <CardContent className="p-3 md:p-4">
+                      <div className="flex flex-col sm:flex-row items-start gap-3">
+                        <div className="space-y-2 flex-1 w-full min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                            <h4 className="font-medium text-sm">{app.name}</h4>
                             <Badge variant="outline" className="text-xs">
                               {app.appType}
                             </Badge>
@@ -276,7 +276,7 @@ export default function IntegrationsPage() {
                               Last synced {new Date(app.lastSync).toLocaleString()}
                             </p>
                           )}
-                          <div className="flex gap-1 flex-wrap mt-2">
+                          <div className="flex gap-1 flex-wrap">
                             {app.permissions.map((perm) => (
                               <Badge key={perm} variant="secondary" className="text-xs">
                                 {perm}
@@ -288,7 +288,7 @@ export default function IntegrationsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => disconnectApp(app.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -309,15 +309,15 @@ export default function IntegrationsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Key className="w-5 h-5 text-pink-600" />
-              <CardTitle>API Keys</CardTitle>
+              <Key className="w-5 h-5 text-pink-600 shrink-0" />
+              <CardTitle className="text-lg">API Keys</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Generate API keys to access your health data programmatically
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <Input
                   placeholder="Key name (e.g., My Fitness App)"
@@ -326,38 +326,40 @@ export default function IntegrationsPage() {
                   onKeyDown={(e) => e.key === "Enter" && generateApiKey()}
                 />
               </div>
-              <Button onClick={generateApiKey} className="bg-pink-600 hover:bg-pink-700">
+              <Button onClick={generateApiKey} className="bg-pink-600 hover:bg-pink-700 w-full sm:w-auto">
                 Generate Key
               </Button>
             </div>
 
             {apiKeys.length > 0 ? (
-              <div className="border rounded-lg">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Key</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="min-w-[120px]">Name</TableHead>
+                      <TableHead className="min-w-[200px]">Key</TableHead>
+                      <TableHead className="min-w-[100px]">Created</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {apiKeys.map((key) => (
                       <TableRow key={key.id}>
-                        <TableCell className="font-medium">{key.name}</TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {key.key.substring(0, 20)}...
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-2 h-6 w-6 p-0"
-                            onClick={() => copyToClipboard(key.key)}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
+                        <TableCell className="font-medium text-sm">{key.name}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{key.key.substring(0, 20)}...</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 shrink-0"
+                              onClick={() => copyToClipboard(key.key)}
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-xs text-muted-foreground">
                           {new Date(key.created).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
@@ -381,20 +383,20 @@ export default function IntegrationsPage() {
               </p>
             )}
 
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+            <div className="bg-muted/50 p-3 md:p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">API Endpoints</h4>
-              <div className="space-y-1 text-sm font-mono">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">GET</Badge>
-                  <code>/api/health/entries</code>
+              <div className="space-y-1 text-xs md:text-sm">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs shrink-0">GET</Badge>
+                  <code className="break-all">/api/health/entries</code>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">POST</Badge>
-                  <code>/api/health/entries</code>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs shrink-0">POST</Badge>
+                  <code className="break-all">/api/health/entries</code>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">GET</Badge>
-                  <code>/api/health/insights</code>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs shrink-0">GET</Badge>
+                  <code className="break-all">/api/health/insights</code>
                 </div>
               </div>
               <Button variant="link" asChild className="text-xs p-0 h-auto">
@@ -410,19 +412,19 @@ export default function IntegrationsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Webhook className="w-5 h-5 text-pink-600" />
-              <CardTitle>Webhooks</CardTitle>
+              <Webhook className="w-5 h-5 text-pink-600 shrink-0" />
+              <CardTitle className="text-lg">Webhooks</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Receive real-time notifications when events occur in your health app
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-pink-600 hover:bg-pink-700">Create Webhook</Button>
+                <Button className="bg-pink-600 hover:bg-pink-700 w-full sm:w-auto">Create Webhook</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-[95vw] sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Create New Webhook</DialogTitle>
                   <DialogDescription>
@@ -479,16 +481,16 @@ export default function IntegrationsPage() {
               <div className="space-y-3">
                 {webhooks.map((webhook) => (
                   <Card key={webhook.id}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{webhook.name}</h4>
-                            <Badge variant={webhook.status === "active" ? "default" : "secondary"}>
+                    <CardContent className="p-3 md:p-4">
+                      <div className="flex flex-col sm:flex-row items-start gap-3">
+                        <div className="space-y-2 flex-1 w-full min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-medium text-sm">{webhook.name}</h4>
+                            <Badge variant={webhook.status === "active" ? "default" : "secondary"} className="text-xs">
                               {webhook.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground font-mono">{webhook.url}</p>
+                          <p className="text-xs text-muted-foreground font-mono break-all">{webhook.url}</p>
                           <div className="flex gap-1 flex-wrap">
                             {webhook.events.map((event) => (
                               <Badge key={event} variant="outline" className="text-xs">
@@ -500,11 +502,12 @@ export default function IntegrationsPage() {
                             Created {new Date(webhook.created).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => toggleWebhookStatus(webhook.id)}
+                            className="flex-1 sm:flex-none"
                           >
                             <RefreshCw className="w-4 h-4" />
                           </Button>
@@ -512,7 +515,7 @@ export default function IntegrationsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => deleteWebhook(webhook.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-1 sm:flex-none"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -533,13 +536,13 @@ export default function IntegrationsPage() {
         {/* Integration Examples */}
         <Card>
           <CardHeader>
-            <CardTitle>Example Integrations</CardTitle>
-            <CardDescription>Sample code to integrate with your apps</CardDescription>
+            <CardTitle className="text-lg">Example Integrations</CardTitle>
+            <CardDescription className="text-sm">Sample code to integrate with your apps</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <h4 className="font-medium text-sm">Mobile App Authorization Flow</h4>
-              <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
+              <pre className="bg-muted p-3 rounded-lg text-[10px] md:text-xs overflow-x-auto">
 {`// In your PWA (GastroGuard, Sleep Tracker, etc.)
 // Step 1: User enters the 6-digit code from HealthHelper
 const authCode = "123456";
@@ -561,7 +564,7 @@ fetch('/api/health/entries', {
             </div>
             <div className="space-y-2">
               <h4 className="font-medium text-sm">Fetch Health Entries (JavaScript)</h4>
-              <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
+              <pre className="bg-muted p-3 rounded-lg text-[10px] md:text-xs overflow-x-auto">
 {`fetch('${typeof window !== "undefined" ? window.location.origin : ""}/api/health/entries', {
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY',
@@ -574,7 +577,7 @@ fetch('/api/health/entries', {
             </div>
             <div className="space-y-2">
               <h4 className="font-medium text-sm">Create Entry (Python)</h4>
-              <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
+              <pre className="bg-muted p-3 rounded-lg text-[10px] md:text-xs overflow-x-auto">
 {`import requests
 
 response = requests.post(
@@ -596,7 +599,7 @@ print(response.json())`}
 
       {/* Authorization Code Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Connection Code</DialogTitle>
             <DialogDescription>
@@ -604,8 +607,8 @@ print(response.json())`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div className="bg-muted/50 p-8 rounded-lg text-center">
-              <p className="text-4xl font-bold tracking-widest text-pink-600 mb-2">
+            <div className="bg-muted/50 p-6 md:p-8 rounded-lg text-center">
+              <p className="text-3xl md:text-4xl font-bold tracking-widest text-pink-600 mb-2">
                 {authCode}
               </p>
               <p className="text-xs text-muted-foreground">

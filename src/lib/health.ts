@@ -47,6 +47,17 @@ export type HealthEntry = {
   mental?: MentalEntry
 }
 
+// Add new sleep quality analysis types
+export type SleepQualityMetrics = {
+  date: string
+  sleepHours: number
+  sleepQuality?: number // 0-10 subjective rating
+  stressLevel: number
+  mood: number
+  sleepDebt?: number // cumulative hours below optimal
+  efficiency?: number // percentage of optimal sleep
+}
+
 const STORAGE_KEY = "orchids.health.entries.v1"
 
 export function loadEntries(): HealthEntry[] {
@@ -195,6 +206,7 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
     const mood = mental.map((e) => e.mental!.mood)
     const anxiety = mental.map((e) => e.mental!.anxiety)
     const sleep = mental.map((e) => (e.mental!.sleepHours ?? 0))
+    const stress = mental.map((e) => (e.mental!.stressLevel ?? 0))
 
     const rMoodAnx = pearson(mood, anxiety)
     if (rMoodAnx !== null && Math.abs(rMoodAnx) >= 0.35) {
@@ -219,6 +231,44 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
           rMoodSleep > 0
             ? "More sleep tends to correlate with better mood."
             : "More sleep tends to correlate with worse mood.",
+      })
+    }
+
+    // New: Sleep vs Stress correlation
+    const rSleepStress = pearson(sleep, stress)
+    if (rSleepStress !== null && Math.abs(rSleepStress) >= 0.35) {
+      insights.push({
+        area: "mental",
+        metric: "sleep vs stress",
+        score: rSleepStress,
+        description:
+          rSleepStress < 0
+            ? "Better sleep is strongly linked to lower stress levels."
+            : "Unusual pattern: more sleep correlated with higher stress (review data quality).",
+      })
+    }
+
+    // New: Sleep debt analysis
+    const avgSleep = sleep.reduce((a, b) => a + b, 0) / sleep.length
+    const optimalSleep = 7.5 // optimal hours
+    if (avgSleep < optimalSleep - 0.5) {
+      const debt = optimalSleep - avgSleep
+      insights.push({
+        area: "mental",
+        metric: "sleep debt",
+        score: debt,
+        description: `Chronic sleep debt detected: averaging ${avgSleep.toFixed(1)}h vs optimal ${optimalSleep}h. Consider earlier bedtime by ${(debt * 60).toFixed(0)} minutes.`,
+      })
+    }
+
+    // New: Stress threshold alert
+    const highStressDays = stress.filter(s => s >= 7).length
+    if (highStressDays >= mental.length * 0.4) {
+      insights.push({
+        area: "mental",
+        metric: "stress threshold",
+        score: highStressDays / mental.length,
+        description: `High stress detected on ${highStressDays} of ${mental.length} days (${((highStressDays / mental.length) * 100).toFixed(0)}%). Prioritize stress management techniques.`,
       })
     }
   }

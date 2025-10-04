@@ -1,0 +1,776 @@
+# HEALTH AI API SERVER - FastAPI Backend
+# ======================================
+# Complete FastAPI server with ML endpoints and data ingestion
+
+## 1. FASTAPI SERVER IMPLEMENTATION
+# File: src/lib/api_server.py
+
+"""
+Health AI API Server
+==================
+FastAPI server for health AI system with ML endpoints
+"""
+
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Dict, List, Optional, Any
+import json
+import datetime as dt
+from pathlib import Path
+
+from .unified_health_ai import (
+    get_conn, init_db, upsert_event, upsert_daily_log, insert_symptom, 
+    insert_meal, insert_sleep_session, insert_workout, insert_vital, insert_journal,
+    EventIn, DailyLogIn, SymptomIn, MealIn, SleepSessionIn, WorkoutIn, VitalIn, JournalIn
+)
+from .feature_store import FeatureStore
+from .ml_models import HealthModelTrainer, HealthPredictionEngine
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="Health AI API",
+    description="Advanced health tracking with AI-powered predictions",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize components
+feature_store = FeatureStore()
+model_trainer = HealthModelTrainer()
+prediction_engine = HealthPredictionEngine()
+
+##############################
+# 1) REQUEST/RESPONSE MODELS #
+##############################
+
+class HealthEventRequest(BaseModel):
+    user_id: str
+    app_id: str
+    event_type: str
+    event_time: dt.datetime
+    data: Dict[str, Any]
+
+class DailyLogRequest(BaseModel):
+    user_id: str
+    date: dt.date
+    mood: Optional[int] = None
+    stress: Optional[int] = None
+    energy: Optional[int] = None
+    focus: Optional[int] = None
+    notes: Optional[str] = None
+    journal_entry: Optional[str] = None
+    coping_strategies: Optional[List[str]] = None
+
+class SymptomRequest(BaseModel):
+    user_id: str
+    date: dt.date
+    type: str
+    severity: int
+    onset_time: Optional[dt.time] = None
+    duration_min: Optional[int] = None
+    location: Optional[str] = None
+    triggers: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+class MealRequest(BaseModel):
+    user_id: str
+    ts: dt.datetime
+    items: str
+    food_type: Optional[str] = None
+    portion_size: Optional[str] = None
+    portion_grams: Optional[int] = None
+    tags: List[str] = []
+    calories: Optional[int] = None
+    caffeine_mg: Optional[int] = None
+    # Macronutrients (per serving)
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
+    fiber_g: Optional[float] = None
+    sugar_g: Optional[float] = None
+    # Additional macronutrients
+    saturated_fat_g: Optional[float] = None
+    monounsaturated_fat_g: Optional[float] = None
+    polyunsaturated_fat_g: Optional[float] = None
+    trans_fat_g: Optional[float] = None
+    cholesterol_mg: Optional[float] = None
+    sodium_mg: Optional[float] = None
+    potassium_mg: Optional[float] = None
+    # Micronutrients
+    vitamin_c_mg: Optional[float] = None
+    vitamin_d_iu: Optional[float] = None
+    calcium_mg: Optional[float] = None
+    iron_mg: Optional[float] = None
+    magnesium_mg: Optional[float] = None
+    zinc_mg: Optional[float] = None
+    artificial_sweeteners: Optional[bool] = False
+
+class SleepRequest(BaseModel):
+    user_id: str
+    start_time: dt.datetime
+    end_time: dt.datetime
+    total_min: Optional[int] = None
+    deep_min: Optional[int] = None
+    light_min: Optional[int] = None
+    rem_min: Optional[int] = None
+    awake_min: Optional[int] = None
+    awakenings: Optional[int] = None
+    sleep_score: Optional[float] = None
+    sleep_factors: Optional[Dict[str, bool]] = None
+    notes: Optional[str] = None
+
+class WorkoutRequest(BaseModel):
+    user_id: str
+    ts: dt.datetime
+    type: str
+    duration_min: Optional[int] = None
+    intensity: Optional[int] = None
+    calories_burned: Optional[int] = None
+    heart_rate_avg: Optional[int] = None
+    heart_rate_max: Optional[int] = None
+    notes: Optional[str] = None
+
+class VitalRequest(BaseModel):
+    user_id: str
+    date: dt.date
+    hr_mean: Optional[float] = None
+    hr_max: Optional[float] = None
+    hrv_ms: Optional[float] = None
+    spo2: Optional[float] = None
+    steps: Optional[int] = None
+    active_min: Optional[int] = None
+    calories_burned: Optional[int] = None
+
+class JournalRequest(BaseModel):
+    user_id: str
+    ts: dt.datetime
+    text: str
+    mood_context: Optional[int] = None
+    stress_context: Optional[int] = None
+
+class PredictionResponse(BaseModel):
+    target: str
+    risk: float
+    confidence: float
+    factors: List[str]
+    recommendations: List[str]
+
+class InsightResponse(BaseModel):
+    title: str
+    description: str
+    priority: str
+    confidence: float
+    actionable: bool
+
+##############################
+# 2) HEALTH ENDPOINTS        #
+##############################
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "healthy", "timestamp": dt.datetime.now().isoformat()}
+
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "message": "Health AI API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
+##############################
+# 3) DATA INGESTION ENDPOINTS #
+##############################
+
+@app.post("/api/events")
+async def ingest_event(event: HealthEventRequest):
+    """Ingest a health event."""
+    try:
+        event_in = EventIn(
+            user_id=event.user_id,
+            app_id=event.app_id,
+            event_type=event.event_type,
+            event_time=event.event_time,
+            raw_json=event.data
+        )
+        
+        event_id = upsert_event(event_in)
+        
+        return {
+            "status": "success",
+            "event_id": event_id,
+            "message": "Event ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/daily-logs")
+async def ingest_daily_log(log: DailyLogRequest):
+    """Ingest daily log data."""
+    try:
+        log_in = DailyLogIn(
+            user_id=log.user_id,
+            date=log.date,
+            mood=log.mood,
+            stress=log.stress,
+            energy=log.energy,
+            focus=log.focus,
+            notes=log.notes,
+            journal_entry=log.journal_entry,
+            coping_strategies=log.coping_strategies
+        )
+        
+        upsert_daily_log(log_in)
+        
+        return {
+            "status": "success",
+            "message": "Daily log ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/symptoms")
+async def ingest_symptom(symptom: SymptomRequest):
+    """Ingest symptom data."""
+    try:
+        symptom_in = SymptomIn(
+            user_id=symptom.user_id,
+            date=symptom.date,
+            type=symptom.type,
+            severity=symptom.severity,
+            onset_time=symptom.onset_time,
+            duration_min=symptom.duration_min,
+            location=symptom.location,
+            triggers=symptom.triggers,
+            notes=symptom.notes
+        )
+        
+        symptom_id = insert_symptom(symptom_in)
+        
+        return {
+            "status": "success",
+            "symptom_id": symptom_id,
+            "message": "Symptom ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/meals")
+async def ingest_meal(meal: MealRequest):
+    """Ingest meal data with detailed macronutrients."""
+    try:
+        meal_in = MealIn(
+            user_id=meal.user_id,
+            ts=meal.ts,
+            items=meal.items,
+            food_type=meal.food_type,
+            portion_size=meal.portion_size,
+            portion_grams=meal.portion_grams,
+            tags=meal.tags,
+            calories=meal.calories,
+            caffeine_mg=meal.caffeine_mg,
+            # Macronutrients
+            protein_g=meal.protein_g,
+            carbs_g=meal.carbs_g,
+            fat_g=meal.fat_g,
+            fiber_g=meal.fiber_g,
+            sugar_g=meal.sugar_g,
+            # Additional macronutrients
+            saturated_fat_g=meal.saturated_fat_g,
+            monounsaturated_fat_g=meal.monounsaturated_fat_g,
+            polyunsaturated_fat_g=meal.polyunsaturated_fat_g,
+            trans_fat_g=meal.trans_fat_g,
+            cholesterol_mg=meal.cholesterol_mg,
+            sodium_mg=meal.sodium_mg,
+            potassium_mg=meal.potassium_mg,
+            # Micronutrients
+            vitamin_c_mg=meal.vitamin_c_mg,
+            vitamin_d_iu=meal.vitamin_d_iu,
+            calcium_mg=meal.calcium_mg,
+            iron_mg=meal.iron_mg,
+            magnesium_mg=meal.magnesium_mg,
+            zinc_mg=meal.zinc_mg,
+            artificial_sweeteners=meal.artificial_sweeteners
+        )
+        
+        meal_id = insert_meal(meal_in)
+        
+        return {
+            "status": "success",
+            "meal_id": meal_id,
+            "message": "Meal with detailed macronutrients ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/sleep")
+async def ingest_sleep(sleep: SleepRequest):
+    """Ingest sleep data."""
+    try:
+        sleep_in = SleepSessionIn(
+            user_id=sleep.user_id,
+            start_time=sleep.start_time,
+            end_time=sleep.end_time,
+            total_min=sleep.total_min,
+            deep_min=sleep.deep_min,
+            light_min=sleep.light_min,
+            rem_min=sleep.rem_min,
+            awake_min=sleep.awake_min,
+            awakenings=sleep.awakenings,
+            sleep_score=sleep.sleep_score,
+            sleep_factors=sleep.sleep_factors,
+            notes=sleep.notes
+        )
+        
+        sleep_id = insert_sleep_session(sleep_in)
+        
+        return {
+            "status": "success",
+            "sleep_id": sleep_id,
+            "message": "Sleep session ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/workouts")
+async def ingest_workout(workout: WorkoutRequest):
+    """Ingest workout data."""
+    try:
+        workout_in = WorkoutIn(
+            user_id=workout.user_id,
+            ts=workout.ts,
+            type=workout.type,
+            duration_min=workout.duration_min,
+            intensity=workout.intensity,
+            calories_burned=workout.calories_burned,
+            heart_rate_avg=workout.heart_rate_avg,
+            heart_rate_max=workout.heart_rate_max,
+            notes=workout.notes
+        )
+        
+        workout_id = insert_workout(workout_in)
+        
+        return {
+            "status": "success",
+            "workout_id": workout_id,
+            "message": "Workout ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/vitals")
+async def ingest_vital(vital: VitalRequest):
+    """Ingest vital data."""
+    try:
+        vital_in = VitalIn(
+            user_id=vital.user_id,
+            date=vital.date,
+            hr_mean=vital.hr_mean,
+            hr_max=vital.hr_max,
+            hrv_ms=vital.hrv_ms,
+            spo2=vital.spo2,
+            steps=vital.steps,
+            active_min=vital.active_min,
+            calories_burned=vital.calories_burned
+        )
+        
+        vital_id = insert_vital(vital_in)
+        
+        return {
+            "status": "success",
+            "vital_id": vital_id,
+            "message": "Vital data ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/journals")
+async def ingest_journal(journal: JournalRequest):
+    """Ingest journal data."""
+    try:
+        journal_in = JournalIn(
+            user_id=journal.user_id,
+            ts=journal.ts,
+            text=journal.text,
+            mood_context=journal.mood_context,
+            stress_context=journal.stress_context
+        )
+        
+        journal_id = insert_journal(journal_in)
+        
+        return {
+            "status": "success",
+            "journal_id": journal_id,
+            "message": "Journal entry ingested successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+##############################
+# 4) FEATURE ENGINEERING    #
+##############################
+
+@app.post("/api/features/rebuild")
+async def rebuild_features(user_id: str, start_date: str, end_date: str):
+    """Rebuild features for a user and date range."""
+    try:
+        feature_store.rebuild_features(user_id, start_date, end_date)
+        
+        return {
+            "status": "success",
+            "message": f"Features rebuilt for user {user_id} from {start_date} to {end_date}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/features/daily/{user_id}/{date}")
+async def get_daily_features(user_id: str, date: str):
+    """Get daily features for a user and date."""
+    try:
+        features = feature_store.get_daily_features(user_id, date)
+        
+        if features is None:
+            raise HTTPException(status_code=404, detail="Features not found")
+        
+        return {
+            "status": "success",
+            "features": features
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/features/sequence/{user_id}/{date}")
+async def get_sequence_features(user_id: str, date: str):
+    """Get sequence features for a user and date."""
+    try:
+        features = feature_store.get_sequence_features(user_id, date)
+        
+        if features is None:
+            raise HTTPException(status_code=404, detail="Sequence features not found")
+        
+        return {
+            "status": "success",
+            "features": features
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+##############################
+# 5) MODEL TRAINING         #
+##############################
+
+@app.post("/api/models/train")
+async def train_models(user_id: str, background_tasks: BackgroundTasks):
+    """Train models for a user."""
+    try:
+        # Train trigger classifiers
+        classifiers = model_trainer.train_trigger_classifiers(user_id)
+        
+        # Train sequence models
+        sequence_models = {}
+        for target in ['gut', 'skin', 'mood']:
+            model = model_trainer.train_sequence_model(user_id, target)
+            if model:
+                sequence_models[target] = model
+        
+        # Save models
+        all_models = {**classifiers, **sequence_models}
+        model_trainer.save_models(user_id, all_models)
+        
+        return {
+            "status": "success",
+            "message": f"Models trained for user {user_id}",
+            "models": list(all_models.keys())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/models/retrain")
+async def retrain_models(user_id: str, background_tasks: BackgroundTasks):
+    """Retrain models with new data."""
+    try:
+        # This would implement incremental learning
+        # For now, just retrain from scratch
+        return await train_models(user_id, background_tasks)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+##############################
+# 6) PREDICTION ENDPOINTS    #
+##############################
+
+@app.get("/api/predictions/daily/{user_id}/{date}")
+async def get_daily_predictions(user_id: str, date: str):
+    """Get daily risk predictions for a user."""
+    try:
+        # Load models if not already loaded
+        if not prediction_engine.models:
+            prediction_engine.load_models(user_id)
+        
+        # Get predictions
+        predictions = prediction_engine.predict_daily_risk(user_id, date)
+        
+        # Format response
+        response = []
+        for target, risk in predictions.items():
+            response.append(PredictionResponse(
+                target=target,
+                risk=float(risk),
+                confidence=0.8,  # This would come from model confidence
+                factors=[],  # This would come from SHAP explanations
+                recommendations=[]  # This would come from recommendation engine
+            ))
+        
+        return {
+            "status": "success",
+            "predictions": response
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/predictions/sequence/{user_id}/{date}")
+async def get_sequence_predictions(user_id: str, date: str):
+    """Get sequence-based predictions for a user."""
+    try:
+        # Load models if not already loaded
+        if not prediction_engine.models:
+            prediction_engine.load_models(user_id)
+        
+        # Get predictions
+        predictions = prediction_engine.predict_sequence_risk(user_id, date)
+        
+        # Format response
+        response = []
+        for target, risk in predictions.items():
+            response.append(PredictionResponse(
+                target=target,
+                risk=float(risk),
+                confidence=0.8,
+                factors=[],
+                recommendations=[]
+            ))
+        
+        return {
+            "status": "success",
+            "predictions": response
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/predictions/explanations/{user_id}/{date}")
+async def get_prediction_explanations(user_id: str, date: str):
+    """Get SHAP explanations for predictions."""
+    try:
+        # Load models if not already loaded
+        if not prediction_engine.models:
+            prediction_engine.load_models(user_id)
+        
+        # Get explanations
+        explanations = prediction_engine.get_explanations(user_id, date)
+        
+        return {
+            "status": "success",
+            "explanations": explanations
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+##############################
+# 7) ANALYTICS ENDPOINTS     #
+##############################
+
+@app.get("/api/analytics/trends/{user_id}")
+async def get_health_trends(user_id: str, days: int = 30):
+    """Get health trends for a user."""
+    try:
+        with get_conn() as conn:
+            # Get daily logs
+            daily_logs = pd.read_sql_query(
+                """SELECT date, mood, stress, energy, focus 
+                   FROM daily_logs 
+                   WHERE user_id=? 
+                   ORDER BY date DESC 
+                   LIMIT ?""",
+                conn, params=[user_id, days]
+            )
+            
+            # Get symptoms
+            symptoms = pd.read_sql_query(
+                """SELECT date, type, severity 
+                   FROM symptoms 
+                   WHERE user_id=? 
+                   ORDER BY date DESC 
+                   LIMIT ?""",
+                conn, params=[user_id, days]
+            )
+            
+            # Get sleep data
+            sleep = pd.read_sql_query(
+                """SELECT date(end_time) as date, sleep_score, total_min 
+                   FROM sleep_sessions 
+                   WHERE user_id=? 
+                   ORDER BY date DESC 
+                   LIMIT ?""",
+                conn, params=[user_id, days]
+            )
+            
+            return {
+                "status": "success",
+                "trends": {
+                    "daily_logs": daily_logs.to_dict('records'),
+                    "symptoms": symptoms.to_dict('records'),
+                    "sleep": sleep.to_dict('records')
+                }
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/analytics/correlations/{user_id}")
+async def get_health_correlations(user_id: str, days: int = 30):
+    """Get health correlations for a user."""
+    try:
+        with get_conn() as conn:
+            # Get all health data
+            df = pd.read_sql_query(
+                """SELECT d.date, d.mood, d.stress, d.energy, d.focus,
+                          s.sleep_score, s.total_min as sleep_min,
+                          v.hrv_ms, v.steps, v.hr_mean
+                   FROM daily_logs d
+                   LEFT JOIN sleep_sessions s ON d.user_id = s.user_id AND d.date = date(s.end_time)
+                   LEFT JOIN vitals v ON d.user_id = v.user_id AND d.date = v.date
+                   WHERE d.user_id = ?
+                   ORDER BY d.date DESC
+                   LIMIT ?""",
+                conn, params=[user_id, days]
+            )
+            
+            # Calculate correlations
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            correlations = df[numeric_cols].corr().to_dict()
+            
+            return {
+                "status": "success",
+                "correlations": correlations
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/analytics/insights/{user_id}")
+async def get_health_insights(user_id: str, days: int = 30):
+    """Get AI-powered health insights for a user."""
+    try:
+        # This would implement advanced analytics
+        # For now, return basic insights
+        insights = [
+            InsightResponse(
+                title="Sleep Quality Impact",
+                description="Your sleep quality has a strong correlation with your mood and energy levels.",
+                priority="medium",
+                confidence=0.8,
+                actionable=True
+            ),
+            InsightResponse(
+                title="Stress Management",
+                description="High stress days are often followed by lower energy and focus scores.",
+                priority="high",
+                confidence=0.9,
+                actionable=True
+            ),
+            InsightResponse(
+                title="Exercise Benefits",
+                description="Regular exercise appears to improve your overall well-being scores.",
+                priority="medium",
+                confidence=0.7,
+                actionable=True
+            )
+        ]
+        
+        return {
+            "status": "success",
+            "insights": insights
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+##############################
+# 8) BATCH PROCESSING       #
+##############################
+
+@app.post("/api/batch/process")
+async def process_batch_data(user_id: str, background_tasks: BackgroundTasks):
+    """Process batch data for a user."""
+    try:
+        # This would implement batch processing
+        # For now, just rebuild features
+        feature_store.rebuild_features(user_id, "2025-01-01", "2025-01-31")
+        
+        return {
+            "status": "success",
+            "message": f"Batch processing started for user {user_id}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/batch/train")
+async def batch_train_models(user_id: str, background_tasks: BackgroundTasks):
+    """Batch train models for a user."""
+    try:
+        # This would implement batch model training
+        # For now, just train models
+        return await train_models(user_id, background_tasks)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+##############################
+# 9) ERROR HANDLING          #
+##############################
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Global exception handler."""
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": "Internal server error",
+            "detail": str(exc)
+        }
+    )
+
+##############################
+# 10) STARTUP EVENTS        #
+##############################
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    try:
+        init_db()
+        print("✅ Database initialized")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown."""
+    print("🔄 Shutting down Health AI API")
+
+# Run the server
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

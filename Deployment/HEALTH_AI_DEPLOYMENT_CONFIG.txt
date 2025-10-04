@@ -1,0 +1,623 @@
+# HEALTH AI DEPLOYMENT CONFIGURATION
+# ===================================
+# Complete deployment setup for the Health AI System
+
+## 1. DOCKER COMPOSE CONFIGURATION
+# File: docker-compose.yml
+
+version: '3.8'
+
+services:
+  # Next.js Health Helper App
+  health-helper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_AI_API_URL=http://ai-api:8000
+      - NODE_ENV=production
+    depends_on:
+      - ai-api
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    networks:
+      - health-network
+
+  # Python AI API Server
+  ai-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///app/data/unified_health.db
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - health-network
+    command: python -m uvicorn src.lib.api_server:app --host 0.0.0.0 --port 8000
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - health-network
+
+  # PostgreSQL (for production)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=health_ai
+      - POSTGRES_USER=health_user
+      - POSTGRES_PASSWORD=health_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - health-network
+
+volumes:
+  postgres_data:
+
+networks:
+  health-network:
+    driver: bridge
+
+## 2. DOCKERFILE FOR NEXT.JS APP
+# File: Dockerfile
+
+# Next.js Health Helper App Dockerfile
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+# ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN npm run build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+# Uncomment the following line in case you want to disable telemetry during runtime.
+# ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# server.js is created by next build from the standalone output
+# https://nextjs.org/docs/pages/api-reference/next-config-js/output
+CMD ["node", "server.js"]
+
+## 3. DOCKERFILE FOR AI API
+# File: Dockerfile.ai
+
+# Python AI API Dockerfile
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY data/ ./data/
+COPY models/ ./models/
+
+# Create directories for data and models
+RUN mkdir -p /app/data /app/models
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the application
+CMD ["python", "-m", "uvicorn", "src.lib.api_server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+## 4. PYTHON REQUIREMENTS
+# File: requirements.txt
+
+# Core dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pandas==2.1.4
+numpy==1.24.3
+scikit-learn==1.3.2
+torch==2.1.1
+sqlalchemy==2.0.23
+sqlite3
+
+# ML and data science
+shap==0.43.0
+joblib==1.3.2
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# API and web
+requests==2.31.0
+httpx==0.25.2
+python-multipart==0.0.6
+
+# Database
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+pathlib2==2.3.7
+
+# Optional: Vision and NLP (uncomment as needed)
+# opencv-python==4.8.1.78
+# pillow==10.1.0
+# transformers==4.36.2
+# torchvision==0.16.1
+# nltk==3.8.1
+# spacy==3.7.2
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+flake8==6.1.0
+
+## 5. ENVIRONMENT CONFIGURATION
+# File: .env.local
+
+# Next.js App
+NEXT_PUBLIC_AI_API_URL=http://localhost:8000
+NODE_ENV=development
+
+# AI API
+DATABASE_URL=sqlite:///data/unified_health.db
+PYTHONPATH=/app
+
+# Redis (optional)
+REDIS_URL=redis://localhost:6379
+
+# PostgreSQL (production)
+# DATABASE_URL=postgresql://health_user:health_password@localhost:5432/health_ai
+
+## 6. PRODUCTION DEPLOYMENT
+# File: docker-compose.prod.yml
+
+version: '3.8'
+
+services:
+  health-helper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_AI_API_URL=https://ai-api.yourdomain.com
+    depends_on:
+      - ai-api
+    networks:
+      - health-network
+
+  ai-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://health_user:health_password@postgres:5432/health_ai
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - health-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=health_ai
+      - POSTGRES_USER=health_user
+      - POSTGRES_PASSWORD=health_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - health-network
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - health-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - health-helper
+      - ai-api
+    networks:
+      - health-network
+
+volumes:
+  postgres_data:
+
+networks:
+  health-network:
+    driver: bridge
+
+## 7. NGINX CONFIGURATION
+# File: nginx.conf
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream health_helper {
+        server health-helper:3000;
+    }
+
+    upstream ai_api {
+        server ai-api:8000;
+    }
+
+    server {
+        listen 80;
+        server_name yourdomain.com;
+
+        location / {
+            proxy_pass http://health_helper;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/ {
+            proxy_pass http://ai_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
+
+## 8. DEPLOYMENT SCRIPTS
+# File: deploy.sh
+
+#!/bin/bash
+
+# Health AI System Deployment Script
+
+echo "🚀 Deploying Health AI System..."
+
+# Build and start services
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# Wait for services to be ready
+echo "⏳ Waiting for services to start..."
+sleep 30
+
+# Initialize database
+echo "🗄️ Initializing database..."
+docker-compose exec ai-api python -c "from src.lib.unified_health_ai import init_db; init_db()"
+
+# Train initial models
+echo "🤖 Training initial models..."
+docker-compose exec ai-api python -c "
+from src.lib.ml_models import HealthModelTrainer
+trainer = HealthModelTrainer()
+trainer.train_trigger_classifiers('user_001')
+"
+
+echo "✅ Health AI System deployed successfully!"
+echo "🌐 Frontend: http://localhost:3000"
+echo "🔧 API: http://localhost:8000"
+echo "📚 API Docs: http://localhost:8000/docs"
+
+## 9. MONITORING CONFIGURATION
+# File: monitoring.yml
+
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - health-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - health-network
+
+  health-helper:
+    # ... existing configuration
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=3000"
+
+  ai-api:
+    # ... existing configuration
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=8000"
+
+volumes:
+  grafana_data:
+
+networks:
+  health-network:
+    driver: bridge
+
+## 10. BACKUP CONFIGURATION
+# File: backup.sh
+
+#!/bin/bash
+
+# Health AI System Backup Script
+
+BACKUP_DIR="/backups/health_ai"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+echo "📦 Creating backup for Health AI System..."
+
+# Create backup directory
+mkdir -p $BACKUP_DIR
+
+# Backup database
+echo "🗄️ Backing up database..."
+docker-compose exec postgres pg_dump -U health_user health_ai > $BACKUP_DIR/database_$DATE.sql
+
+# Backup models
+echo "🤖 Backing up models..."
+tar -czf $BACKUP_DIR/models_$DATE.tar.gz models/
+
+# Backup data
+echo "📊 Backing up data..."
+tar -czf $BACKUP_DIR/data_$DATE.tar.gz data/
+
+# Create backup archive
+echo "📁 Creating backup archive..."
+tar -czf $BACKUP_DIR/health_ai_backup_$DATE.tar.gz $BACKUP_DIR/database_$DATE.sql $BACKUP_DIR/models_$DATE.tar.gz $BACKUP_DIR/data_$DATE.tar.gz
+
+# Clean up individual files
+rm $BACKUP_DIR/database_$DATE.sql $BACKUP_DIR/models_$DATE.tar.gz $BACKUP_DIR/data_$DATE.tar.gz
+
+echo "✅ Backup completed: $BACKUP_DIR/health_ai_backup_$DATE.tar.gz"
+
+## 11. RESTORE CONFIGURATION
+# File: restore.sh
+
+#!/bin/bash
+
+# Health AI System Restore Script
+
+BACKUP_FILE=$1
+
+if [ -z "$BACKUP_FILE" ]; then
+    echo "❌ Please provide backup file path"
+    echo "Usage: ./restore.sh /path/to/backup.tar.gz"
+    exit 1
+fi
+
+echo "🔄 Restoring Health AI System from $BACKUP_FILE..."
+
+# Extract backup
+echo "📦 Extracting backup..."
+tar -xzf $BACKUP_FILE
+
+# Restore database
+echo "🗄️ Restoring database..."
+docker-compose exec -T postgres psql -U health_user health_ai < database_*.sql
+
+# Restore models
+echo "🤖 Restoring models..."
+tar -xzf models_*.tar.gz
+
+# Restore data
+echo "📊 Restoring data..."
+tar -xzf data_*.tar.gz
+
+# Clean up extracted files
+rm database_*.sql models_*.tar.gz data_*.tar.gz
+
+echo "✅ Restore completed successfully!"
+
+## 12. HEALTH CHECK SCRIPT
+# File: health_check.sh
+
+#!/bin/bash
+
+# Health AI System Health Check Script
+
+echo "🔍 Checking Health AI System status..."
+
+# Check if services are running
+echo "📊 Checking services..."
+docker-compose ps
+
+# Check API health
+echo "🔧 Checking API health..."
+curl -f http://localhost:8000/health || echo "❌ API health check failed"
+
+# Check frontend
+echo "🌐 Checking frontend..."
+curl -f http://localhost:3000 || echo "❌ Frontend health check failed"
+
+# Check database connection
+echo "🗄️ Checking database connection..."
+docker-compose exec ai-api python -c "
+from src.lib.unified_health_ai import get_conn
+conn = get_conn()
+print('✅ Database connection successful')
+" || echo "❌ Database connection failed"
+
+# Check model files
+echo "🤖 Checking model files..."
+ls -la models/ || echo "❌ Model files not found"
+
+echo "✅ Health check completed!"
+
+## 13. SCALING CONFIGURATION
+# File: docker-compose.scale.yml
+
+version: '3.8'
+
+services:
+  health-helper:
+    # ... existing configuration
+    deploy:
+      replicas: 2
+
+  ai-api:
+    # ... existing configuration
+    deploy:
+      replicas: 3
+
+  nginx:
+    # ... existing configuration
+    depends_on:
+      - health-helper
+      - ai-api
+
+## 14. SECURITY CONFIGURATION
+# File: security.yml
+
+version: '3.8'
+
+services:
+  health-helper:
+    # ... existing configuration
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=your_jwt_secret_here
+      - ENCRYPTION_KEY=your_encryption_key_here
+
+  ai-api:
+    # ... existing configuration
+    environment:
+      - DATABASE_URL=postgresql://health_user:health_password@postgres:5432/health_ai
+      - JWT_SECRET=your_jwt_secret_here
+      - ENCRYPTION_KEY=your_encryption_key_here
+
+  postgres:
+    # ... existing configuration
+    environment:
+      - POSTGRES_DB=health_ai
+      - POSTGRES_USER=health_user
+      - POSTGRES_PASSWORD=health_password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+
+## 15. DEVELOPMENT SETUP
+# File: dev_setup.sh
+
+#!/bin/bash
+
+# Health AI System Development Setup
+
+echo "🛠️ Setting up Health AI System for development..."
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+npm install
+pip install -r requirements.txt
+
+# Initialize database
+echo "🗄️ Initializing database..."
+python -c "from src.lib.unified_health_ai import init_db; init_db()"
+
+# Start development servers
+echo "🚀 Starting development servers..."
+
+# Terminal 1: Start AI API
+echo "Starting AI API server..."
+python -m uvicorn src.lib.api_server:app --reload --port 8000 &
+
+# Terminal 2: Start Next.js app
+echo "Starting Next.js app..."
+npm run dev &
+
+echo "✅ Development setup completed!"
+echo "🌐 Frontend: http://localhost:3000"
+echo "🔧 API: http://localhost:8000"
+echo "📚 API Docs: http://localhost:8000/docs"

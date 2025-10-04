@@ -1,0 +1,789 @@
+# HEALTH AI FEATURE STORE & ML MODELS
+# ===================================
+# Advanced feature engineering and machine learning implementation
+
+## 1. FEATURE STORE IMPLEMENTATION
+# File: src/lib/feature_store.py
+
+"""
+Feature Store Implementation
+========================
+Materialized feature engineering for health AI system
+"""
+
+import json
+import math
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta
+import sqlite3
+from pathlib import Path
+
+from .unified_health_ai import get_conn, ROLL_DAYS, SEQ_LEN
+
+class FeatureStore:
+    """Feature store for materialized health features."""
+    
+    def __init__(self, db_path: str = "unified_health.db"):
+        self.db_path = db_path
+    
+    def build_daily_features(self, user_id: str, start_date: str, end_date: str) -> pd.DataFrame:
+        """Build daily tabular features for a user."""
+        with get_conn() as conn:
+            # Pull all source data
+            meals = pd.read_sql_query(
+                """SELECT date(ts) as date, 
+                          SUM(caffeine_mg) AS caffeine, 
+                          COUNT(*) AS meals_cnt,
+                          AVG(calories) AS avg_calories,
+                          SUM(protein_g) AS total_protein,
+                          SUM(carbs_g) AS total_carbs,
+                          SUM(fat_g) AS total_fat,
+                          SUM(fiber_g) AS total_fiber,
+                          SUM(sugar_g) AS total_sugar
+                   FROM meals 
+                   WHERE user_id=? 
+                   GROUP BY date(ts)""", 
+                conn, params=[user_id]
+            )
+            
+            sleep = pd.read_sql_query(
+                """SELECT date(end_time) as date, 
+                          SUM(total_min) AS sleep_min, 
+                          AVG(sleep_score) as sleep_score,
+                          SUM(deep_min) AS deep_min,
+                          SUM(rem_min) AS rem_min,
+                          AVG(awakenings) AS avg_awakenings
+                   FROM sleep_sessions 
+                   WHERE user_id=? 
+                   GROUP BY date(end_time)""", 
+                conn, params=[user_id]
+            )
+            
+            vitals = pd.read_sql_query(
+                """SELECT date, hrv_ms, steps, hr_mean, hr_max, spo2, active_min, calories_burned 
+                   FROM vitals 
+                   WHERE user_id=?""", 
+                conn, params=[user_id]
+            )
+            
+            daily_logs = pd.read_sql_query(
+                """SELECT date, mood, stress, energy, focus 
+                   FROM daily_logs 
+                   WHERE user_id=?""", 
+                conn, params=[user_id]
+            )
+            
+            symptoms = pd.read_sql_query(
+                """SELECT date, type, MAX(severity) AS max_severity
+                   FROM symptoms 
+                   WHERE user_id=? 
+                   GROUP BY date, type""", 
+                conn, params=[user_id]
+            )
+            
+            workouts = pd.read_sql_query(
+                """SELECT date(ts) as date, 
+                          COUNT(*) AS workout_count,
+                          SUM(duration_min) AS total_workout_min,
+                          AVG(intensity) AS avg_intensity,
+                          SUM(calories_burned) AS workout_calories
+                   FROM workouts 
+                   WHERE user_id=? 
+                   GROUP BY date(ts)""", 
+                conn, params=[user_id]
+            )
+            
+            # Pivot symptoms by type
+            symptoms_pivot = symptoms.pivot_table(
+                index='date', columns='type', values='max_severity', fill_value=0
+            ).reset_index()
+            
+            # Create date range
+            date_range = pd.date_range(start_date, end_date, freq='D')
+            df = pd.DataFrame({'date': date_range.date})
+            df['date'] = df['date'].astype(str)
+            
+            # Merge all data
+            for data, cols in [
+                (meals, ['caffeine', 'meals_cnt', 'avg_calories', 'total_protein', 'total_carbs', 'total_fat', 'total_fiber', 'total_sugar']),
+                (sleep, ['sleep_min', 'sleep_score', 'deep_min', 'rem_min', 'avg_awakenings']),
+                (vitals, ['hrv_ms', 'steps', 'hr_mean', 'hr_max', 'spo2', 'active_min', 'calories_burned']),
+                (daily_logs, ['mood', 'stress', 'energy', 'focus']),
+                (symptoms_pivot, [col for col in symptoms_pivot.columns if col != 'date']),
+                (workouts, ['workout_count', 'total_workout_min', 'avg_intensity', 'workout_calories'])
+            ]:
+                if not data.empty:
+                    data = data.copy()
+                    data['date'] = data['date'].astype(str)
+                    df = df.merge(data[['date'] + [col for col in cols if col in data.columns]], on='date', how='left')
+            
+            # Fill missing values with sensible defaults
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            df[numeric_cols] = df[numeric_cols].fillna(0)
+            
+            # Add rolling features
+            df = self._add_rolling_features(df)
+            
+            # Add lag features
+            df = self._add_lag_features(df)
+            
+            # Add derived features
+            df = self._add_derived_features(df)
+            
+            # Add labels for next-day prediction
+            df = self._add_labels(df)
+            
+            return df
+    
+    def _add_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add rolling window features."""
+        rolling_cols = ['caffeine', 'sleep_min', 'sleep_score', 'hrv_ms', 'steps', 
+                       'mood', 'stress', 'energy', 'focus', 'workout_count']
+        
+        for col in rolling_cols:
+            if col in df.columns:
+                # Rolling mean and std
+                df[f'{col}_rmean_{ROLL_DAYS}'] = df[col].rolling(ROLL_DAYS, min_periods=1).mean()
+                df[f'{col}_rstd_{ROLL_DAYS}'] = df[col].rolling(ROLL_DAYS, min_periods=1).std().fillna(0)
+                
+                # Rolling min/max
+                df[f'{col}_rmin_{ROLL_DAYS}'] = df[col].rolling(ROLL_DAYS, min_periods=1).min()
+                df[f'{col}_rmax_{ROLL_DAYS}'] = df[col].rolling(ROLL_DAYS, min_periods=1).max()
+        
+        return df
+    
+    def _add_lag_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add lag features."""
+        lag_cols = ['mood', 'stress', 'sleep_score', 'caffeine', 'workout_count']
+        
+        for col in lag_cols:
+            if col in df.columns:
+                df[f'{col}_lag1'] = df[col].shift(1)
+                df[f'{col}_lag2'] = df[col].shift(2)
+                df[f'{col}_lag3'] = df[col].shift(3)
+        
+        return df
+    
+    def _add_derived_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add derived features."""
+        # Sleep efficiency
+        if 'sleep_min' in df.columns and 'awake_min' in df.columns:
+            df['sleep_efficiency'] = (df['sleep_min'] - df['awake_min']) / df['sleep_min']
+            df['sleep_efficiency'] = df['sleep_efficiency'].fillna(0)
+        
+        # Caffeine timing (assuming caffeine affects sleep)
+        if 'caffeine' in df.columns:
+            df['caffeine_afternoon'] = df['caffeine'] * 0.7  # Simplified model
+            df['caffeine_evening'] = df['caffeine'] * 0.3
+        
+        # Stress-sleep interaction
+        if 'stress' in df.columns and 'sleep_score' in df.columns:
+            df['stress_sleep_interaction'] = df['stress'] * (10 - df['sleep_score'])
+        
+        # Exercise intensity
+        if 'total_workout_min' in df.columns and 'avg_intensity' in df.columns:
+            df['exercise_load'] = df['total_workout_min'] * df['avg_intensity']
+        
+        # HRV recovery
+        if 'hrv_ms' in df.columns:
+            df['hrv_recovery'] = df['hrv_ms'] / df['hrv_ms'].rolling(7, min_periods=1).mean()
+            df['hrv_recovery'] = df['hrv_recovery'].fillna(1)
+        
+        return df
+    
+    def _add_labels(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add next-day prediction labels."""
+        # Binary labels for high-risk days
+        if 'gut' in df.columns:
+            df['y_gut_next'] = (df['gut'].shift(-1) >= 5).astype(int)
+        if 'skin' in df.columns:
+            df['y_skin_next'] = (df['skin'].shift(-1) >= 5).astype(int)
+        if 'mood' in df.columns:
+            df['y_mood_next'] = (df['mood'].shift(-1) <= 3).astype(int)  # Low mood
+        if 'stress' in df.columns:
+            df['y_stress_next'] = (df['stress'].shift(-1) >= 8).astype(int)  # High stress
+        
+        return df
+    
+    def persist_daily_features(self, user_id: str, df: pd.DataFrame) -> None:
+        """Persist daily features to database."""
+        with get_conn() as conn:
+            for _, row in df.iterrows():
+                # Extract features (exclude labels and date)
+                feature_cols = [col for col in df.columns 
+                              if not col.startswith('y_') and col != 'date']
+                features = row[feature_cols].to_dict()
+                
+                # Extract labels
+                label_cols = [col for col in df.columns if col.startswith('y_')]
+                labels = {col: int(row[col]) if not pd.isna(row[col]) else None 
+                         for col in label_cols}
+                
+                conn.execute(
+                    """INSERT OR REPLACE INTO fs_daily_user (user_id, date, features_json, labels_json)
+                       VALUES (?, ?, ?, ?)""",
+                    (user_id, row['date'], json.dumps(features), json.dumps(labels))
+                )
+    
+    def build_sequence_features(self, user_id: str, start_date: str, end_date: str, 
+                              seq_len: int = SEQ_LEN) -> List[Dict[str, Any]]:
+        """Build sequence features for deep learning models."""
+        with get_conn() as conn:
+            df = pd.read_sql_query(
+                """SELECT date, features_json, labels_json 
+                   FROM fs_daily_user 
+                   WHERE user_id=? AND date BETWEEN ? AND ? 
+                   ORDER BY date""",
+                conn, params=[user_id, start_date, end_date]
+            )
+        
+        if df.empty:
+            return []
+        
+        # Parse features and labels
+        features_list = df['features_json'].apply(json.loads).tolist()
+        labels_list = df['labels_json'].apply(json.loads).tolist()
+        
+        # Convert to numpy arrays
+        X = np.array([list(f.values()) for f in features_list], dtype=np.float32)
+        dates = pd.to_datetime(df['date']).dt.date.tolist()
+        
+        # Create sequences
+        sequences = []
+        for i in range(len(X) - seq_len):
+            x_seq = X[i:i+seq_len]
+            y = labels_list[i+seq_len]
+            sequences.append({
+                'date': dates[i+seq_len],
+                'X': x_seq.tolist(),
+                'Y': y
+            })
+        
+        return sequences
+    
+    def persist_sequence_features(self, user_id: str, sequences: List[Dict[str, Any]]) -> None:
+        """Persist sequence features to database."""
+        with get_conn() as conn:
+            for seq in sequences:
+                conn.execute(
+                    """INSERT OR REPLACE INTO fs_seq_user (user_id, date, seq_json)
+                       VALUES (?, ?, ?)""",
+                    (user_id, seq['date'].isoformat(), json.dumps(seq))
+                )
+    
+    def get_daily_features(self, user_id: str, date: str) -> Optional[Dict[str, Any]]:
+        """Get daily features for a specific date."""
+        with get_conn() as conn:
+            result = conn.execute(
+                """SELECT features_json, labels_json 
+                   FROM fs_daily_user 
+                   WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchone()
+            
+            if result:
+                return {
+                    'features': json.loads(result[0]),
+                    'labels': json.loads(result[1])
+                }
+            return None
+    
+    def get_sequence_features(self, user_id: str, date: str) -> Optional[Dict[str, Any]]:
+        """Get sequence features for a specific date."""
+        with get_conn() as conn:
+            result = conn.execute(
+                """SELECT seq_json 
+                   FROM fs_seq_user 
+                   WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchone()
+            
+            if result:
+                return json.loads(result[0])
+            return None
+    
+    def rebuild_features(self, user_id: str, start_date: str, end_date: str) -> None:
+        """Rebuild all features for a user and date range."""
+        print(f"Building features for user {user_id} from {start_date} to {end_date}")
+        
+        # Build daily features
+        daily_df = self.build_daily_features(user_id, start_date, end_date)
+        self.persist_daily_features(user_id, daily_df)
+        
+        # Build sequence features
+        sequences = self.build_sequence_features(user_id, start_date, end_date)
+        self.persist_sequence_features(user_id, sequences)
+        
+        print(f"✅ Features rebuilt: {len(daily_df)} daily records, {len(sequences)} sequences")
+
+## 2. ML MODELS IMPLEMENTATION
+# File: src/lib/ml_models.py
+
+"""
+ML Models Implementation
+======================
+Multi-task sequence models and trigger classifiers for health AI
+"""
+
+import json
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Optional, Tuple, Any
+import joblib
+from pathlib import Path
+
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import roc_auc_score, brier_score_loss, classification_report
+import shap
+
+from .unified_health_ai import get_conn, ROLL_DAYS, SEQ_LEN
+
+##############################
+# 1) SEQUENCE DATASET        #
+##############################
+
+class HealthSequenceDataset(Dataset):
+    """Dataset for health sequence data."""
+    
+    def __init__(self, sequences: List[Dict[str, Any]], target: str = "gut"):
+        self.sequences = sequences
+        self.target = target
+        
+    def __len__(self):
+        return len(self.sequences)
+    
+    def __getitem__(self, idx):
+        seq = self.sequences[idx]
+        X = torch.tensor(seq['X'], dtype=torch.float32)
+        y = torch.tensor([seq['Y'].get(self.target, 0)], dtype=torch.float32)
+        return X, y
+
+##############################
+# 2) MULTI-TASK LSTM MODEL   #
+##############################
+
+class MultiTaskLSTM(nn.Module):
+    """Multi-task LSTM for health prediction."""
+    
+    def __init__(self, input_dim: int, hidden_dim: int = 64, num_layers: int = 2, 
+                 dropout: float = 0.2, num_tasks: int = 3):
+        super().__init__()
+        
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.num_tasks = num_tasks
+        
+        # Shared LSTM backbone
+        self.lstm = nn.LSTM(
+            input_size=input_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0
+        )
+        
+        # Task-specific heads
+        self.gut_head = nn.Sequential(
+            nn.Linear(hidden_dim, 32),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+        
+        self.skin_head = nn.Sequential(
+            nn.Linear(hidden_dim, 32),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+        
+        self.mood_head = nn.Sequential(
+            nn.Linear(hidden_dim, 32),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+        
+    def forward(self, x):
+        # LSTM forward pass
+        lstm_out, (hidden, cell) = self.lstm(x)
+        
+        # Use last hidden state
+        last_hidden = lstm_out[:, -1, :]
+        
+        # Task-specific predictions
+        gut_pred = self.gut_head(last_hidden)
+        skin_pred = self.skin_head(last_hidden)
+        mood_pred = self.mood_head(last_hidden)
+        
+        return {
+            'gut': gut_pred.squeeze(),
+            'skin': skin_pred.squeeze(),
+            'mood': mood_pred.squeeze()
+        }
+
+##############################
+# 3) TRIGGER CLASSIFIERS    #
+##############################
+
+class TriggerClassifier:
+    """Fast tabular classifier for same-day risk scoring."""
+    
+    def __init__(self, target: str, model_type: str = "gradient_boosting"):
+        self.target = target
+        self.model_type = model_type
+        self.model = None
+        self.scaler = None
+        self.feature_names = None
+        self.explainer = None
+        
+    def train(self, X: pd.DataFrame, y: pd.Series, cv_folds: int = 3) -> Dict[str, float]:
+        """Train the classifier with temporal cross-validation."""
+        if len(X) < 10:
+            print(f"Not enough data for {self.target} classifier")
+            return {}
+        
+        # Temporal cross-validation
+        tscv = TimeSeriesSplit(n_splits=cv_folds)
+        scores = []
+        
+        for train_idx, test_idx in tscv.split(X):
+            X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+            y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+            
+            # Create pipeline
+            if self.model_type == "gradient_boosting":
+                model = GradientBoostingClassifier(
+                    n_estimators=100,
+                    learning_rate=0.1,
+                    max_depth=3,
+                    random_state=42
+                )
+            else:
+                model = LogisticRegression(
+                    max_iter=1000,
+                    random_state=42
+                )
+            
+            pipeline = Pipeline([
+                ("scaler", StandardScaler()),
+                ("classifier", model)
+            ])
+            
+            # Train and evaluate
+            pipeline.fit(X_train, y_train)
+            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+            
+            if len(y_test.unique()) > 1:  # Check if we have both classes
+                auc = roc_auc_score(y_test, y_pred_proba)
+                scores.append(auc)
+        
+        if scores:
+            # Train final model on all data
+            if self.model_type == "gradient_boosting":
+                self.model = GradientBoostingClassifier(
+                    n_estimators=100,
+                    learning_rate=0.1,
+                    max_depth=3,
+                    random_state=42
+                )
+            else:
+                self.model = LogisticRegression(max_iter=1000, random_state=42)
+            
+            self.scaler = StandardScaler()
+            X_scaled = self.scaler.fit_transform(X)
+            self.model.fit(X_scaled, y)
+            self.feature_names = X.columns.tolist()
+            
+            # Create SHAP explainer
+            try:
+                self.explainer = shap.TreeExplainer(self.model) if self.model_type == "gradient_boosting" else None
+            except:
+                self.explainer = None
+            
+            return {
+                'mean_auc': np.mean(scores),
+                'std_auc': np.std(scores),
+                'best_auc': np.max(scores)
+            }
+        
+        return {}
+    
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Make predictions."""
+        if self.model is None:
+            return np.zeros(len(X))
+        
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict_proba(X_scaled)[:, 1]
+    
+    def explain(self, X: pd.DataFrame) -> Optional[np.ndarray]:
+        """Get SHAP explanations."""
+        if self.explainer is None:
+            return None
+        
+        X_scaled = self.scaler.transform(X)
+        return self.explainer.shap_values(X_scaled)
+
+##############################
+# 4) MODEL TRAINER           #
+##############################
+
+class HealthModelTrainer:
+    """Trainer for health prediction models."""
+    
+    def __init__(self, db_path: str = "unified_health.db"):
+        self.db_path = db_path
+        self.models = {}
+        
+    def train_sequence_model(self, user_id: str, target: str = "gut", 
+                           epochs: int = 10, lr: float = 1e-3) -> Optional[MultiTaskLSTM]:
+        """Train sequence model for a specific target."""
+        with get_conn() as conn:
+            df = pd.read_sql_query(
+                """SELECT seq_json FROM fs_seq_user 
+                   WHERE user_id=? ORDER BY date""",
+                conn, params=[user_id]
+            )
+        
+        if df.empty:
+            print(f"No sequence data for user {user_id}")
+            return None
+        
+        # Parse sequences
+        sequences = []
+        for _, row in df.iterrows():
+            seq_data = json.loads(row['seq_json'])
+            if seq_data['Y'].get(target) is not None:
+                sequences.append(seq_data)
+        
+        if len(sequences) < 10:
+            print(f"Not enough sequences for {target} model")
+            return None
+        
+        # Create dataset
+        dataset = HealthSequenceDataset(sequences, target)
+        dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+        
+        # Initialize model
+        input_dim = len(sequences[0]['X'][0])
+        model = MultiTaskLSTM(input_dim=input_dim, hidden_dim=64, num_layers=2)
+        
+        # Training setup
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        criterion = nn.BCELoss()
+        
+        # Training loop
+        model.train()
+        for epoch in range(epochs):
+            total_loss = 0
+            for X, y in dataloader:
+                optimizer.zero_grad()
+                outputs = model(X)
+                loss = criterion(outputs[target], y.squeeze())
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
+            
+            avg_loss = total_loss / len(dataloader)
+            print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
+        
+        return model
+    
+    def train_trigger_classifiers(self, user_id: str) -> Dict[str, TriggerClassifier]:
+        """Train trigger classifiers for all targets."""
+        with get_conn() as conn:
+            df = pd.read_sql_query(
+                """SELECT features_json, labels_json 
+                   FROM fs_daily_user 
+                   WHERE user_id=? ORDER BY date""",
+                conn, params=[user_id]
+            )
+        
+        if df.empty:
+            print(f"No feature data for user {user_id}")
+            return {}
+        
+        # Parse features and labels
+        features_list = df['features_json'].apply(json.loads).tolist()
+        labels_list = df['labels_json'].apply(json.loads).tolist()
+        
+        X = pd.DataFrame(features_list)
+        
+        classifiers = {}
+        targets = ['gut', 'skin', 'mood', 'stress']
+        
+        for target in targets:
+            # Extract target labels
+            y = pd.Series([labels.get(target) for labels in labels_list])
+            y = y.dropna().astype(int)
+            
+            if len(y) < 10:
+                print(f"Not enough data for {target} classifier")
+                continue
+            
+            # Align features with labels
+            X_aligned = X.iloc[y.index]
+            
+            # Train classifier
+            classifier = TriggerClassifier(target, "gradient_boosting")
+            scores = classifier.train(X_aligned, y)
+            
+            if scores:
+                classifiers[target] = classifier
+                print(f"{target} classifier - AUC: {scores['mean_auc']:.3f} ± {scores['std_auc']:.3f}")
+        
+        return classifiers
+    
+    def save_models(self, user_id: str, models: Dict[str, Any], model_dir: str = "models") -> None:
+        """Save trained models."""
+        model_path = Path(model_dir) / user_id
+        model_path.mkdir(parents=True, exist_ok=True)
+        
+        for name, model in models.items():
+            if isinstance(model, nn.Module):
+                torch.save(model.state_dict(), model_path / f"{name}.pth")
+            else:
+                joblib.dump(model, model_path / f"{name}.pkl")
+        
+        print(f"Models saved to {model_path}")
+    
+    def load_models(self, user_id: str, model_dir: str = "models") -> Dict[str, Any]:
+        """Load trained models."""
+        model_path = Path(model_dir) / user_id
+        models = {}
+        
+        for model_file in model_path.glob("*.pkl"):
+            name = model_file.stem
+            models[name] = joblib.load(model_file)
+        
+        print(f"Models loaded from {model_path}")
+        return models
+
+##############################
+# 5) PREDICTION ENGINE       #
+##############################
+
+class HealthPredictionEngine:
+    """Engine for making health predictions."""
+    
+    def __init__(self, db_path: str = "unified_health.db"):
+        self.db_path = db_path
+        self.models = {}
+        self.feature_store = None
+        
+    def load_models(self, user_id: str, model_dir: str = "models") -> None:
+        """Load models for a user."""
+        trainer = HealthModelTrainer(self.db_path)
+        self.models = trainer.load_models(user_id, model_dir)
+    
+    def predict_daily_risk(self, user_id: str, date: str) -> Dict[str, float]:
+        """Predict daily risk for all targets."""
+        with get_conn() as conn:
+            result = conn.execute(
+                """SELECT features_json FROM fs_daily_user 
+                   WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchone()
+        
+        if not result:
+            return {}
+        
+        features = json.loads(result[0])
+        X = pd.DataFrame([features])
+        
+        predictions = {}
+        for target, classifier in self.models.items():
+            if hasattr(classifier, 'predict'):
+                risk = classifier.predict(X)[0]
+                predictions[target] = float(risk)
+        
+        return predictions
+    
+    def predict_sequence_risk(self, user_id: str, date: str) -> Dict[str, float]:
+        """Predict sequence-based risk."""
+        with get_conn() as conn:
+            result = conn.execute(
+                """SELECT seq_json FROM fs_seq_user 
+                   WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchone()
+        
+        if not result:
+            return {}
+        
+        seq_data = json.loads(result[0])
+        X = torch.tensor(seq_data['X'], dtype=torch.float32).unsqueeze(0)
+        
+        predictions = {}
+        for target, model in self.models.items():
+            if isinstance(model, nn.Module):
+                model.eval()
+                with torch.no_grad():
+                    outputs = model(X)
+                    predictions[target] = float(outputs[target].item())
+        
+        return predictions
+    
+    def get_explanations(self, user_id: str, date: str) -> Dict[str, Dict[str, float]]:
+        """Get SHAP explanations for predictions."""
+        with get_conn() as conn:
+            result = conn.execute(
+                """SELECT features_json FROM fs_daily_user 
+                   WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchone()
+        
+        if not result:
+            return {}
+        
+        features = json.loads(result[0])
+        X = pd.DataFrame([features])
+        
+        explanations = {}
+        for target, classifier in self.models.items():
+            if hasattr(classifier, 'explain') and classifier.explainer is not None:
+                shap_values = classifier.explain(X)
+                if shap_values is not None:
+                    feature_names = classifier.feature_names
+                    explanations[target] = dict(zip(feature_names, shap_values[0]))
+        
+        return explanations
+
+# Example usage
+if __name__ == "__main__":
+    # Initialize trainer
+    trainer = HealthModelTrainer()
+    
+    # Train models for a user
+    user_id = "user_001"
+    
+    # Train trigger classifiers
+    classifiers = trainer.train_trigger_classifiers(user_id)
+    
+    # Train sequence model
+    sequence_model = trainer.train_sequence_model(user_id, "gut")
+    
+    # Save models
+    all_models = {**classifiers, "sequence": sequence_model}
+    trainer.save_models(user_id, all_models)
+    
+    # Make predictions
+    engine = HealthPredictionEngine()
+    engine.load_models(user_id)
+    
+    predictions = engine.predict_daily_risk(user_id, "2025-01-15")
+    print("Daily risk predictions:", predictions)

@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
+import { generateSkinResponse } from "@/lib/chat/skin-chat"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -295,7 +296,7 @@ export default function SkinTrackPage() {
         }
       } catch {
         // Fallback to local rule-based responder
-        const reply = generateSkintrackResponse(q)
+        const reply = generateSkinResponse(q)
         setChat([...base, { role: "assistant", text: reply, time: new Date().toISOString() }])
       }
     })()
@@ -1032,30 +1033,4 @@ export default function SkinTrackPage() {
       />
     </div>
   )
-}
-
-// --- SkinTrack rule-based responses (specialized) ---
-function generateSkintrackResponse(prompt: string): string {
-  const p = prompt.toLowerCase()
-  // Photo/lesion analysis
-  if (p.includes("photo") || p.includes("image") || p.includes("lesion") || p.includes("spot")) {
-    return "🔬 Photo/Lesion Analysis guidance: track area, redness (R/G), and border irregularity over time. Watch for rapid growth, very dark/variegated color, bleeding, or asymmetry — seek a clinician if present. For consistent photos: same lighting, distance, and background.";
-  }
-  // Trends & metrics
-  if (p.includes("trend") || p.includes("redness") || p.includes("border") || p.includes("area")) {
-    return "📊 Trend tips: decreasing area and redness suggest improvement. Border irregularity ≥1 rising over time warrants attention. Keep measurements weekly and note any new treatments or product changes.";
-  }
-  // Treatment schedule / adherence
-  if (p.includes("treatment") || p.includes("medication") || p.includes("cream") || p.includes("ointment") || p.includes("schedule") || p.includes("adherence")) {
-    return "💊 Treatment guidance: apply as prescribed (e.g., thin layer BID). Moisturize after bathing, avoid fragrances, and set reminders for morning/evening doses. If irritation occurs, pause and consult your clinician.";
-  }
-  // Triggers and care
-  if (p.includes("trigger") || p.includes("flare") || p.includes("itch") || p.includes("pain") || p.includes("stress")) {
-    return "⚠️ Flare management: identify triggers (fragrance, detergents, pollen/pets, new products, sweat). Keep nails short, use gentle cleansers, lukewarm showers, pat-dry then moisturize, manage stress/sleep. Record exposures on flare days.";
-  }
-  // Conditions
-  if (p.includes("eczema") || p.includes("psoriasis") || p.includes("acne") || p.includes("dermatitis") || p.includes("melanoma") || p.includes("vitiligo")) {
-    return "🧾 Condition info: track lesion size, redness, and symptoms alongside treatment steps. Escalate to care if rapid changes, severe pain, infection signs, or concerning ABCDEs (Asymmetry, Border, Color, Diameter, Evolving).";
-  }
-  return `🤖 SkinTrack Assistant\nTell me about "${prompt}". I can help with photo tracking, trend interpretation, treatment routines, and trigger management.`
 }

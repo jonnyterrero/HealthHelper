@@ -12,6 +12,7 @@ import { ProfileMenu } from "@/components/profile-menu"
 import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ChatPanel } from "@/components/chat/chat-panel"
+import { generateMindResponse } from "@/lib/chat/mind-chat"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.profile.v1"
@@ -604,30 +605,6 @@ function calcStreak(entries: Entry[]) {
 }
 
 function respond(q: string, profile: Profile, entries: Entry[]): string {
-  const t = q.toLowerCase()
-  const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0)
-  const lastN = (n: number) => entries.slice(-n)
-  const moodAvg7 = avg(lastN(7).map((e) => e.mood))
-  const sleepAvg7 = avg(lastN(7).map((e) => e.sleepHours))
-  const stressAvg7 = avg(lastN(7).map((e) => e.stress))
-  const recent = entries.slice(-2)
-  const stressTrend = recent.length === 2 ? recent[1].stress - recent[0].stress : 0
-
-  if (t.includes("sleep")) {
-    return `Past week sleep avg: ${sleepAvg7.toFixed(1)}h. Aim for a consistent wind-down, limit caffeine after 2pm, and keep devices out of bed.`
-  }
-  if (t.includes("stress")) {
-    const trendTxt = stressTrend > 0.5 ? "rising" : stressTrend < -0.5 ? "falling" : "stable"
-    return `Stress is ${trendTxt}; 7‑day avg: ${stressAvg7.toFixed(1)}/10. Try 4‑7‑8 breathing for 2 minutes and a short walk after meals.`
-  }
-  if (t.includes("mood")) {
-    return `Your 7‑day mood average is ${moodAvg7.toFixed(1)}/10. Improve by aligning sleep (${sleepAvg7.toFixed(1)}h avg) and light exercise on low‑energy days.`
-  }
-  if (t.includes("medication") || t.includes("reminder")) {
-    return "Set reminders aligned to your routine (morning/afternoon/evening). Log any side effects in notes to spot patterns over time.";
-  }
-  if (profile.conditions.length) {
-    return `Consider your profile conditions (${profile.conditions.join(", ")}). Pace activities and prioritize recovery on high‑stress days (${stressAvg7.toFixed(1)}/10 avg).`
-  }
-  return `Ask about mood, sleep, or stress. Tip: last 7 days — mood ${moodAvg7.toFixed(1)}, sleep ${sleepAvg7.toFixed(1)}h, stress ${stressAvg7.toFixed(1)}/10.`
+  // Use the specialized MindTrack chat logic
+  return generateMindResponse(q)
 }

@@ -92,6 +92,63 @@ export default function HomePage() {
   // Quick sleep check-in state
   const [quickSleep, setQuickSleep] = React.useState({ hours: 7, stress: 5 });
 
+  // Enhanced nutrition tracking with all macros/micros from Python backend
+  const [nutrition, setNutrition] = React.useState({
+    mealTime: "",
+    foodItems: "",
+    foodType: "",
+    portionSize: "",
+    portionGrams: 0,
+    tags: [] as string[],
+    calories: 0,
+    caffeineMg: 0,
+    // Macronutrients
+    proteinG: 0,
+    carbsG: 0,
+    fatG: 0,
+    fiberG: 0,
+    sugarG: 0,
+    // Additional macros
+    saturatedFatG: 0,
+    monounsaturatedFatG: 0,
+    polyunsaturatedFatG: 0,
+    transFatG: 0,
+    cholesterolMg: 0,
+    sodiumMg: 0,
+    potassiumMg: 0,
+    // Micronutrients
+    vitaminCMg: 0,
+    vitaminDIu: 0,
+    calciumMg: 0,
+    ironMg: 0,
+    magnesiumMg: 0,
+    zincMg: 0,
+    artificialSweeteners: false,
+  });
+
+  // Workout tracking from Python backend
+  const [workout, setWorkout] = React.useState({
+    timestamp: "",
+    type: "",
+    durationMin: 0,
+    intensity: 5,
+    caloriesBurned: 0,
+    heartRateAvg: 0,
+    heartRateMax: 0,
+    notes: "",
+  });
+
+  // Vital signs tracking from Python backend
+  const [vitals, setVitals] = React.useState({
+    hrMean: 0,
+    hrMax: 0,
+    hrvMs: 0,
+    spo2: 0,
+    steps: 0,
+    activeMin: 0,
+    caloriesBurned: 0,
+  });
+
   React.useEffect(() => {
     // preload existing for selected date
     const e = loadEntries().find((x) => x.date === date);
@@ -473,6 +530,406 @@ export default function HomePage() {
               placeholder="Write about your day, feelings, or observations..."
               rows={3}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* NEW: Nutrition Tracking Card */}
+      <Card className="border-green-200 dark:border-green-900/50">
+        <CardHeader>
+          <CardTitle>🍎 Nutrition & Meal Tracking</CardTitle>
+          <CardDescription>Comprehensive macronutrient and micronutrient tracking</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Meal Time</Label>
+              <Input 
+                type="datetime-local" 
+                value={nutrition.mealTime} 
+                onChange={(e) => setNutrition({ ...nutrition, mealTime: e.target.value })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Food Type</Label>
+              <Select value={nutrition.foodType} onValueChange={(v) => setNutrition({ ...nutrition, foodType: v })}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="breakfast">Breakfast</SelectItem>
+                  <SelectItem value="lunch">Lunch</SelectItem>
+                  <SelectItem value="dinner">Dinner</SelectItem>
+                  <SelectItem value="snack">Snack</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Portion Size</Label>
+              <Select value={nutrition.portionSize} onValueChange={(v) => setNutrition({ ...nutrition, portionSize: v })}>
+                <SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                  <SelectItem value="exact_grams">Exact (grams)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Food Items</Label>
+            <Input 
+              value={nutrition.foodItems} 
+              onChange={(e) => setNutrition({ ...nutrition, foodItems: e.target.value })} 
+              placeholder="e.g., Grilled chicken, brown rice, steamed broccoli"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-3">
+            <div className="space-y-2">
+              <Label className="text-xs">Calories</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={nutrition.calories || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, calories: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Protein (g)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                step={0.1} 
+                value={nutrition.proteinG || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, proteinG: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Carbs (g)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                step={0.1} 
+                value={nutrition.carbsG || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, carbsG: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Fat (g)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                step={0.1} 
+                value={nutrition.fatG || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, fatG: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Fiber (g)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                step={0.1} 
+                value={nutrition.fiberG || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, fiberG: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Sugar (g)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                step={0.1} 
+                value={nutrition.sugarG || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, sugarG: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Sodium (mg)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={nutrition.sodiumMg || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, sodiumMg: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Caffeine (mg)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={nutrition.caffeineMg || ""} 
+                onChange={(e) => setNutrition({ ...nutrition, caffeineMg: Number(e.target.value) })} 
+              />
+            </div>
+          </div>
+
+          <Accordion type="single" collapsible>
+            <AccordionItem value="advanced-nutrition">
+              <AccordionTrigger>Advanced Nutrition Details</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid md:grid-cols-4 gap-3 pt-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Saturated Fat (g)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      step={0.1} 
+                      value={nutrition.saturatedFatG || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, saturatedFatG: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Cholesterol (mg)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      value={nutrition.cholesterolMg || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, cholesterolMg: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Vitamin C (mg)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      step={0.1} 
+                      value={nutrition.vitaminCMg || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, vitaminCMg: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Vitamin D (IU)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      value={nutrition.vitaminDIu || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, vitaminDIu: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Calcium (mg)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      value={nutrition.calciumMg || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, calciumMg: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Iron (mg)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      step={0.1} 
+                      value={nutrition.ironMg || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, ironMg: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Magnesium (mg)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      value={nutrition.magnesiumMg || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, magnesiumMg: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Zinc (mg)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      step={0.1} 
+                      value={nutrition.zincMg || ""} 
+                      onChange={(e) => setNutrition({ ...nutrition, zincMg: Number(e.target.value) })} 
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <Switch 
+                    checked={nutrition.artificialSweeteners} 
+                    onCheckedChange={(c) => setNutrition({ ...nutrition, artificialSweeteners: c })} 
+                  />
+                  <Label>Contains Artificial Sweeteners</Label>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
+
+      {/* NEW: Workout Tracking Card */}
+      <Card className="border-orange-200 dark:border-orange-900/50">
+        <CardHeader>
+          <CardTitle>💪 Workout & Activity Tracking</CardTitle>
+          <CardDescription>Exercise sessions with heart rate and intensity</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Workout Time</Label>
+              <Input 
+                type="datetime-local" 
+                value={workout.timestamp} 
+                onChange={(e) => setWorkout({ ...workout, timestamp: e.target.value })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Workout Type</Label>
+              <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v })}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="run">Running</SelectItem>
+                  <SelectItem value="weights">Weights</SelectItem>
+                  <SelectItem value="yoga">Yoga</SelectItem>
+                  <SelectItem value="cycling">Cycling</SelectItem>
+                  <SelectItem value="swimming">Swimming</SelectItem>
+                  <SelectItem value="hiit">HIIT</SelectItem>
+                  <SelectItem value="walking">Walking</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Duration (minutes)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={workout.durationMin || ""} 
+                onChange={(e) => setWorkout({ ...workout, durationMin: Number(e.target.value) })} 
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-3">
+            <div className="space-y-2">
+              <Label>Intensity (1-5)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={5} 
+                value={workout.intensity} 
+                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Calories Burned</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={workout.caloriesBurned || ""} 
+                onChange={(e) => setWorkout({ ...workout, caloriesBurned: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Avg Heart Rate</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={workout.heartRateAvg || ""} 
+                onChange={(e) => setWorkout({ ...workout, heartRateAvg: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Max Heart Rate</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={workout.heartRateMax || ""} 
+                onChange={(e) => setWorkout({ ...workout, heartRateMax: Number(e.target.value) })} 
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Input 
+              value={workout.notes} 
+              onChange={(e) => setWorkout({ ...workout, notes: e.target.value })} 
+              placeholder="How did you feel? Any observations?"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* NEW: Daily Vitals Card */}
+      <Card className="border-blue-200 dark:border-blue-900/50">
+        <CardHeader>
+          <CardTitle>❤️ Daily Vitals & Activity</CardTitle>
+          <CardDescription>Heart rate, steps, and other vital signs</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-4 gap-3">
+            <div className="space-y-2">
+              <Label>Avg Heart Rate</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={vitals.hrMean || ""} 
+                onChange={(e) => setVitals({ ...vitals, hrMean: Number(e.target.value) })} 
+                placeholder="bpm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Max Heart Rate</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={vitals.hrMax || ""} 
+                onChange={(e) => setVitals({ ...vitals, hrMax: Number(e.target.value) })} 
+                placeholder="bpm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>HRV (ms)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={vitals.hrvMs || ""} 
+                onChange={(e) => setVitals({ ...vitals, hrvMs: Number(e.target.value) })} 
+                placeholder="Heart rate variability"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>SpO2 (%)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={100} 
+                value={vitals.spo2 || ""} 
+                onChange={(e) => setVitals({ ...vitals, spo2: Number(e.target.value) })} 
+                placeholder="Blood oxygen"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Steps</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={vitals.steps || ""} 
+                onChange={(e) => setVitals({ ...vitals, steps: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Active Minutes</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={vitals.activeMin || ""} 
+                onChange={(e) => setVitals({ ...vitals, activeMin: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Calories Burned</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={vitals.caloriesBurned || ""} 
+                onChange={(e) => setVitals({ ...vitals, caloriesBurned: Number(e.target.value) })} 
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

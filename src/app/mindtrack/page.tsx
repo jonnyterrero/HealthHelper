@@ -13,12 +13,14 @@ import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { generateMindResponse } from "@/lib/chat/mind-chat"
+import { Pill, CheckCircle2, XCircle, Clock } from "lucide-react"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.profile.v1"
 const ENTRIES_KEY = "orchids.mindtrack.entries.v1"
 const CHAT_KEY = "orchids.mindtrack.chat.v1"
 const JOURNAL_KEY = "orchids.mindtrack.journal.v1"
+const MEDICATION_KEY = "orchids.mindtrack.medications.v1"
 
 // Types
 type Profile = {
@@ -57,6 +59,16 @@ type JournalEntry = {
 }
 
 type ChatMessage = { role: "user" | "assistant"; text: string; time: string }
+
+type MedicationEntry = {
+  id: string
+  date: string
+  timestamp: string
+  medName: string
+  dosage: string
+  status: "taken" | "missed" | "late" | "skipped"
+  notes?: string
+}
 
 function loadProfile(): Profile {
   if (typeof window === "undefined") return { conditions: [], recurring: [] }
@@ -121,6 +133,22 @@ function saveJournalEntries(list: JournalEntry[]) {
   localStorage.setItem(JOURNAL_KEY, JSON.stringify(list))
 }
 
+function loadMedications(): MedicationEntry[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(MEDICATION_KEY)
+    const arr = raw ? JSON.parse(raw) : []
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+}
+
+function saveMedications(list: MedicationEntry[]) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(MEDICATION_KEY, JSON.stringify(list))
+}
+
 function todayISO() {
   const d = new Date()
   const iso = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -157,10 +185,20 @@ export default function MindTrackPage() {
   const [journalEntries, setJournalEntries] = React.useState<JournalEntry[]>([])
   const [journalText, setJournalText] = React.useState("")
 
+  // Medication tracking state
+  const [medications, setMedications] = React.useState<MedicationEntry[]>([])
+  const [medForm, setMedForm] = React.useState({
+    medName: "",
+    dosage: "",
+    status: "taken" as "taken" | "missed" | "late" | "skipped",
+    notes: "",
+  })
+
   React.useEffect(() => {
     setEntries(loadEntries())
     setChat(loadChat())
     setJournalEntries(loadJournalEntries())
+    setMedications(loadMedications())
   }, [])
 
   // Auto-prefill from shared profile (conditions/recurring symptoms)
@@ -237,6 +275,31 @@ export default function MindTrackPage() {
     
     setJournalText("")
     toast.success("Journal entry saved")
+  }
+
+  function saveMedication() {
+    if (!medForm.medName.trim()) {
+      toast.error("Medication name is required")
+      return
+    }
+    
+    const now = new Date()
+    const entry: MedicationEntry = {
+      id: crypto.randomUUID(),
+      date: todayISO(),
+      timestamp: now.toISOString(),
+      medName: medForm.medName,
+      dosage: medForm.dosage,
+      status: medForm.status,
+      notes: medForm.notes || undefined,
+    }
+    
+    const next = [entry, ...medications]
+    setMedications(next)
+    saveMedications(next)
+    
+    setMedForm({ medName: "", dosage: "", status: "taken", notes: "" })
+    toast.success("Medication entry saved")
   }
 
   function askAssistant() {
@@ -412,6 +475,22 @@ export default function MindTrackPage() {
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-30) // Last 30 days
   }, [journalEntries, entries])
+
+  const medStats = React.useMemo(() => {
+    const last7Days = medications.filter(m => {
+      const medDate = new Date(m.date)
+      const sevenDaysAgo = addDays(-6)
+      return medDate >= sevenDaysAgo
+    })
+    
+    const totalEntries = medications.length
+    const last7Count = last7Days.length
+    const adherenceRate = last7Days.length 
+      ? Math.round((last7Days.filter(m => m.status === "taken").length / last7Days.length) * 100)
+      : 0
+    
+    return { totalEntries, last7Count, adherenceRate }
+  }, [medications])
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
@@ -800,6 +879,124 @@ export default function MindTrackPage() {
                 ))}
               </ul>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-3 border-blue-200 dark:border-blue-900/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Pill className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              Medication Tracking
+            </CardTitle>
+            <CardDescription>Track medication adherence and effectiveness</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-4 gap-3 text-sm mb-4">
+              <div className="rounded-md border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 p-3">
+                <div className="text-muted-foreground">Total Entries</div>
+                <div className="text-xl font-semibold text-blue-700 dark:text-blue-400">{medStats.totalEntries}</div>
+              </div>
+              <div className="rounded-md border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 p-3">
+                <div className="text-muted-foreground">Last 7 Days</div>
+                <div className="text-xl font-semibold text-blue-700 dark:text-blue-400">{medStats.last7Count}</div>
+              </div>
+              <div className="rounded-md border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 p-3">
+                <div className="text-muted-foreground">Adherence Rate</div>
+                <div className="text-xl font-semibold text-blue-700 dark:text-blue-400">{medStats.adherenceRate}%</div>
+              </div>
+              <div className={`rounded-md border p-3 ${
+                medStats.adherenceRate >= 80 
+                  ? 'border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20' 
+                  : 'border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20'
+              }`}>
+                <div className="text-muted-foreground">Status</div>
+                <div className={`text-xl font-semibold ${
+                  medStats.adherenceRate >= 80 
+                    ? 'text-green-700 dark:text-green-400' 
+                    : 'text-yellow-700 dark:text-yellow-400'
+                }`}>
+                  {medStats.adherenceRate >= 80 ? '✓ Good' : '⚠ Improve'}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-4 gap-3">
+              <div className="space-y-2">
+                <Label>Medication Name</Label>
+                <Input 
+                  value={medForm.medName} 
+                  onChange={(e) => setMedForm({ ...medForm, medName: e.target.value })} 
+                  placeholder="e.g., Sertraline"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Dosage</Label>
+                <Input 
+                  value={medForm.dosage} 
+                  onChange={(e) => setMedForm({ ...medForm, dosage: e.target.value })} 
+                  placeholder="e.g., 50mg"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={medForm.status} onValueChange={(v: any) => setMedForm({ ...medForm, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="taken">✓ Taken</SelectItem>
+                    <SelectItem value="missed">✗ Missed</SelectItem>
+                    <SelectItem value="late">⏰ Late</SelectItem>
+                    <SelectItem value="skipped">⊘ Skipped</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="opacity-0">Action</Label>
+                <Button onClick={saveMedication} className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Pill className="w-4 h-4 mr-2" />
+                  Log Medication
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Input 
+                value={medForm.notes} 
+                onChange={(e) => setMedForm({ ...medForm, notes: e.target.value })} 
+                placeholder="Side effects, effectiveness, reminders..."
+              />
+            </div>
+
+            {/* Recent Medication History */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-semibold mb-3">Recent History</h4>
+              {medications.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No medication entries yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {medications.slice(0, 5).map((med) => (
+                    <div key={med.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-shrink-0">
+                        {med.status === "taken" && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+                        {med.status === "missed" && <XCircle className="w-5 h-5 text-red-600" />}
+                        {med.status === "late" && <Clock className="w-5 h-5 text-yellow-600" />}
+                        {med.status === "skipped" && <XCircle className="w-5 h-5 text-gray-600" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{med.medName}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(med.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {med.dosage} • {med.status}
+                          {med.notes && ` • ${med.notes}`}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

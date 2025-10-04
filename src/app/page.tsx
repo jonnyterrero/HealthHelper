@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -221,11 +221,23 @@ export default function HomePage() {
 
       {/* Desktop Navigation Tabs */}
       <nav className="block">
-        <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+        <div className="flex items-center gap-2 p-1 bg-muted rounded-lg flex-wrap">
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/analytics" className="flex items-center justify-center gap-2">
               <Activity className="w-4 h-4" />
               Analytics
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
+            <Link href="/nutrition" className="flex items-center justify-center gap-2">
+              <Apple className="w-4 h-4" />
+              Nutrition
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
+            <Link href="/remedies" className="flex items-center justify-center gap-2">
+              <Leaf className="w-4 h-4" />
+              Remedies
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">

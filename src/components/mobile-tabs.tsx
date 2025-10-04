@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Activity, HeartPulse, Sparkles, Brain } from "lucide-react";
+import { Home, Activity, HeartPulse, Sparkles, Brain, Apple, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/analytics", label: "Insights", icon: Activity },
+  { href: "/nutrition", label: "Nutrition", icon: Apple },
+  { href: "/remedies", label: "Remedies", icon: Leaf },
   { href: "/skintrack", label: "Skin", icon: Sparkles },
   { href: "/gastro", label: "Gastro", icon: HeartPulse },
   { href: "/mindtrack", label: "Mind", icon: Brain },
@@ -23,7 +25,7 @@ export const MobileTabs = () => {
       aria-label="Primary"
       role="navigation"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-7">
         {TABS.map((tab) => {
           const active = pathname === tab.href;
           const Icon = tab.icon;

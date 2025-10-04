@@ -18,6 +18,7 @@ import { generateMindResponse } from "@/lib/chat/mind-chat"
 const PROFILE_KEY = "orchids.profile.v1"
 const ENTRIES_KEY = "orchids.mindtrack.entries.v1"
 const CHAT_KEY = "orchids.mindtrack.chat.v1"
+const JOURNAL_KEY = "orchids.mindtrack.journal.v1"
 
 // Types
 type Profile = {
@@ -44,6 +45,15 @@ type Entry = {
     duration: string
     notes?: string
   }
+  journaledToday?: boolean // Track if user journaled on this day
+}
+
+type JournalEntry = {
+  id: string
+  date: string // yyyy-mm-dd
+  timestamp: string // ISO datetime
+  wordCount: number
+  characterCount: number
 }
 
 type ChatMessage = { role: "user" | "assistant"; text: string; time: string }
@@ -95,6 +105,22 @@ function saveChat(list: ChatMessage[]) {
   localStorage.setItem(CHAT_KEY, JSON.stringify(list))
 }
 
+function loadJournalEntries(): JournalEntry[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(JOURNAL_KEY)
+    const arr = raw ? JSON.parse(raw) : []
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+}
+
+function saveJournalEntries(list: JournalEntry[]) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(JOURNAL_KEY, JSON.stringify(list))
+}
+
 function todayISO() {
   const d = new Date()
   const iso = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -126,10 +152,15 @@ export default function MindTrackPage() {
   const [entries, setEntries] = React.useState<Entry[]>([])
   const [chat, setChat] = React.useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = React.useState("")
+  
+  // Journal state
+  const [journalEntries, setJournalEntries] = React.useState<JournalEntry[]>([])
+  const [journalText, setJournalText] = React.useState("")
 
   React.useEffect(() => {
     setEntries(loadEntries())
     setChat(loadChat())
+    setJournalEntries(loadJournalEntries())
   }, [])
 
   // Auto-prefill from shared profile (conditions/recurring symptoms)
@@ -166,11 +197,46 @@ export default function MindTrackPage() {
         duration,
         notes: bodyNotes || undefined,
       },
+      journaledToday: journalEntries.some(j => j.date === (dateTime ? dateTime.slice(0,10) : date))
     }
     const next = [e, ...entries.filter((x) => !(x.date === e.date))].sort((a, b) => a.date.localeCompare(b.date))
     setEntries(next)
     saveEntries(next)
     toast.success("Mind entry saved")
+  }
+
+  function saveJournal() {
+    if (!journalText.trim()) {
+      toast.error("Journal entry is empty")
+      return
+    }
+    
+    const now = new Date()
+    const todayDate = todayISO()
+    const entry: JournalEntry = {
+      id: crypto.randomUUID(),
+      date: todayDate,
+      timestamp: now.toISOString(),
+      wordCount: journalText.trim().split(/\s+/).length,
+      characterCount: journalText.length
+    }
+    
+    const next = [entry, ...journalEntries]
+    setJournalEntries(next)
+    saveJournalEntries(next)
+    
+    // Update today's entry to mark journaling
+    const existingEntry = entries.find(e => e.date === todayDate)
+    if (existingEntry) {
+      const updated = entries.map(e => 
+        e.date === todayDate ? { ...e, journaledToday: true } : e
+      )
+      setEntries(updated)
+      saveEntries(updated)
+    }
+    
+    setJournalText("")
+    toast.success("Journal entry saved")
   }
 
   function askAssistant() {
@@ -289,6 +355,63 @@ export default function MindTrackPage() {
   }, [entries])
 
   const recentSymptoms = React.useMemo(() => entries.slice(-5).reverse(), [entries])
+
+  const journalStats = React.useMemo(() => {
+    const last30Days = journalEntries.filter(e => {
+      const entryDate = new Date(e.date)
+      const thirtyDaysAgo = addDays(-29)
+      return entryDate >= thirtyDaysAgo
+    })
+    
+    const totalEntries = journalEntries.length
+    const last30Count = last30Days.length
+    const avgWordCount = journalEntries.length 
+      ? Math.round(journalEntries.reduce((sum, e) => sum + e.wordCount, 0) / journalEntries.length)
+      : 0
+    
+    // Calculate streak
+    let streak = 0
+    let checkDate = new Date()
+    const journalDates = new Set(journalEntries.map(e => e.date))
+    
+    while (true) {
+      const iso = new Date(Date.UTC(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate())).toISOString().slice(0, 10)
+      if (journalDates.has(iso)) {
+        streak++
+        checkDate.setDate(checkDate.getDate() - 1)
+      } else {
+        break
+      }
+    }
+    
+    return { totalEntries, last30Count, avgWordCount, streak }
+  }, [journalEntries])
+
+  const journalCorrelationData = React.useMemo(() => {
+    // Create a map of dates with journal count and mood/stress data
+    const dataMap = new Map<string, { date: string; journalCount: number; mood?: number; stress?: number; energy?: number }>()
+    
+    // Add journal entries
+    journalEntries.forEach(je => {
+      const existing = dataMap.get(je.date) || { date: je.date, journalCount: 0 }
+      existing.journalCount++
+      dataMap.set(je.date, existing)
+    })
+    
+    // Add mood/stress data
+    entries.forEach(e => {
+      const existing = dataMap.get(e.date) || { date: e.date, journalCount: 0 }
+      existing.mood = e.mood
+      existing.stress = e.stress
+      existing.energy = e.energy
+      dataMap.set(e.date, existing)
+    })
+    
+    // Convert to array and sort by date
+    return Array.from(dataMap.values())
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-30) // Last 30 days
+  }, [journalEntries, entries])
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
@@ -409,6 +532,33 @@ export default function MindTrackPage() {
               </Card>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="journal">
+            <AccordionTrigger>Journal Entry</AccordionTrigger>
+            <AccordionContent>
+              <Card className="mt-2 border-purple-200 dark:border-purple-900/50">
+                <CardContent className="space-y-3 pt-4">
+                  <div className="space-y-2">
+                    <Label>Write your thoughts (private - only frequency tracked)</Label>
+                    <textarea
+                      value={journalText}
+                      onChange={(e) => setJournalText(e.target.value)}
+                      placeholder="How are you feeling today? What's on your mind?"
+                      className="w-full min-h-[120px] p-3 rounded-md border bg-background resize-y"
+                      rows={6}
+                    />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{journalText.trim().split(/\s+/).filter(Boolean).length} words</span>
+                      <span>{journalText.length} characters</span>
+                    </div>
+                  </div>
+                  <Button onClick={saveJournal} className="w-full bg-purple-600 hover:bg-purple-700">
+                    Save Journal Entry
+                  </Button>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </div>
 
@@ -515,7 +665,52 @@ export default function MindTrackPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="md:col-span-2 border-purple-200 dark:border-purple-900/50">
+          <CardHeader>
+            <CardTitle>Daily Journal</CardTitle>
+            <CardDescription>Express your thoughts and feelings (only frequency tracked for privacy)</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-4 gap-3 text-sm mb-4">
+              <div className="rounded-md border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/20 p-3">
+                <div className="text-muted-foreground">Total Entries</div>
+                <div className="text-xl font-semibold text-purple-700 dark:text-purple-400">{journalStats.totalEntries}</div>
+              </div>
+              <div className="rounded-md border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/20 p-3">
+                <div className="text-muted-foreground">Last 30 Days</div>
+                <div className="text-xl font-semibold text-purple-700 dark:text-purple-400">{journalStats.last30Count}</div>
+              </div>
+              <div className="rounded-md border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/20 p-3">
+                <div className="text-muted-foreground">Current Streak</div>
+                <div className="text-xl font-semibold text-purple-700 dark:text-purple-400">{journalStats.streak}d</div>
+              </div>
+              <div className="rounded-md border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/20 p-3">
+                <div className="text-muted-foreground">Avg Words</div>
+                <div className="text-xl font-semibold text-purple-700 dark:text-purple-400">{journalStats.avgWordCount}</div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Write your thoughts (private - only frequency tracked)</Label>
+              <textarea
+                value={journalText}
+                onChange={(e) => setJournalText(e.target.value)}
+                placeholder="How are you feeling today? What's on your mind? Your journal content is private and never stored."
+                className="w-full min-h-[150px] p-3 rounded-md border bg-background resize-y focus:border-purple-400 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-900/50"
+                rows={8}
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{journalText.trim().split(/\s+/).filter(Boolean).length} words • {journalText.length} characters</span>
+                <span className="text-purple-600 dark:text-purple-400">🔒 Content never stored, only frequency</span>
+              </div>
+            </div>
+            <Button onClick={saveJournal} className="w-full bg-purple-600 hover:bg-purple-700">
+              Save Journal Entry
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle>Dashboard Metrics</CardTitle>
             <CardDescription>This week & overall</CardDescription>
@@ -526,6 +721,40 @@ export default function MindTrackPage() {
               <div className="rounded-md border p-3"><div className="text-muted-foreground">This week</div><div className="text-xl font-semibold">{counters.last7}</div></div>
               <div className="rounded-md border p-3"><div className="text-muted-foreground">Current streak</div><div className="text-xl font-semibold">{counters.streak}d</div></div>
               <div className="rounded-md border p-3"><div className="text-muted-foreground">Avg sleep</div><div className="text-xl font-semibold">{counters.avgSleep.toFixed(1)}h</div></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-3 border-purple-200 dark:border-purple-900/50">
+          <CardHeader>
+            <CardTitle>Journaling Impact on Mental Health</CardTitle>
+            <CardDescription>Correlation between journaling frequency and mood/stress levels (last 30 days)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer 
+              className="w-full h-[280px]" 
+              config={{ 
+                journalCount: { label: "Journal Entries", color: "var(--chart-5)" },
+                mood: { label: "Mood", color: "var(--chart-3)" }, 
+                stress: { label: "Stress", color: "var(--chart-1)" }
+              }}
+            >
+              <LineChart data={journalCorrelationData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                <YAxis yAxisId="left" domain={[0, 10]} tick={{ fontSize: 12 }} label={{ value: "Mood/Stress (0-10)", angle: -90, position: "insideLeft", style: { fontSize: 11 } }} />
+                <YAxis yAxisId="right" orientation="right" domain={[0, 'auto']} tick={{ fontSize: 12 }} label={{ value: "Journal Entries", angle: 90, position: "insideRight", style: { fontSize: 11 } }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Line yAxisId="right" type="monotone" dataKey="journalCount" stroke="var(--color-journalCount)" strokeWidth={3} dot={{ r: 4 }} name="Journal Entries" />
+                <Line yAxisId="left" type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} name="Mood" />
+                <Line yAxisId="left" type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} name="Stress" />
+              </LineChart>
+            </ChartContainer>
+            <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Privacy Note:</strong> Your journal content is never stored. Only the frequency (date and word count) is tracked to help you visualize the correlation between journaling habits and your mental health metrics.
+              </p>
             </div>
           </CardContent>
         </Card>

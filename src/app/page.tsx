@@ -12,6 +12,7 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights, predictSleepQuality, predictSymptoms, type HealthEntry } from "@/lib/health";
 import { loadSampleData } from "@/lib/sampleData";
 import { exportCSV, exportPDF } from "@/lib/export";
@@ -30,30 +31,62 @@ export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
   const [entries, setEntries] = React.useState(() => loadEntries());
 
+  // Enhanced daily log state
+  const [dailyLog, setDailyLog] = React.useState({
+    mood: 5,
+    stress: 5,
+    energy: 5,
+    focus: 5,
+    notes: "",
+    journalEntry: "",
+    copingStrategies: [] as string[],
+    menstrualPhase: "",
+    cycleDay: 0,
+    dailyFlareStatus: false,
+    flareType: "",
+    flareSeverity: 0,
+    flareDurationHours: 0,
+    recoveryActivities: [] as string[],
+    meditationMinutes: 0,
+    relaxationQuality: 5
+  });
+
+  // Enhanced stomach state with GI specifics
   const [stomach, setStomach] = React.useState({
     severity: 0,
     painLocation: "",
     bowelChanges: "",
     triggers: { dairy: false, gluten: false, spicy: false, alcohol: false, caffeine: false },
-    notes: ""
+    notes: "",
+    refluxSeverity: 0,
+    bloatingSeverity: 0,
+    abdominalPainSeverity: 0,
+    stoolConsistency: 4 // Bristol stool scale 1-7
   });
+
+  // Enhanced skin state
   const [skin, setSkin] = React.useState({
     severity: 0,
     area: "",
     rash: false,
     itch: false,
     triggers: { cosmetics: false, detergent: false, weather: false, sweat: false, dietSugar: false },
-    notes: ""
+    notes: "",
+    skinLocation: "",
+    skinType: ""
   });
+
   const [mental, setMental] = React.useState({ mood: 5, anxiety: 5, sleepHours: 7, stressLevel: 5, notes: "" });
 
-  // New: Symptom tracking state
+  // Enhanced symptom tracking state
   const [symptoms, setSymptoms] = React.useState({
     giFlare: 0,
     skinFlare: 0,
     migraine: 0,
     fatigue: 0,
-    notes: ""
+    notes: "",
+    fatigueSeverity: 0,
+    headacheSeverity: 0
   });
 
   // Quick sleep check-in state
@@ -67,7 +100,11 @@ export default function HomePage() {
       painLocation: e.stomach.painLocation ?? "",
       bowelChanges: e.stomach.bowelChanges ?? "",
       triggers: { ...e.stomach.triggers },
-      notes: e.stomach.notes ?? ""
+      notes: e.stomach.notes ?? "",
+      refluxSeverity: 0,
+      bloatingSeverity: 0,
+      abdominalPainSeverity: 0,
+      stoolConsistency: 4
     });
     if (e?.skin) setSkin({
       severity: e.skin.severity,
@@ -75,7 +112,9 @@ export default function HomePage() {
       rash: !!e.skin.rash,
       itch: !!e.skin.itch,
       triggers: { ...e.skin.triggers },
-      notes: e.skin.notes ?? ""
+      notes: e.skin.notes ?? "",
+      skinLocation: "",
+      skinType: ""
     });
     if (e?.mental) setMental({
       mood: e.mental.mood,
@@ -89,7 +128,9 @@ export default function HomePage() {
       skinFlare: e.symptoms.skinFlare,
       migraine: e.symptoms.migraine,
       fatigue: e.symptoms.fatigue,
-      notes: e.symptoms.notes ?? ""
+      notes: e.symptoms.notes ?? "",
+      fatigueSeverity: 0,
+      headacheSeverity: 0
     });
   }, [date]);
 
@@ -148,7 +189,6 @@ export default function HomePage() {
   function handleLoadSampleData() {
     const sampleData = loadSampleData();
     setEntries(sampleData);
-    // Reload the page to show the new data with all insights
     window.location.reload();
   }
 
@@ -302,6 +342,141 @@ export default function HomePage() {
         </Card>
       )}
 
+      {/* Enhanced Daily Log Card */}
+      <Card className="border-blue-200 dark:border-blue-900/50">
+        <CardHeader>
+          <CardTitle>📋 Daily Health Log</CardTitle>
+          <CardDescription>Comprehensive daily tracking aligned with AI backend</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>Energy (1-10)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={10} 
+                value={dailyLog.energy} 
+                onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Focus (1-10)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={10} 
+                value={dailyLog.focus} 
+                onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Meditation (min)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                value={dailyLog.meditationMinutes} 
+                onChange={(e) => setDailyLog({ ...dailyLog, meditationMinutes: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Relaxation Quality (1-10)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={10} 
+                value={dailyLog.relaxationQuality} 
+                onChange={(e) => setDailyLog({ ...dailyLog, relaxationQuality: Number(e.target.value) })} 
+              />
+            </div>
+          </div>
+
+          {/* Flare Tracking */}
+          <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Switch 
+                checked={dailyLog.dailyFlareStatus} 
+                onCheckedChange={(c) => setDailyLog({ ...dailyLog, dailyFlareStatus: c })} 
+              />
+              <Label className="font-semibold">Did you experience a flare today?</Label>
+            </div>
+            {dailyLog.dailyFlareStatus && (
+              <div className="grid md:grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label>Flare Type</Label>
+                  <Select value={dailyLog.flareType} onValueChange={(v) => setDailyLog({ ...dailyLog, flareType: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gut">Gut</SelectItem>
+                      <SelectItem value="skin">Skin</SelectItem>
+                      <SelectItem value="mental">Mental</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Flare Severity (0-10)</Label>
+                  <Input 
+                    type="number" 
+                    min={0} 
+                    max={10} 
+                    value={dailyLog.flareSeverity} 
+                    onChange={(e) => setDailyLog({ ...dailyLog, flareSeverity: Number(e.target.value) })} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Duration (hours)</Label>
+                  <Input 
+                    type="number" 
+                    min={0} 
+                    value={dailyLog.flareDurationHours} 
+                    onChange={(e) => setDailyLog({ ...dailyLog, flareDurationHours: Number(e.target.value) })} 
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Menstrual Cycle Tracking */}
+          <div className="grid md:grid-cols-2 gap-3 p-3 border rounded-lg bg-pink-50/50 dark:bg-pink-900/10">
+            <div className="space-y-2">
+              <Label>Menstrual Phase</Label>
+              <Select value={dailyLog.menstrualPhase} onValueChange={(v) => setDailyLog({ ...dailyLog, menstrualPhase: v })}>
+                <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="period">Period</SelectItem>
+                  <SelectItem value="follicular">Follicular</SelectItem>
+                  <SelectItem value="luteal">Luteal</SelectItem>
+                  <SelectItem value="ovulation">Ovulation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Cycle Day (1-35)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={35} 
+                value={dailyLog.cycleDay || ""} 
+                onChange={(e) => setDailyLog({ ...dailyLog, cycleDay: Number(e.target.value) })} 
+                placeholder="Enter cycle day"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Journal Entry</Label>
+            <Textarea 
+              value={dailyLog.journalEntry} 
+              onChange={(e) => setDailyLog({ ...dailyLog, journalEntry: e.target.value })} 
+              placeholder="Write about your day, feelings, or observations..."
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
@@ -441,6 +616,28 @@ export default function HomePage() {
                 onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
               />
             </div>
+            <div className="space-y-2">
+              <Label>Fatigue Severity (0-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                step={1} 
+                value={symptoms.fatigueSeverity} 
+                onChange={(e) => setSymptoms({ ...symptoms, fatigueSeverity: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Headache Severity (0-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                step={1} 
+                value={symptoms.headacheSeverity} 
+                onChange={(e) => setSymptoms({ ...symptoms, headacheSeverity: Number(e.target.value) })} 
+              />
+            </div>
             <div className="md:col-span-4 space-y-2">
               <Label>Symptom Notes</Label>
               <Input 
@@ -454,8 +651,8 @@ export default function HomePage() {
 
         <Card className="hidden md:block">
           <CardHeader>
-            <CardTitle>Stomach</CardTitle>
-            <CardDescription>Symptoms and triggers</CardDescription>
+            <CardTitle>Stomach (Enhanced)</CardTitle>
+            <CardDescription>GI-specific tracking</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
@@ -476,10 +673,52 @@ export default function HomePage() {
                   })
                 }
               />
-              {Number.isNaN(stomach.severity as any) && (
-                <p className="text-xs text-muted-foreground">Please enter a value from 0 to 10.</p>
-              )}
             </div>
+
+            {/* New GI-specific fields */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Reflux (0-10)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={stomach.refluxSeverity}
+                  onChange={(e) => setStomach({ ...stomach, refluxSeverity: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Bloating (0-10)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={stomach.bloatingSeverity}
+                  onChange={(e) => setStomach({ ...stomach, bloatingSeverity: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Abdominal Pain (0-10)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={stomach.abdominalPainSeverity}
+                  onChange={(e) => setStomach({ ...stomach, abdominalPainSeverity: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Bristol Scale (1-7)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={7}
+                  value={stomach.stoolConsistency}
+                  onChange={(e) => setStomach({ ...stomach, stoolConsistency: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label>Pain Location</Label>
               <Select value={stomach.painLocation || undefined} onValueChange={(v) => setStomach({ ...stomach, painLocation: v })}>
@@ -522,17 +761,46 @@ export default function HomePage() {
 
         <Card className="hidden md:block">
           <CardHeader>
-            <CardTitle>Skin</CardTitle>
-            <CardDescription>Symptoms and triggers</CardDescription>
+            <CardTitle>Skin (Enhanced)</CardTitle>
+            <CardDescription>Detailed skin tracking</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <Label>Severity (0-10)</Label>
               <Input type="number" min={0} max={10} step={1} value={skin.severity} onChange={(e) => setSkin({ ...skin, severity: Number(e.target.value) })} />
-              {(skin.severity < 0 || skin.severity > 10) && (
-                <p className="text-xs text-muted-foreground">Value must be between 0 and 10.</p>
-              )}
             </div>
+
+            {/* New skin-specific fields */}
+            <div className="space-y-1">
+              <Label>Skin Location</Label>
+              <Select value={skin.skinLocation || undefined} onValueChange={(v) => setSkin({ ...skin, skinLocation: v })}>
+                <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="face">Face</SelectItem>
+                  <SelectItem value="chest">Chest</SelectItem>
+                  <SelectItem value="back">Back</SelectItem>
+                  <SelectItem value="arms">Arms</SelectItem>
+                  <SelectItem value="legs">Legs</SelectItem>
+                  <SelectItem value="scalp">Scalp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Skin Type</Label>
+              <Select value={skin.skinType || undefined} onValueChange={(v) => setSkin({ ...skin, skinType: v })}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="acne">Acne</SelectItem>
+                  <SelectItem value="rash">Rash</SelectItem>
+                  <SelectItem value="itchiness">Itchiness</SelectItem>
+                  <SelectItem value="dryness">Dryness</SelectItem>
+                  <SelectItem value="eczema">Eczema</SelectItem>
+                  <SelectItem value="psoriasis">Psoriasis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-1">
               <Label>Affected Area</Label>
               <Select value={skin.area || undefined} onValueChange={(v) => setSkin({ ...skin, area: v })}>

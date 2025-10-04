@@ -1,4 +1,4 @@
-// Health data models, storage helpers, and simple ML insights
+// Health data models, storage helpers, and advanced ML insights
 
 export type StomachEntry = {
   date: string // ISO date (yyyy-mm-dd)
@@ -31,6 +31,7 @@ export type SkinEntry = {
   notes?: string
 }
 
+// Enhanced Mental Entry with more detailed tracking
 export type MentalEntry = {
   date: string
   mood: number // 0-10 (higher is better)
@@ -41,7 +42,73 @@ export type MentalEntry = {
   wakeTime?: string // HH:MM format
   stressLevel?: number // 0-10
   energy?: number // 0-10
+  focus?: number // 0-10
+  journalEntry?: string
+  voiceNotePath?: string
+  copingStrategies?: string[]
   notes?: string
+}
+
+// Separate Sleep Entry for detailed sleep tracking
+export type SleepEntry = {
+  date: string
+  startTime: string // HH:MM format
+  endTime: string // HH:MM format
+  durationHours: number
+  qualityScore: number // 1-10
+  sleepStages?: {
+    deep: number // percentage
+    light: number // percentage
+    rem: number // percentage
+    awake: number // percentage
+  }
+  sleepFactors: {
+    caffeine: boolean
+    alcohol: boolean
+    exercise: boolean
+    stress: boolean
+    screenTime: boolean
+  }
+  notes?: string
+}
+
+// Symptom tracking for comprehensive health monitoring
+export type SymptomEntry = {
+  date: string
+  giFlare: number // 0-10
+  skinFlare: number // 0-10
+  migraine: number // 0-10
+  fatigue: number // 0-10
+  notes?: string
+}
+
+// Nutrition tracking types
+export type FoodItem = {
+  name: string
+  portion: string
+  calories?: number
+  protein?: number
+  carbs?: number
+  fat?: number
+  time: string // HH:MM format
+}
+
+export type MealEntry = {
+  date: string
+  meals: FoodItem[]
+  waterIntake?: number // in ml or oz
+  notes?: string
+}
+
+export type NutritionEntry = {
+  date: string
+  meals: MealEntry
+  symptoms?: {
+    stomach: number // 0-10
+    skin: number // 0-10
+    energy: number // 0-10
+  }
+  correlations?: string[] // detected food-symptom correlations
 }
 
 export type HealthEntry = {
@@ -49,9 +116,37 @@ export type HealthEntry = {
   stomach?: StomachEntry
   skin?: SkinEntry
   mental?: MentalEntry
+  sleep?: SleepEntry
+  symptoms?: SymptomEntry
+  nutrition?: NutritionEntry
 }
 
-// Add new sleep quality analysis types
+// Advanced ML prediction types
+export type Prediction = {
+  condition: string
+  probability: number // 0-100
+  factors: string[]
+  severity: 'low' | 'medium' | 'high'
+  confidence: number // 0-100
+}
+
+export type SleepPrediction = {
+  predictedQuality: number // 1-10
+  riskFactors: string[]
+  recommendations: string[]
+  confidence: number
+}
+
+export type SymptomPrediction = {
+  giFlareRisk: number // 0-100
+  skinFlareRisk: number // 0-100
+  migraineRisk: number // 0-100
+  fatigueRisk: number // 0-100
+  overallRisk: 'low' | 'medium' | 'high'
+  preventiveActions: string[]
+}
+
+// Sleep quality analysis types
 export type SleepQualityMetrics = {
   date: string
   sleepHours: number
@@ -64,7 +159,6 @@ export type SleepQualityMetrics = {
   wakeTime?: string
 }
 
-// Advanced ML feature: Sleep Stage Prediction
 export type SleepStageDistribution = {
   date: string
   deep: number // percentage
@@ -103,6 +197,9 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
       stomach: { ...entries[idx].stomach, ...partial.stomach },
       skin: { ...entries[idx].skin, ...partial.skin },
       mental: { ...entries[idx].mental, ...partial.mental },
+      sleep: { ...entries[idx].sleep, ...partial.sleep },
+      symptoms: { ...entries[idx].symptoms, ...partial.symptoms },
+      nutrition: { ...entries[idx].nutrition, ...partial.nutrition },
     }
   } else {
     entries.push({ date: partial.date, ...partial })
@@ -127,7 +224,7 @@ export function lastNDays(entries: HealthEntry[], days = 14): HealthEntry[] {
 
 // Simple pattern mining: correlation between numeric severity and boolean triggers
 export type Insight = {
-  area: "stomach" | "skin" | "mental" | "sleep" | "cross-module"
+  area: "stomach" | "skin" | "mental" | "sleep" | "cross-module" | "nutrition"
   metric: string
   trigger?: string
   score: number // correlation-like score (-1..1)
@@ -155,6 +252,185 @@ function pearson(x: number[], y: number[]): number | null {
   const r = cov / Math.sqrt(vx * vy)
   if (!isFinite(r)) return null
   return Math.max(-1, Math.min(1, r))
+}
+
+// ML PREDICTION FUNCTIONS
+
+/**
+ * Predict sleep quality based on current entry
+ */
+export function predictSleepQuality(entry: HealthEntry): SleepPrediction {
+  const sleep = entry.sleep
+  const mental = entry.mental
+  const symptoms = entry.symptoms
+  
+  if (!sleep && !mental?.sleepHours) {
+    return {
+      predictedQuality: 7,
+      riskFactors: ['No sleep data available'],
+      recommendations: ['Start tracking your sleep patterns'],
+      confidence: 0
+    }
+  }
+
+  let riskFactors: string[] = []
+  let recommendations: string[] = []
+  let qualityScore = sleep?.qualityScore ?? mental?.sleepQuality ?? 7
+
+  // Analyze sleep factors
+  if (sleep?.sleepFactors.caffeine) {
+    riskFactors.push('Caffeine consumption')
+    recommendations.push('Avoid caffeine 6 hours before bedtime')
+  }
+  
+  if (sleep?.sleepFactors.alcohol) {
+    riskFactors.push('Alcohol consumption')
+    recommendations.push('Limit alcohol intake before sleep')
+  }
+  
+  if (sleep?.sleepFactors.screenTime) {
+    riskFactors.push('Screen time before bed')
+    recommendations.push('Use blue light filters or avoid screens 1 hour before bed')
+  }
+  
+  if (sleep?.sleepFactors.stress || (mental?.stressLevel ?? 0) > 7) {
+    riskFactors.push('High stress levels')
+    recommendations.push('Practice relaxation techniques before bed')
+  }
+
+  // Analyze sleep duration
+  const sleepHours = sleep?.durationHours ?? mental?.sleepHours ?? 0
+  if (sleepHours < 6) {
+    riskFactors.push('Insufficient sleep duration')
+    recommendations.push('Aim for 7-9 hours of sleep')
+    qualityScore = Math.max(1, qualityScore - 2)
+  } else if (sleepHours > 9) {
+    riskFactors.push('Excessive sleep duration')
+    recommendations.push('Maintain consistent sleep schedule')
+  }
+
+  // Analyze correlations with mental health
+  if (mental && mental.stressLevel && mental.stressLevel > 7) {
+    riskFactors.push('High stress affecting sleep')
+    recommendations.push('Practice stress management techniques')
+    qualityScore = Math.max(1, qualityScore - 1)
+  }
+
+  // Analyze correlations with symptoms
+  if (symptoms && symptoms.giFlare > 5) {
+    riskFactors.push('GI symptoms affecting sleep')
+    recommendations.push('Consider dietary adjustments for better sleep')
+    qualityScore = Math.max(1, qualityScore - 1)
+  }
+
+  const confidence = Math.max(60, 100 - (riskFactors.length * 15))
+  
+  return {
+    predictedQuality: Math.max(1, Math.min(10, qualityScore)),
+    riskFactors,
+    recommendations,
+    confidence
+  }
+}
+
+/**
+ * Predict symptom risks based on current patterns
+ */
+export function predictSymptoms(entry: HealthEntry): SymptomPrediction {
+  const sleep = entry.sleep
+  const mental = entry.mental
+  const stomach = entry.stomach
+  const skin = entry.skin
+  
+  let giFlareRisk = 20 // baseline
+  let skinFlareRisk = 20
+  let migraineRisk = 15
+  let fatigueRisk = 25
+  const preventiveActions: string[] = []
+
+  // Sleep quality impact
+  const sleepQuality = sleep?.qualityScore ?? mental?.sleepQuality ?? 7
+  const sleepHours = sleep?.durationHours ?? mental?.sleepHours ?? 7
+  
+  if (sleepQuality < 6) {
+    giFlareRisk += 25
+    skinFlareRisk += 20
+    migraineRisk += 30
+    fatigueRisk += 35
+    preventiveActions.push('Improve sleep quality')
+  }
+  
+  if (sleepHours < 6) {
+    giFlareRisk += 20
+    skinFlareRisk += 15
+    migraineRisk += 25
+    fatigueRisk += 30
+    preventiveActions.push('Get adequate sleep (7-9 hours)')
+  }
+
+  // Stress impact
+  const stressLevel = mental?.stressLevel ?? 5
+  if (stressLevel > 7) {
+    giFlareRisk += 30
+    skinFlareRisk += 25
+    migraineRisk += 35
+    fatigueRisk += 20
+    preventiveActions.push('Practice stress management')
+  }
+
+  // Mood impact
+  const mood = mental?.mood ?? 5
+  if (mood < 4) {
+    giFlareRisk += 15
+    skinFlareRisk += 10
+    migraineRisk += 20
+    fatigueRisk += 25
+    preventiveActions.push('Focus on mood improvement activities')
+  }
+
+  // Existing symptoms
+  if (stomach && stomach.severity > 5) {
+    giFlareRisk += 20
+    preventiveActions.push('Monitor stomach triggers')
+  }
+
+  if (skin && skin.severity > 5) {
+    skinFlareRisk += 20
+    preventiveActions.push('Monitor skin triggers')
+  }
+
+  // Caffeine impact
+  if (sleep?.sleepFactors.caffeine) {
+    giFlareRisk += 15
+    migraineRisk += 20
+    preventiveActions.push('Limit caffeine intake')
+  }
+
+  // Exercise impact (protective)
+  if (sleep?.sleepFactors.exercise) {
+    giFlareRisk = Math.max(0, giFlareRisk - 10)
+    skinFlareRisk = Math.max(0, skinFlareRisk - 10)
+    migraineRisk = Math.max(0, migraineRisk - 15)
+    fatigueRisk = Math.max(0, fatigueRisk - 15)
+  }
+
+  // Clamp values
+  giFlareRisk = Math.min(100, giFlareRisk)
+  skinFlareRisk = Math.min(100, skinFlareRisk)
+  migraineRisk = Math.min(100, migraineRisk)
+  fatigueRisk = Math.min(100, fatigueRisk)
+
+  const maxRisk = Math.max(giFlareRisk, skinFlareRisk, migraineRisk, fatigueRisk)
+  const overallRisk = maxRisk > 70 ? 'high' : maxRisk > 40 ? 'medium' : 'low'
+
+  return {
+    giFlareRisk,
+    skinFlareRisk,
+    migraineRisk,
+    fatigueRisk,
+    overallRisk,
+    preventiveActions
+  }
 }
 
 export function generateInsights(entries: HealthEntry[]): Insight[] {
@@ -323,6 +599,10 @@ export function generateInsights(entries: HealthEntry[]): Insight[] {
   // Add ML-powered sleep stage predictions
   const sleepStageInsights = analyzeSleepStages(entries)
   insights.push(...sleepStageInsights)
+
+  // Add nutrition insights
+  const nutritionInsights = analyzeNutritionPatterns(entries)
+  insights.push(...nutritionInsights)
 
   // Rank by priority and absolute score
   return insights.sort((a, b) => {
@@ -766,6 +1046,109 @@ export function analyzeSleepStages(entries: HealthEntry[]): Insight[] {
       description: `High nighttime wake percentage (${avgAwake.toFixed(1)}% vs optimal <5%). Fragmented sleep reduces restorative benefits. Address by: limiting liquids before bed, optimizing sleep environment (darkness, quiet, temperature), and managing anxiety.`,
       priority: "medium",
     })
+  }
+  
+  return insights
+}
+
+/**
+ * Advanced ML Feature: Nutrition Pattern Analysis
+ * Detects food-symptom correlations
+ */
+export function analyzeNutritionPatterns(entries: HealthEntry[]): Insight[] {
+  const insights: Insight[] = []
+  const nutritionEntries = entries.filter(e => e.nutrition !== undefined)
+  
+  if (nutritionEntries.length < 5) return insights
+  
+  // Analyze water intake correlation with symptoms
+  const waterIntakes = nutritionEntries
+    .filter(e => e.nutrition?.meals.waterIntake !== undefined)
+    .map(e => ({ water: e.nutrition!.meals.waterIntake!, stomach: e.stomach?.severity ?? 0, skin: e.skin?.severity ?? 0 }))
+  
+  if (waterIntakes.length >= 5) {
+    const water = waterIntakes.map(e => e.water)
+    const stomach = waterIntakes.map(e => e.stomach)
+    const skin = waterIntakes.map(e => e.skin)
+    
+    const rWaterStomach = pearson(water, stomach)
+    if (rWaterStomach !== null && rWaterStomach < -0.35) {
+      insights.push({
+        area: "nutrition",
+        metric: "hydration → digestion",
+        score: Math.abs(rWaterStomach),
+        description: `Higher water intake (${(water.reduce((a,b)=>a+b,0)/water.length).toFixed(0)}ml avg) correlates with reduced stomach issues. Aim for 2-3L daily.`,
+        priority: "medium",
+      })
+    }
+    
+    const rWaterSkin = pearson(water, skin)
+    if (rWaterSkin !== null && rWaterSkin < -0.35) {
+      insights.push({
+        area: "nutrition",
+        metric: "hydration → skin",
+        score: Math.abs(rWaterSkin),
+        description: `Better hydration significantly improves skin health. Maintain consistent water intake throughout the day.`,
+        priority: "medium",
+      })
+    }
+  }
+  
+  // Analyze meal timing and symptoms
+  const lateNightMeals = nutritionEntries.filter(e => {
+    const meals = e.nutrition?.meals.meals ?? []
+    return meals.some(meal => {
+      const [hours] = meal.time.split(':').map(Number)
+      return hours >= 21 || hours <= 2 // 9 PM to 2 AM
+    })
+  })
+  
+  if (lateNightMeals.length >= 3) {
+    const lateNightStomach = lateNightMeals.map(e => e.stomach?.severity ?? 0)
+    const avgLateSeverity = lateNightStomach.reduce((a, b) => a + b, 0) / lateNightStomach.length
+    
+    const regularMeals = nutritionEntries.filter(e => !lateNightMeals.includes(e))
+    const regularStomach = regularMeals.map(e => e.stomach?.severity ?? 0)
+    const avgRegularSeverity = regularStomach.reduce((a, b) => a + b, 0) / Math.max(1, regularStomach.length)
+    
+    if (avgLateSeverity > avgRegularSeverity + 1) {
+      insights.push({
+        area: "nutrition",
+        metric: "meal timing",
+        score: avgLateSeverity - avgRegularSeverity,
+        description: `Late-night eating (after 9 PM) increases stomach issues by ${((avgLateSeverity - avgRegularSeverity) * 10).toFixed(0)}%. Finish meals 3-4 hours before bed.`,
+        priority: "high",
+      })
+    }
+  }
+  
+  // Detect food triggers from correlations
+  if (nutritionEntries.length >= 7) {
+    const detectedCorrelations = nutritionEntries
+      .filter(e => e.nutrition?.correlations && e.nutrition.correlations.length > 0)
+    
+    if (detectedCorrelations.length >= 3) {
+      const allCorrelations = detectedCorrelations.flatMap(e => e.nutrition!.correlations!)
+      const correlationFreq: Record<string, number> = {}
+      
+      allCorrelations.forEach(corr => {
+        correlationFreq[corr] = (correlationFreq[corr] || 0) + 1
+      })
+      
+      const frequentTriggers = Object.entries(correlationFreq)
+        .filter(([_, count]) => count >= 2)
+        .sort((a, b) => b[1] - a[1])
+      
+      if (frequentTriggers.length > 0) {
+        insights.push({
+          area: "nutrition",
+          metric: "food triggers",
+          score: frequentTriggers[0][1] / detectedCorrelations.length,
+          description: `Potential food triggers detected: ${frequentTriggers.map(([food, count]) => `${food} (${count}x)`).slice(0, 3).join(', ')}. Consider elimination diet to confirm.`,
+          priority: "high",
+        })
+      }
+    }
   }
   
   return insights

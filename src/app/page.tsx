@@ -10,7 +10,10 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
-import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights } from "@/lib/health";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights, predictSleepQuality, predictSymptoms, type HealthEntry } from "@/lib/health";
+import { loadSampleData } from "@/lib/sampleData";
 import { exportCSV, exportPDF } from "@/lib/export";
 import { ProfileMenu } from "@/components/profile-menu";
 import {
@@ -18,33 +21,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
   const [entries, setEntries] = React.useState(() => loadEntries());
-
-  // add profile state (local-only)
-  const [profileOpen, setProfileOpen] = React.useState(false);
-  const [profile, setProfile] = React.useState(() => {
-    if (typeof window === "undefined") return { conditions: [], medications: [] } as any;
-    try { return JSON.parse(localStorage.getItem("orchids.profile.v1") || "null") || { conditions: [], medications: [] } } catch { return { conditions: [], medications: [] } }
-  });
-  React.useEffect(() => {
-    // hydrate profile if not set yet
-    try {
-      const raw = localStorage.getItem("orchids.profile.v1");
-      if (raw) setProfile(JSON.parse(raw));
-    } catch {}
-  }, []);
-  function saveProfileLocal() {
-    try { localStorage.setItem("orchids.profile.v1", JSON.stringify(profile)); } catch {}
-    setProfileOpen(false);
-  }
 
   const [stomach, setStomach] = React.useState({
     severity: 0,
@@ -62,6 +46,15 @@ export default function HomePage() {
     notes: ""
   });
   const [mental, setMental] = React.useState({ mood: 5, anxiety: 5, sleepHours: 7, stressLevel: 5, notes: "" });
+
+  // New: Symptom tracking state
+  const [symptoms, setSymptoms] = React.useState({
+    giFlare: 0,
+    skinFlare: 0,
+    migraine: 0,
+    fatigue: 0,
+    notes: ""
+  });
 
   // Quick sleep check-in state
   const [quickSleep, setQuickSleep] = React.useState({ hours: 7, stress: 5 });
@@ -91,6 +84,13 @@ export default function HomePage() {
       stressLevel: e.mental.stressLevel ?? 0,
       notes: e.mental.notes ?? ""
     });
+    if (e?.symptoms) setSymptoms({
+      giFlare: e.symptoms.giFlare,
+      skinFlare: e.symptoms.skinFlare,
+      migraine: e.symptoms.migraine,
+      fatigue: e.symptoms.fatigue,
+      notes: e.symptoms.notes ?? ""
+    });
   }, [date]);
 
   const series14 = toTimeSeries(lastNDays(entries, 14));
@@ -104,12 +104,25 @@ export default function HomePage() {
     return { avgSleep: avgSleep.toFixed(1), avgStress: avgStress.toFixed(1) };
   }, [entries]);
 
+  // ML Predictions for current entry
+  const currentEntry: HealthEntry = React.useMemo(() => ({
+    date,
+    stomach: stomach.severity > 0 ? { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined } : undefined,
+    skin: skin.severity > 0 ? { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined } : undefined,
+    mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
+    symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined }
+  }), [date, stomach, skin, mental, symptoms]);
+  
+  const sleepPrediction = React.useMemo(() => predictSleepQuality(currentEntry), [currentEntry]);
+  const symptomPrediction = React.useMemo(() => predictSymptoms(currentEntry), [currentEntry]);
+
   function saveAll() {
     const updated = upsertEntry({
       date,
       stomach: { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
-      mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined }
+      mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
+      symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined }
     });
     setEntries(updated);
   }
@@ -126,9 +139,17 @@ export default function HomePage() {
         sleepHours: clamp024(quickSleep.hours), 
         stressLevel: clamp010(quickSleep.stress),
         notes: entries.find(e => e.date === todayISO())?.mental?.notes
-      }
+      },
+      symptoms: entries.find(e => e.date === todayISO())?.symptoms
     });
     setEntries(updated);
+  }
+
+  function handleLoadSampleData() {
+    const sampleData = loadSampleData();
+    setEntries(sampleData);
+    // Reload the page to show the new data with all insights
+    window.location.reload();
   }
 
   return (
@@ -136,14 +157,22 @@ export default function HomePage() {
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Health Dashboard</h1>
-          <p className="text-muted-foreground">Daily tracking for stomach, skin, and mental health</p>
+          <p className="text-muted-foreground">AI-powered tracking for stomach, skin, and mental health</p>
         </div>
         <div className="relative">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              variant="outline" 
+              onClick={handleLoadSampleData}
+              className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-900/50 dark:text-green-400 dark:hover:bg-green-900/20"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Load Sample Data
+            </Button>
             <ProfileMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">
+                <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
                   <Download className="w-4 h-4 mr-2" />
                   Export Data
                 </Button>
@@ -160,40 +189,70 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* AI Risk Alerts */}
+      {symptomPrediction.overallRisk === 'high' && (
+        <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/50">
+          <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <AlertTitle className="text-red-800 dark:text-red-300 font-semibold">High Risk Alert</AlertTitle>
+          <AlertDescription className="text-red-700 dark:text-red-400">
+            <p>Your current patterns suggest elevated risk for symptoms:</p>
+            <ul className="list-disc pl-5 mt-2 space-y-1">
+              {symptomPrediction.giFlareRisk > 70 && <li>GI Flare Risk: {symptomPrediction.giFlareRisk}%</li>}
+              {symptomPrediction.skinFlareRisk > 70 && <li>Skin Flare Risk: {symptomPrediction.skinFlareRisk}%</li>}
+              {symptomPrediction.migraineRisk > 70 && <li>Migraine Risk: {symptomPrediction.migraineRisk}%</li>}
+              {symptomPrediction.fatigueRisk > 70 && <li>Fatigue Risk: {symptomPrediction.fatigueRisk}%</li>}
+            </ul>
+            <p className="mt-2 font-medium">Recommended Actions: {symptomPrediction.preventiveActions.slice(0, 2).join(', ')}</p>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {sleepPrediction.riskFactors.length > 0 && sleepPrediction.confidence > 60 && (
+        <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-900/50">
+          <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <AlertTitle className="text-yellow-800 dark:text-yellow-300 font-semibold">Sleep Quality Alert</AlertTitle>
+          <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+            <p className="font-medium">Risk Factors: {sleepPrediction.riskFactors.join(', ')}</p>
+            <p className="mt-1">💡 {sleepPrediction.recommendations.slice(0, 2).join(' • ')}</p>
+            <p className="text-xs mt-2">Predicted Quality: {sleepPrediction.predictedQuality}/10 (Confidence: {sleepPrediction.confidence}%)</p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Desktop Navigation Tabs */}
       <nav className="block">
         <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/analytics" className="flex items-center justify-center gap-2">
               <Activity className="w-4 h-4" />
               Analytics
             </Link>
           </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/skintrack" className="flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4" />
               SkinTrack+
             </Link>
           </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/gastro" className="flex items-center justify-center gap-2">
               <HeartPulse className="w-4 h-4" />
               GastroGuard
             </Link>
           </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/mindtrack" className="flex items-center justify-center gap-2">
               <Brain className="w-4 h-4" />
               MindTrack
             </Link>
           </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/sleeptrack" className="flex items-center justify-center gap-2">
               <Moon className="w-4 h-4" />
               SleepTrack
             </Link>
           </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200">
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/integrations" className="flex items-center justify-center gap-2">
               <Plug className="w-4 h-4" />
               Integrations
@@ -202,7 +261,36 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 !text-pink-300">
+      {/* AI Insights Dashboard */}
+      {insights.length > 0 && (
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-900/50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <CardTitle>AI-Powered Insights</CardTitle>
+            </div>
+            <CardDescription>Personalized recommendations based on your health patterns</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {insights.slice(0, 5).map((ins, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-purple-100 dark:border-purple-900/30">
+                  <Badge variant={ins.priority === 'high' ? 'destructive' : ins.priority === 'medium' ? 'default' : 'secondary'} className="mt-0.5">
+                    {ins.priority || 'low'}
+                  </Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium">[{ins.area}] {ins.metric}</p>
+                    <p className="text-sm text-muted-foreground">{ins.description}</p>
+                    <p className="text-xs text-muted-foreground">Correlation score: {ins.score.toFixed(2)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>General</CardTitle>
@@ -213,7 +301,7 @@ export default function HomePage() {
               <Label htmlFor="date">Date</Label>
               <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
-            <Button onClick={saveAll}>Save Today</Button>
+            <Button onClick={saveAll} className="w-full">Save Today</Button>
           </CardContent>
         </Card>
 
@@ -286,6 +374,68 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Symptom Tracking Card */}
+        <Card className="md:col-span-3 border-orange-200 dark:border-orange-900/50">
+          <CardHeader>
+            <CardTitle>Daily Symptoms</CardTitle>
+            <CardDescription>Track specific symptoms for comprehensive health monitoring</CardDescription>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>GI Flare (0-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                step={1} 
+                value={symptoms.giFlare} 
+                onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Skin Flare (0-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                step={1} 
+                value={symptoms.skinFlare} 
+                onChange={(e) => setSymptoms({ ...symptoms, skinFlare: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Migraine (0-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                step={1} 
+                value={symptoms.migraine} 
+                onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Fatigue (0-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                step={1} 
+                value={symptoms.fatigue} 
+                onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="md:col-span-4 space-y-2">
+              <Label>Symptom Notes</Label>
+              <Input 
+                value={symptoms.notes} 
+                onChange={(e) => setSymptoms({ ...symptoms, notes: e.target.value })} 
+                placeholder="Any additional symptom details..." 
+              />
             </div>
           </CardContent>
         </Card>

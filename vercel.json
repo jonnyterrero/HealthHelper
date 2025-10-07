@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/app/page.tsx",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "PYTHON_BACKEND_API.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "PYTHON_BACKEND_API.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/app/page.tsx"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_AI_API_URL": "https://your-app.vercel.app/api"
+  }
+}

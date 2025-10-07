@@ -30,7 +30,7 @@ export default function NutritionPage() {
   // Load existing meals for selected date
   React.useEffect(() => {
     const entry = entries.find((e) => e.date === date);
-    if (entry?.nutrition?.meals) {
+    if (entry?.nutrition?.meals && Array.isArray(entry.nutrition.meals)) {
       setMeals(entry.nutrition.meals);
     } else {
       setMeals([]);
@@ -206,7 +206,7 @@ export default function NutritionPage() {
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Foods Logged</p>
-                <p className="text-2xl font-bold">{meals.reduce((acc, m) => acc + m.foods.length, 0)}</p>
+                <p className="text-2xl font-bold">{Array.isArray(meals) ? meals.reduce((acc, m) => acc + m.foods.length, 0) : 0}</p>
               </div>
             </div>
           </CardContent>

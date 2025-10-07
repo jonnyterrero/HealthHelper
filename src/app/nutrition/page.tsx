@@ -111,9 +111,10 @@ export default function NutritionPage() {
   const mealTimingData = React.useMemo(() => {
     const recent = lastNDays(entries, 7);
     return recent.map(entry => {
-      const breakfast = entry.nutrition?.meals?.find(m => m.type === "breakfast");
-      const lunch = entry.nutrition?.meals?.find(m => m.type === "lunch");
-      const dinner = entry.nutrition?.meals?.find(m => m.type === "dinner");
+      const meals = Array.isArray(entry.nutrition?.meals) ? entry.nutrition.meals : [];
+      const breakfast = meals.find(m => m.type === "breakfast");
+      const lunch = meals.find(m => m.type === "lunch");
+      const dinner = meals.find(m => m.type === "dinner");
       
       return {
         date: entry.date.slice(5),

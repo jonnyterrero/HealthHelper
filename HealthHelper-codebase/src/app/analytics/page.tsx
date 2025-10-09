@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={(props) => <ChartLegendContent {...props} />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="stomach" stroke="var(--color-stomach)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="skin" stroke="var(--color-skin)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="mood" stroke="var(--color-mood)" />
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
               <XAxis dataKey="time" tick={{ fontSize: 12 }} />
               <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={(props) => <ChartLegendContent {...props} />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line type="monotone" dataKey="pain" stroke="var(--color-pain)" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
             </LineChart>
@@ -271,7 +271,7 @@ export default function AnalyticsPage() {
               <YAxis yAxisId="left" domain={[0,10]} tick={{ fontSize: 12 }} />
               <YAxis yAxisId="right" orientation="right" domain={[0,24]} tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={(props) => <ChartLegendContent {...props} />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line yAxisId="left" type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
               <Line yAxisId="left" type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
               <Line yAxisId="right" type="monotone" dataKey="sleep" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
@@ -315,7 +315,7 @@ export default function AnalyticsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={(props) => <ChartLegendContent {...props} />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="gastroPain" stroke="var(--color-stomach)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="mindStress" stroke="var(--color-anxiety)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="mood" stroke="var(--color-mood)" />

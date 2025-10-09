@@ -1,0 +1,193 @@
+/* Updated: 2025-10-09T21:42:58.804Z */
+/* Updated: 2025-10-07T21:56:55.857Z */
+/* Updated: 2025-10-07T02:43:12.538Z */
+/* Updated: 2025-10-07T00:50:32.664Z */
+/* Updated: 2025-10-07T00:50:28.526Z */
+/* Updated: 2025-10-07T00:12:17.673Z */
+/* Updated: 2025-10-06T03:27:50.758Z */
+/* Updated: 2025-10-04T04:59:25.883Z */
+/* Updated: 2025-10-04T04:34:44.410Z */
+/* Updated: 2025-10-04T04:11:36.678Z */
+/* Updated: 2025-10-04T04:11:31.124Z */
+/* Updated: 2025-10-04T04:11:26.514Z */
+/* Updated: 2025-10-04T03:48:33.696Z */
+/* Updated: 2025-10-04T03:07:05.446Z */
+/* Updated: 2025-10-04T03:02:18.877Z */
+/* Updated: 2025-10-04T02:57:43.665Z */
+/* Updated: 2025-10-03T03:10:53.679Z */
+/* Updated: 2025-10-03T02:07:32.170Z */
+/* Updated: 2025-10-03T02:07:20.765Z */
+/* Updated: 2025-10-03T02:07:03.439Z */
+/* Updated: 2025-10-03T01:50:37.615Z */
+/* Updated: 2025-10-02T21:30:06.779Z */
+/* Updated: 2025-10-01T01:35:00.575Z */
+/* Updated: 2025-10-01T01:31:27.731Z */
+/* Updated: 2025-09-30T03:23:13.050Z */
+/* Updated: 2025-09-30T03:17:22.307Z */
+/* Updated: 2025-09-30T02:52:48.002Z */
+/* Updated: 2025-09-30T00:26:15.943Z */
+/* Updated: 2025-09-29T23:06:29.488Z */
+/* Updated: 2025-09-29T22:40:34.247Z */
+/* Updated: 2025-09-29T22:40:30.492Z */
+/* Updated: 2025-09-29T21:38:09.032Z */
+/* Updated: 2025-09-21T01:08:26.606Z */
+/* Updated: 2025-09-21T00:39:48.173Z */
+/* Updated: 2025-09-20T22:07:46.029Z */
+/* Updated: 2025-09-20T16:26:45.517Z */
+/* Updated: 2025-09-20T04:59:33.028Z */
+/* Updated: 2025-09-19T20:13:14.390Z */
+/* Updated: 2025-09-19T20:01:09.588Z */
+/* Updated: 2025-09-19T19:51:53.170Z */
+/* Updated: 2025-09-19T19:23:49.897Z */
+/* Updated: 2025-09-19T19:03:18.395Z */
+/* Updated: 2025-09-19T18:47:01.074Z */
+/* Updated: 2025-09-19T18:41:40.836Z */
+/* Updated: 2025-09-19T18:41:29.651Z */
+/* Updated: 2025-09-19T16:33:43.112Z */
+/* Updated: 2025-09-18T22:37:36.353Z */
+/* Updated: 2025-09-18T20:03:51.526Z */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Light pink/purple theme */
+  --background: oklch(0.985 0.035 305);
+  --foreground: oklch(0.22 0.02 320);
+  --card: oklch(0.992 0.02 320);
+  --card-foreground: oklch(0.22 0.02 320);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 320);
+  --primary: oklch(0.62 0.18 305);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.968 0.025 315);
+  --secondary-foreground: oklch(0.22 0.02 320);
+  --muted: oklch(0.965 0.02 318);
+  --muted-foreground: oklch(0.56 0.03 320);
+  --accent: oklch(0.97 0.03 325);
+  --accent-foreground: oklch(0.22 0.02 320);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(0.93 0.01 320);
+  --input: oklch(0.93 0.01 320);
+  --ring: oklch(0.72 0.05 315);
+  /* Charts aligned to pink/purple hues */
+  --chart-1: oklch(0.72 0.18 342);
+  --chart-2: oklch(0.68 0.2 300);
+  --chart-3: oklch(0.66 0.19 325);
+  --chart-4: oklch(0.8 0.14 310);
+  --chart-5: oklch(0.78 0.12 330);
+  --sidebar: oklch(0.985 0.03 320);
+  --sidebar-foreground: oklch(0.22 0.02 320);
+  --sidebar-primary: oklch(0.62 0.18 305);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.968 0.025 315);
+  --sidebar-accent-foreground: oklch(0.22 0.02 320);
+  --sidebar-border: oklch(0.93 0.01 320);
+  --sidebar-ring: oklch(0.72 0.05 315);
+  /* Custom data stroke colors used in charts */
+  --color-stomach: oklch(0.66 0.19 325);
+  --color-skin: oklch(0.68 0.2 300);
+  --color-mood: oklch(0.62 0.18 305);
+  --color-anxiety: oklch(0.72 0.18 342);
+}
+
+.dark {
+  /* Deep purple night theme */
+  --background: oklch(0.18 0.05 300);
+  --foreground: oklch(0.96 0.02 320);
+  --card: oklch(0.22 0.05 300);
+  --card-foreground: oklch(0.98 0.01 320);
+  --popover: oklch(0.22 0.05 300);
+  --popover-foreground: oklch(0.98 0.01 320);
+  --primary: oklch(0.78 0.14 310);
+  --primary-foreground: oklch(0.22 0.02 320);
+  --secondary: oklch(0.28 0.03 305);
+  --secondary-foreground: oklch(0.98 0.01 320);
+  --muted: oklch(0.28 0.03 305);
+  --muted-foreground: oklch(0.72 0.05 315);
+  --accent: oklch(0.3 0.04 325);
+  --accent-foreground: oklch(0.98 0.01 320);
+  --destructive: oklch(0.7 0.18 22);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.62 0.08 312);
+  --chart-1: oklch(0.74 0.16 342);
+  --chart-2: oklch(0.78 0.15 300);
+  --chart-3: oklch(0.82 0.12 325);
+  --chart-4: oklch(0.86 0.1 310);
+  --chart-5: oklch(0.8 0.11 330);
+  --sidebar: oklch(0.2 0.05 300);
+  --sidebar-foreground: oklch(0.96 0.02 320);
+  --sidebar-primary: oklch(0.78 0.14 310);
+  --sidebar-primary-foreground: oklch(0.2 0.05 300);
+  --sidebar-accent: oklch(0.28 0.03 305);
+  --sidebar-accent-foreground: oklch(0.98 0.01 320);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.62 0.08 312);
+  /* Custom data stroke colors */
+  --color-stomach: oklch(0.82 0.12 325);
+  --color-skin: oklch(0.78 0.15 300);
+  --color-mood: oklch(0.8 0.11 330);
+  --color-anxiety: oklch(0.74 0.16 342);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Subtle top glow gradient to match pink/purple theme */
+    background-image:
+      radial-gradient(1000px 400px at 10% -10%, oklch(0.95 0.05 305 / 0.55), transparent 60%),
+      radial-gradient(800px 300px at 90% -10%, oklch(0.94 0.06 300 / 0.5), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Hide Next.js error overlay portal */
+nextjs-portal {
+  display: none !important;
+}

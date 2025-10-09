@@ -1,3 +1,24 @@
+/* Updated: 2025-09-30T02:52:48.002Z */
+/* Updated: 2025-09-30T00:26:15.943Z */
+/* Updated: 2025-09-29T23:06:29.488Z */
+/* Updated: 2025-09-29T22:40:34.247Z */
+/* Updated: 2025-09-29T22:40:30.492Z */
+/* Updated: 2025-09-29T21:38:09.032Z */
+/* Updated: 2025-09-21T01:08:26.606Z */
+/* Updated: 2025-09-21T00:39:48.173Z */
+/* Updated: 2025-09-20T22:07:46.029Z */
+/* Updated: 2025-09-20T16:26:45.517Z */
+/* Updated: 2025-09-20T04:59:33.028Z */
+/* Updated: 2025-09-19T20:13:14.390Z */
+/* Updated: 2025-09-19T20:01:09.588Z */
+/* Updated: 2025-09-19T19:51:53.170Z */
+/* Updated: 2025-09-19T19:23:49.897Z */
+/* Updated: 2025-09-19T19:03:18.395Z */
+/* Updated: 2025-09-19T18:47:01.074Z */
+/* Updated: 2025-09-19T18:41:40.836Z */
+/* Updated: 2025-09-19T18:41:29.651Z */
+/* Updated: 2025-09-19T16:33:43.112Z */
+/* Updated: 2025-09-18T22:37:36.353Z */
 /* Updated: 2025-09-18T20:03:51.526Z */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -46,71 +67,84 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  /* Light pink/purple theme */
+  --background: oklch(0.985 0.035 305);
+  --foreground: oklch(0.22 0.02 320);
+  --card: oklch(0.992 0.02 320);
+  --card-foreground: oklch(0.22 0.02 320);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.22 0.02 320);
+  --primary: oklch(0.62 0.18 305);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --secondary: oklch(0.968 0.025 315);
+  --secondary-foreground: oklch(0.22 0.02 320);
+  --muted: oklch(0.965 0.02 318);
+  --muted-foreground: oklch(0.56 0.03 320);
+  --accent: oklch(0.97 0.03 325);
+  --accent-foreground: oklch(0.22 0.02 320);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(0.93 0.01 320);
+  --input: oklch(0.93 0.01 320);
+  --ring: oklch(0.72 0.05 315);
+  /* Charts aligned to pink/purple hues */
+  --chart-1: oklch(0.72 0.18 342);
+  --chart-2: oklch(0.68 0.2 300);
+  --chart-3: oklch(0.66 0.19 325);
+  --chart-4: oklch(0.8 0.14 310);
+  --chart-5: oklch(0.78 0.12 330);
+  --sidebar: oklch(0.985 0.03 320);
+  --sidebar-foreground: oklch(0.22 0.02 320);
+  --sidebar-primary: oklch(0.62 0.18 305);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.968 0.025 315);
+  --sidebar-accent-foreground: oklch(0.22 0.02 320);
+  --sidebar-border: oklch(0.93 0.01 320);
+  --sidebar-ring: oklch(0.72 0.05 315);
+  /* Custom data stroke colors used in charts */
+  --color-stomach: oklch(0.66 0.19 325);
+  --color-skin: oklch(0.68 0.2 300);
+  --color-mood: oklch(0.62 0.18 305);
+  --color-anxiety: oklch(0.72 0.18 342);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  /* Deep purple night theme */
+  --background: oklch(0.18 0.05 300);
+  --foreground: oklch(0.96 0.02 320);
+  --card: oklch(0.22 0.05 300);
+  --card-foreground: oklch(0.98 0.01 320);
+  --popover: oklch(0.22 0.05 300);
+  --popover-foreground: oklch(0.98 0.01 320);
+  --primary: oklch(0.78 0.14 310);
+  --primary-foreground: oklch(0.22 0.02 320);
+  --secondary: oklch(0.28 0.03 305);
+  --secondary-foreground: oklch(0.98 0.01 320);
+  --muted: oklch(0.28 0.03 305);
+  --muted-foreground: oklch(0.72 0.05 315);
+  --accent: oklch(0.3 0.04 325);
+  --accent-foreground: oklch(0.98 0.01 320);
+  --destructive: oklch(0.7 0.18 22);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.62 0.08 312);
+  --chart-1: oklch(0.74 0.16 342);
+  --chart-2: oklch(0.78 0.15 300);
+  --chart-3: oklch(0.82 0.12 325);
+  --chart-4: oklch(0.86 0.1 310);
+  --chart-5: oklch(0.8 0.11 330);
+  --sidebar: oklch(0.2 0.05 300);
+  --sidebar-foreground: oklch(0.96 0.02 320);
+  --sidebar-primary: oklch(0.78 0.14 310);
+  --sidebar-primary-foreground: oklch(0.2 0.05 300);
+  --sidebar-accent: oklch(0.28 0.03 305);
+  --sidebar-accent-foreground: oklch(0.98 0.01 320);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.62 0.08 312);
+  /* Custom data stroke colors */
+  --color-stomach: oklch(0.82 0.12 325);
+  --color-skin: oklch(0.78 0.15 300);
+  --color-mood: oklch(0.8 0.11 330);
+  --color-anxiety: oklch(0.74 0.16 342);
 }
 
 @layer base {
@@ -119,6 +153,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Subtle top glow gradient to match pink/purple theme */
+    background-image:
+      radial-gradient(1000px 400px at 10% -10%, oklch(0.95 0.05 305 / 0.55), transparent 60%),
+      radial-gradient(800px 300px at 90% -10%, oklch(0.94 0.06 300 / 0.5), transparent 60%);
+    background-attachment: fixed;
   }
 }
 

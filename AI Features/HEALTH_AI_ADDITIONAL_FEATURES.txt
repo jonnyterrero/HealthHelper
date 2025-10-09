@@ -1,0 +1,960 @@
+# HEALTH AI ADDITIONAL FEATURES - Sleep, Stress, Nutrition & Remedies
+# ===================================================================
+# Advanced AI features for sleep tracking, stress management, nutrition analysis, and remedy recommendations
+
+## 1. SLEEP & STRESS AI FEATURES
+# File: src/lib/sleep_stress_ai.py
+
+"""
+Sleep & Stress AI Analysis
+========================
+Advanced AI features for sleep quality prediction and stress management
+"""
+
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta
+import json
+
+class SleepStressAI:
+    """AI-powered sleep and stress analysis."""
+    
+    def __init__(self):
+        self.sleep_models = {}
+        self.stress_models = {}
+    
+    def analyze_sleep_patterns(self, sleep_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze sleep patterns and provide insights."""
+        if not sleep_data:
+            return {"error": "No sleep data available"}
+        
+        df = pd.DataFrame(sleep_data)
+        
+        # Calculate sleep metrics
+        avg_duration = df['duration_hours'].mean()
+        avg_quality = df['quality_score'].mean()
+        consistency = 1 - df['duration_hours'].std() / df['duration_hours'].mean()
+        
+        # Sleep stage analysis
+        deep_sleep_avg = df['deep_sleep_percent'].mean()
+        rem_sleep_avg = df['rem_sleep_percent'].mean()
+        
+        # Identify patterns
+        patterns = {
+            'sleep_debt': max(0, 8 - avg_duration),
+            'quality_trend': self._calculate_trend(df['quality_score']),
+            'consistency_score': consistency,
+            'deep_sleep_sufficiency': deep_sleep_avg >= 20,
+            'rem_sleep_sufficiency': rem_sleep_avg >= 20
+        }
+        
+        # Generate recommendations
+        recommendations = self._generate_sleep_recommendations(patterns, df)
+        
+        return {
+            'metrics': {
+                'avg_duration': avg_duration,
+                'avg_quality': avg_quality,
+                'consistency': consistency,
+                'deep_sleep_avg': deep_sleep_avg,
+                'rem_sleep_avg': rem_sleep_avg
+            },
+            'patterns': patterns,
+            'recommendations': recommendations,
+            'risk_factors': self._identify_sleep_risk_factors(df)
+        }
+    
+    def predict_sleep_quality(self, current_factors: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict sleep quality based on current factors."""
+        # Feature engineering
+        features = self._extract_sleep_features(current_factors)
+        
+        # Simple rule-based prediction (can be replaced with ML model)
+        base_score = 7.0
+        
+        # Adjust for duration
+        if features['duration_hours'] < 6:
+            base_score -= 2
+        elif features['duration_hours'] > 9:
+            base_score -= 1
+        
+        # Adjust for factors
+        if features['caffeine_afternoon']:
+            base_score -= 1.5
+        if features['alcohol_evening']:
+            base_score -= 1
+        if features['screen_time_late']:
+            base_score -= 1
+        if features['stress_level'] > 7:
+            base_score -= 1.5
+        if features['exercise_late']:
+            base_score -= 0.5
+        
+        # Adjust for positive factors
+        if features['exercise_early']:
+            base_score += 0.5
+        if features['meditation']:
+            base_score += 0.5
+        if features['consistent_bedtime']:
+            base_score += 1
+        
+        predicted_quality = max(1, min(10, base_score))
+        
+        return {
+            'predicted_quality': predicted_quality,
+            'confidence': 0.8,
+            'risk_factors': self._get_sleep_risk_factors(features),
+            'recommendations': self._get_sleep_recommendations(features)
+        }
+    
+    def analyze_stress_patterns(self, stress_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze stress patterns and provide management insights."""
+        if not stress_data:
+            return {"error": "No stress data available"}
+        
+        df = pd.DataFrame(stress_data)
+        
+        # Calculate stress metrics
+        avg_stress = df['stress_level'].mean()
+        stress_volatility = df['stress_level'].std()
+        high_stress_days = (df['stress_level'] > 7).sum()
+        
+        # Identify stress triggers
+        triggers = self._identify_stress_triggers(df)
+        
+        # Analyze coping strategies effectiveness
+        coping_effectiveness = self._analyze_coping_strategies(df)
+        
+        return {
+            'metrics': {
+                'avg_stress': avg_stress,
+                'volatility': stress_volatility,
+                'high_stress_days': high_stress_days,
+                'stress_trend': self._calculate_trend(df['stress_level'])
+            },
+            'triggers': triggers,
+            'coping_effectiveness': coping_effectiveness,
+            'recommendations': self._generate_stress_recommendations(df)
+        }
+    
+    def predict_stress_risk(self, current_factors: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict stress risk based on current factors."""
+        features = self._extract_stress_features(current_factors)
+        
+        # Calculate stress risk score
+        risk_score = 0.5  # Base risk
+        
+        # Adjust for factors
+        if features['work_pressure'] > 7:
+            risk_score += 0.2
+        if features['sleep_quality'] < 5:
+            risk_score += 0.3
+        if features['social_support'] < 4:
+            risk_score += 0.2
+        if features['physical_activity'] < 3:
+            risk_score += 0.1
+        if features['recent_stress_events'] > 0:
+            risk_score += 0.2
+        
+        # Adjust for protective factors
+        if features['meditation_practice']:
+            risk_score -= 0.2
+        if features['exercise_regular']:
+            risk_score -= 0.1
+        if features['social_connections'] > 6:
+            risk_score -= 0.1
+        
+        risk_score = max(0, min(1, risk_score))
+        
+        return {
+            'stress_risk': risk_score,
+            'confidence': 0.75,
+            'risk_factors': self._get_stress_risk_factors(features),
+            'preventive_actions': self._get_stress_preventive_actions(features)
+        }
+    
+    def _extract_sleep_features(self, factors: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract features for sleep prediction."""
+        return {
+            'duration_hours': factors.get('duration_hours', 8),
+            'caffeine_afternoon': factors.get('caffeine_afternoon', False),
+            'alcohol_evening': factors.get('alcohol_evening', False),
+            'screen_time_late': factors.get('screen_time_late', False),
+            'stress_level': factors.get('stress_level', 5),
+            'exercise_late': factors.get('exercise_late', False),
+            'exercise_early': factors.get('exercise_early', False),
+            'meditation': factors.get('meditation', False),
+            'consistent_bedtime': factors.get('consistent_bedtime', True),
+            'room_temperature': factors.get('room_temperature', 20),
+            'noise_level': factors.get('noise_level', 3)
+        }
+    
+    def _extract_stress_features(self, factors: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract features for stress prediction."""
+        return {
+            'work_pressure': factors.get('work_pressure', 5),
+            'sleep_quality': factors.get('sleep_quality', 7),
+            'social_support': factors.get('social_support', 5),
+            'physical_activity': factors.get('physical_activity', 5),
+            'recent_stress_events': factors.get('recent_stress_events', 0),
+            'meditation_practice': factors.get('meditation_practice', False),
+            'exercise_regular': factors.get('exercise_regular', False),
+            'social_connections': factors.get('social_connections', 5),
+            'financial_stress': factors.get('financial_stress', 3),
+            'relationship_stress': factors.get('relationship_stress', 3)
+        }
+    
+    def _calculate_trend(self, series: pd.Series) -> str:
+        """Calculate trend direction."""
+        if len(series) < 2:
+            return "insufficient_data"
+        
+        recent = series.tail(3).mean()
+        earlier = series.head(3).mean()
+        
+        if recent > earlier + 0.5:
+            return "improving"
+        elif recent < earlier - 0.5:
+            return "declining"
+        else:
+            return "stable"
+    
+    def _generate_sleep_recommendations(self, patterns: Dict, df: pd.DataFrame) -> List[str]:
+        """Generate personalized sleep recommendations."""
+        recommendations = []
+        
+        if patterns['sleep_debt'] > 1:
+            recommendations.append("Consider going to bed 30 minutes earlier to reduce sleep debt")
+        
+        if not patterns['consistency_score'] > 0.8:
+            recommendations.append("Try to maintain a consistent sleep schedule, even on weekends")
+        
+        if not patterns['deep_sleep_sufficiency']:
+            recommendations.append("Avoid caffeine after 2 PM and create a cool, dark sleep environment")
+        
+        if not patterns['rem_sleep_sufficiency']:
+            recommendations.append("Ensure adequate sleep duration and avoid alcohol before bed")
+        
+        return recommendations
+    
+    def _identify_sleep_risk_factors(self, df: pd.DataFrame) -> List[str]:
+        """Identify sleep risk factors."""
+        risk_factors = []
+        
+        if df['duration_hours'].mean() < 6:
+            risk_factors.append("Insufficient sleep duration")
+        
+        if df['quality_score'].mean() < 6:
+            risk_factors.append("Poor sleep quality")
+        
+        if df['duration_hours'].std() > 2:
+            risk_factors.append("Irregular sleep schedule")
+        
+        return risk_factors
+    
+    def _get_sleep_risk_factors(self, features: Dict[str, Any]) -> List[str]:
+        """Get current sleep risk factors."""
+        factors = []
+        
+        if features['duration_hours'] < 6:
+            factors.append("Short sleep duration")
+        if features['caffeine_afternoon']:
+            factors.append("Late caffeine consumption")
+        if features['screen_time_late']:
+            factors.append("Late screen time")
+        if features['stress_level'] > 7:
+            factors.append("High stress levels")
+        
+        return factors
+    
+    def _get_sleep_recommendations(self, features: Dict[str, Any]) -> List[str]:
+        """Get personalized sleep recommendations."""
+        recommendations = []
+        
+        if features['duration_hours'] < 7:
+            recommendations.append("Aim for 7-9 hours of sleep per night")
+        
+        if features['caffeine_afternoon']:
+            recommendations.append("Avoid caffeine after 2 PM")
+        
+        if features['screen_time_late']:
+            recommendations.append("Stop using screens 1 hour before bed")
+        
+        if features['stress_level'] > 7:
+            recommendations.append("Practice relaxation techniques before bed")
+        
+        return recommendations
+    
+    def _identify_stress_triggers(self, df: pd.DataFrame) -> Dict[str, float]:
+        """Identify stress triggers from data."""
+        triggers = {}
+        
+        # Simple correlation analysis
+        for col in df.columns:
+            if col != 'stress_level' and df[col].dtype in ['int64', 'float64']:
+                corr = df['stress_level'].corr(df[col])
+                if abs(corr) > 0.3:
+                    triggers[col] = corr
+        
+        return triggers
+    
+    def _analyze_coping_strategies(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze effectiveness of coping strategies."""
+        # This would analyze the relationship between coping strategies and stress reduction
+        return {
+            'meditation': 0.7,
+            'exercise': 0.8,
+            'social_support': 0.6,
+            'breathing_exercises': 0.5
+        }
+    
+    def _generate_stress_recommendations(self, df: pd.DataFrame) -> List[str]:
+        """Generate stress management recommendations."""
+        recommendations = []
+        
+        if df['stress_level'].mean() > 7:
+            recommendations.append("Consider regular meditation or mindfulness practice")
+        
+        if df['physical_activity'].mean() < 4:
+            recommendations.append("Increase physical activity to reduce stress")
+        
+        if df['social_support'].mean() < 5:
+            recommendations.append("Strengthen social connections and support network")
+        
+        return recommendations
+    
+    def _get_stress_risk_factors(self, features: Dict[str, Any]) -> List[str]:
+        """Get current stress risk factors."""
+        factors = []
+        
+        if features['work_pressure'] > 7:
+            factors.append("High work pressure")
+        if features['sleep_quality'] < 5:
+            factors.append("Poor sleep quality")
+        if features['social_support'] < 4:
+            factors.append("Low social support")
+        if features['recent_stress_events'] > 0:
+            factors.append("Recent stressful events")
+        
+        return factors
+    
+    def _get_stress_preventive_actions(self, features: Dict[str, Any]) -> List[str]:
+        """Get preventive actions for stress management."""
+        actions = []
+        
+        if features['work_pressure'] > 7:
+            actions.append("Set boundaries and prioritize tasks")
+        
+        if features['sleep_quality'] < 5:
+            actions.append("Improve sleep hygiene and routine")
+        
+        if features['social_support'] < 4:
+            actions.append("Reach out to friends and family")
+        
+        if not features['meditation_practice']:
+            actions.append("Start a daily meditation practice")
+        
+        return actions
+
+## 2. NUTRITION & SYMPTOMS AI FEATURES
+# File: src/lib/nutrition_symptoms_ai.py
+
+"""
+Nutrition & Symptoms AI Analysis
+===============================
+Advanced AI features for nutrition tracking and symptom-remedy matching
+"""
+
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta
+import json
+
+class NutritionSymptomsAI:
+    """AI-powered nutrition and symptom analysis."""
+    
+    def __init__(self):
+        self.nutrition_models = {}
+        self.symptom_models = {}
+        self.remedy_database = self._load_remedy_database()
+    
+    def analyze_nutrition_patterns(self, nutrition_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze nutrition patterns and identify triggers."""
+        if not nutrition_data:
+            return {"error": "No nutrition data available"}
+        
+        df = pd.DataFrame(nutrition_data)
+        
+        # Calculate nutritional metrics
+        avg_calories = df['calories'].mean()
+        avg_protein = df['protein_g'].mean()
+        avg_carbs = df['carbs_g'].mean()
+        avg_fat = df['fat_g'].mean()
+        avg_fiber = df['fiber_g'].mean()
+        
+        # Identify potential triggers
+        triggers = self._identify_food_triggers(df)
+        
+        # Analyze meal timing patterns
+        timing_patterns = self._analyze_meal_timing(df)
+        
+        # Generate nutrition insights
+        insights = self._generate_nutrition_insights(df)
+        
+        return {
+            'metrics': {
+                'avg_calories': avg_calories,
+                'avg_protein': avg_protein,
+                'avg_carbs': avg_carbs,
+                'avg_fat': avg_fat,
+                'avg_fiber': avg_fiber
+            },
+            'triggers': triggers,
+            'timing_patterns': timing_patterns,
+            'insights': insights,
+            'recommendations': self._generate_nutrition_recommendations(df)
+        }
+    
+    def predict_symptom_triggers(self, meal_data: Dict[str, Any], symptom_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict which foods might trigger symptoms."""
+        # Extract meal features
+        meal_features = self._extract_meal_features(meal_data)
+        
+        # Extract symptom features
+        symptom_features = self._extract_symptom_features(symptom_data)
+        
+        # Calculate trigger probability
+        trigger_probability = self._calculate_trigger_probability(meal_features, symptom_features)
+        
+        # Identify specific trigger foods
+        trigger_foods = self._identify_trigger_foods(meal_features)
+        
+        return {
+            'trigger_probability': trigger_probability,
+            'trigger_foods': trigger_foods,
+            'risk_factors': self._get_meal_risk_factors(meal_features),
+            'recommendations': self._get_meal_recommendations(meal_features)
+        }
+    
+    def recommend_remedies(self, symptoms: Dict[str, Any], user_history: List[Dict]) -> Dict[str, Any]:
+        """Recommend remedies based on symptoms and user history."""
+        # Extract symptom information
+        symptom_types = [k for k, v in symptoms.items() if v > 0]
+        severity_scores = {k: v for k, v in symptoms.items() if v > 0}
+        
+        # Find relevant remedies
+        relevant_remedies = self._find_relevant_remedies(symptom_types)
+        
+        # Rank remedies by effectiveness
+        ranked_remedies = self._rank_remedies(relevant_remedies, user_history, severity_scores)
+        
+        # Generate personalized recommendations
+        recommendations = self._generate_remedy_recommendations(ranked_remedies, symptoms)
+        
+        return {
+            'recommended_remedies': recommendations,
+            'effectiveness_scores': self._calculate_effectiveness_scores(ranked_remedies),
+            'timing_recommendations': self._get_timing_recommendations(ranked_remedies),
+            'contraindications': self._check_contraindications(ranked_remedies)
+        }
+    
+    def analyze_symptom_patterns(self, symptom_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze symptom patterns and identify trends."""
+        if not symptom_data:
+            return {"error": "No symptom data available"}
+        
+        df = pd.DataFrame(symptom_data)
+        
+        # Calculate symptom metrics
+        symptom_frequency = df['type'].value_counts()
+        avg_severity = df.groupby('type')['severity'].mean()
+        
+        # Identify patterns
+        patterns = self._identify_symptom_patterns(df)
+        
+        # Analyze triggers
+        triggers = self._analyze_symptom_triggers(df)
+        
+        # Generate insights
+        insights = self._generate_symptom_insights(df)
+        
+        return {
+            'frequency': symptom_frequency.to_dict(),
+            'avg_severity': avg_severity.to_dict(),
+            'patterns': patterns,
+            'triggers': triggers,
+            'insights': insights,
+            'recommendations': self._generate_symptom_recommendations(df)
+        }
+    
+    def _load_remedy_database(self) -> Dict[str, Any]:
+        """Load remedy database with effectiveness data."""
+        return {
+            'peppermint_tea': {
+                'conditions': ['gut', 'nausea', 'indigestion'],
+                'effectiveness': 0.8,
+                'timing': 'after_meals',
+                'dosage': '1-2 cups',
+                'contraindications': ['gastroesophageal_reflux']
+            },
+            'ginger_tea': {
+                'conditions': ['gut', 'nausea', 'motion_sickness'],
+                'effectiveness': 0.75,
+                'timing': 'as_needed',
+                'dosage': '1-2 cups',
+                'contraindications': ['blood_thinners']
+            },
+            'probiotics': {
+                'conditions': ['gut', 'digestive_issues'],
+                'effectiveness': 0.7,
+                'timing': 'with_meals',
+                'dosage': '1 capsule',
+                'contraindications': ['immunocompromised']
+            },
+            'turmeric': {
+                'conditions': ['inflammation', 'joint_pain'],
+                'effectiveness': 0.65,
+                'timing': 'with_meals',
+                'dosage': '500mg',
+                'contraindications': ['gallstones']
+            },
+            'magnesium': {
+                'conditions': ['muscle_cramps', 'headaches', 'sleep'],
+                'effectiveness': 0.7,
+                'timing': 'evening',
+                'dosage': '200-400mg',
+                'contraindications': ['kidney_disease']
+            },
+            'omega_3': {
+                'conditions': ['inflammation', 'mood', 'heart_health'],
+                'effectiveness': 0.6,
+                'timing': 'with_meals',
+                'dosage': '1000mg',
+                'contraindications': ['blood_thinners']
+            }
+        }
+    
+    def _extract_meal_features(self, meal_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract features from meal data."""
+        return {
+            'calories': meal_data.get('calories', 0),
+            'protein_g': meal_data.get('protein_g', 0),
+            'carbs_g': meal_data.get('carbs_g', 0),
+            'fat_g': meal_data.get('fat_g', 0),
+            'fiber_g': meal_data.get('fiber_g', 0),
+            'sugar_g': meal_data.get('sugar_g', 0),
+            'caffeine_mg': meal_data.get('caffeine_mg', 0),
+            'spicy': 'spicy' in meal_data.get('tags', []),
+            'dairy': 'dairy' in meal_data.get('tags', []),
+            'gluten': 'gluten' in meal_data.get('tags', []),
+            'processed': 'processed' in meal_data.get('tags', []),
+            'meal_time': meal_data.get('meal_time', 'unknown')
+        }
+    
+    def _extract_symptom_features(self, symptom_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract features from symptom data."""
+        return {
+            'gi_flare': symptom_data.get('giFlare', 0),
+            'skin_flare': symptom_data.get('skinFlare', 0),
+            'migraine': symptom_data.get('migraine', 0),
+            'fatigue': symptom_data.get('fatigue', 0),
+            'severity': max(symptom_data.values()) if symptom_data else 0
+        }
+    
+    def _calculate_trigger_probability(self, meal_features: Dict[str, Any], symptom_features: Dict[str, Any]) -> float:
+        """Calculate probability of meal triggering symptoms."""
+        probability = 0.1  # Base probability
+        
+        # Adjust for high-risk foods
+        if meal_features['spicy'] and symptom_features['gi_flare'] > 0:
+            probability += 0.3
+        if meal_features['dairy'] and symptom_features['gi_flare'] > 0:
+            probability += 0.2
+        if meal_features['gluten'] and symptom_features['gi_flare'] > 0:
+            probability += 0.25
+        if meal_features['processed'] and symptom_features['gi_flare'] > 0:
+            probability += 0.15
+        
+        # Adjust for high sugar content
+        if meal_features['sugar_g'] > 50 and symptom_features['fatigue'] > 0:
+            probability += 0.2
+        
+        # Adjust for caffeine
+        if meal_features['caffeine_mg'] > 200 and symptom_features['migraine'] > 0:
+            probability += 0.3
+        
+        return min(1.0, probability)
+    
+    def _identify_trigger_foods(self, meal_features: Dict[str, Any]) -> List[str]:
+        """Identify specific trigger foods."""
+        triggers = []
+        
+        if meal_features['spicy']:
+            triggers.append("Spicy foods")
+        if meal_features['dairy']:
+            triggers.append("Dairy products")
+        if meal_features['gluten']:
+            triggers.append("Gluten-containing foods")
+        if meal_features['processed']:
+            triggers.append("Processed foods")
+        if meal_features['sugar_g'] > 50:
+            triggers.append("High sugar content")
+        if meal_features['caffeine_mg'] > 200:
+            triggers.append("High caffeine content")
+        
+        return triggers
+    
+    def _get_meal_risk_factors(self, meal_features: Dict[str, Any]) -> List[str]:
+        """Get meal risk factors."""
+        factors = []
+        
+        if meal_features['calories'] > 800:
+            factors.append("High calorie meal")
+        if meal_features['fat_g'] > 30:
+            factors.append("High fat content")
+        if meal_features['sugar_g'] > 30:
+            factors.append("High sugar content")
+        if meal_features['fiber_g'] < 5:
+            factors.append("Low fiber content")
+        
+        return factors
+    
+    def _get_meal_recommendations(self, meal_features: Dict[str, Any]) -> List[str]:
+        """Get meal recommendations."""
+        recommendations = []
+        
+        if meal_features['fiber_g'] < 5:
+            recommendations.append("Add more fiber-rich foods like vegetables and whole grains")
+        if meal_features['protein_g'] < 20:
+            recommendations.append("Include lean protein sources")
+        if meal_features['sugar_g'] > 30:
+            recommendations.append("Reduce added sugars")
+        if meal_features['fat_g'] > 30:
+            recommendations.append("Choose healthier fat sources")
+        
+        return recommendations
+    
+    def _find_relevant_remedies(self, symptom_types: List[str]) -> List[str]:
+        """Find remedies relevant to symptoms."""
+        relevant = []
+        
+        for remedy, data in self.remedy_database.items():
+            if any(condition in symptom_types for condition in data['conditions']):
+                relevant.append(remedy)
+        
+        return relevant
+    
+    def _rank_remedies(self, remedies: List[str], user_history: List[Dict], severity_scores: Dict[str, float]) -> List[Dict[str, Any]]:
+        """Rank remedies by effectiveness."""
+        ranked = []
+        
+        for remedy in remedies:
+            remedy_data = self.remedy_database[remedy]
+            
+            # Calculate effectiveness score
+            base_effectiveness = remedy_data['effectiveness']
+            
+            # Adjust based on user history
+            user_effectiveness = self._get_user_effectiveness(remedy, user_history)
+            
+            # Adjust based on symptom severity
+            severity_adjustment = min(0.2, max(severity_scores.values()) * 0.1)
+            
+            final_score = base_effectiveness + user_effectiveness + severity_adjustment
+            
+            ranked.append({
+                'remedy': remedy,
+                'effectiveness': final_score,
+                'data': remedy_data
+            })
+        
+        return sorted(ranked, key=lambda x: x['effectiveness'], reverse=True)
+    
+    def _get_user_effectiveness(self, remedy: str, user_history: List[Dict]) -> float:
+        """Get user-specific effectiveness for a remedy."""
+        # This would analyze user's historical data
+        # For now, return a small random adjustment
+        return 0.0
+    
+    def _generate_remedy_recommendations(self, ranked_remedies: List[Dict[str, Any]], symptoms: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate personalized remedy recommendations."""
+        recommendations = []
+        
+        for remedy_info in ranked_remedies[:3]:  # Top 3 remedies
+            remedy = remedy_info['remedy']
+            data = remedy_info['data']
+            
+            recommendations.append({
+                'name': remedy.replace('_', ' ').title(),
+                'effectiveness': remedy_info['effectiveness'],
+                'timing': data['timing'],
+                'dosage': data['dosage'],
+                'conditions': data['conditions'],
+                'contraindications': data['contraindications']
+            })
+        
+        return recommendations
+    
+    def _calculate_effectiveness_scores(self, ranked_remedies: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Calculate effectiveness scores for remedies."""
+        return {remedy['remedy']: remedy['effectiveness'] for remedy in ranked_remedies}
+    
+    def _get_timing_recommendations(self, ranked_remedies: List[Dict[str, Any]]) -> Dict[str, str]:
+        """Get timing recommendations for remedies."""
+        return {remedy['remedy']: remedy['data']['timing'] for remedy in ranked_remedies}
+    
+    def _check_contraindications(self, ranked_remedies: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+        """Check for contraindications."""
+        return {remedy['remedy']: remedy['data']['contraindications'] for remedy in ranked_remedies}
+    
+    def _identify_food_triggers(self, df: pd.DataFrame) -> Dict[str, float]:
+        """Identify food triggers from nutrition data."""
+        triggers = {}
+        
+        # Simple correlation analysis
+        for col in df.columns:
+            if col != 'symptoms' and df[col].dtype in ['int64', 'float64']:
+                if 'symptoms' in df.columns:
+                    corr = df['symptoms'].corr(df[col])
+                    if abs(corr) > 0.3:
+                        triggers[col] = corr
+        
+        return triggers
+    
+    def _analyze_meal_timing(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze meal timing patterns."""
+        return {
+            'breakfast_time': df[df['meal_type'] == 'breakfast']['time'].mean(),
+            'lunch_time': df[df['meal_type'] == 'lunch']['time'].mean(),
+            'dinner_time': df[df['meal_type'] == 'dinner']['time'].mean(),
+            'snack_frequency': len(df[df['meal_type'] == 'snack'])
+        }
+    
+    def _generate_nutrition_insights(self, df: pd.DataFrame) -> List[str]:
+        """Generate nutrition insights."""
+        insights = []
+        
+        if df['fiber_g'].mean() < 25:
+            insights.append("Consider increasing fiber intake for better digestive health")
+        
+        if df['protein_g'].mean() < 50:
+            insights.append("Protein intake may be insufficient for optimal health")
+        
+        if df['sugar_g'].mean() > 50:
+            insights.append("Sugar intake is high - consider reducing added sugars")
+        
+        return insights
+    
+    def _generate_nutrition_recommendations(self, df: pd.DataFrame) -> List[str]:
+        """Generate nutrition recommendations."""
+        recommendations = []
+        
+        if df['fiber_g'].mean() < 25:
+            recommendations.append("Add more fruits, vegetables, and whole grains")
+        
+        if df['protein_g'].mean() < 50:
+            recommendations.append("Include lean protein sources in each meal")
+        
+        if df['sugar_g'].mean() > 50:
+            recommendations.append("Reduce processed foods and added sugars")
+        
+        return recommendations
+    
+    def _identify_symptom_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Identify symptom patterns."""
+        patterns = {}
+        
+        # Time-based patterns
+        if 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'])
+            df['day_of_week'] = df['date'].dt.day_name()
+            patterns['day_of_week'] = df.groupby('day_of_week')['severity'].mean().to_dict()
+        
+        # Severity patterns
+        patterns['severity_trend'] = self._calculate_trend(df['severity'])
+        
+        return patterns
+    
+    def _analyze_symptom_triggers(self, df: pd.DataFrame) -> Dict[str, float]:
+        """Analyze symptom triggers."""
+        triggers = {}
+        
+        # This would analyze correlations between symptoms and various factors
+        # For now, return empty dict
+        return triggers
+    
+    def _generate_symptom_insights(self, df: pd.DataFrame) -> List[str]:
+        """Generate symptom insights."""
+        insights = []
+        
+        if df['severity'].mean() > 7:
+            insights.append("Symptom severity is high - consider consulting a healthcare provider")
+        
+        if df['severity'].std() > 3:
+            insights.append("Symptom severity varies significantly - track triggers more closely")
+        
+        return insights
+    
+    def _generate_symptom_recommendations(self, df: pd.DataFrame) -> List[str]:
+        """Generate symptom recommendations."""
+        recommendations = []
+        
+        if df['severity'].mean() > 7:
+            recommendations.append("Consider implementing stress management techniques")
+        
+        if df['severity'].std() > 3:
+            recommendations.append("Keep a detailed symptom diary to identify patterns")
+        
+        return recommendations
+    
+    def _calculate_trend(self, series: pd.Series) -> str:
+        """Calculate trend direction."""
+        if len(series) < 2:
+            return "insufficient_data"
+        
+        recent = series.tail(3).mean()
+        earlier = series.head(3).mean()
+        
+        if recent > earlier + 0.5:
+            return "improving"
+        elif recent < earlier - 0.5:
+            return "declining"
+        else:
+            return "stable"
+
+## 3. INTEGRATION WITH MAIN SYSTEM
+# File: src/lib/health_ai_integration.py
+
+"""
+Enhanced Health AI Integration
+=============================
+Integration of sleep, stress, nutrition, and symptom AI features
+"""
+
+from .sleep_stress_ai import SleepStressAI
+from .nutrition_symptoms_ai import NutritionSymptomsAI
+from .unified_health_ai import get_conn
+import json
+
+class EnhancedHealthAI:
+    """Enhanced health AI with all features."""
+    
+    def __init__(self):
+        self.sleep_stress_ai = SleepStressAI()
+        self.nutrition_symptoms_ai = NutritionSymptomsAI()
+    
+    def get_comprehensive_analysis(self, user_id: str, date: str) -> Dict[str, Any]:
+        """Get comprehensive health analysis."""
+        # Get user data
+        user_data = self._get_user_data(user_id, date)
+        
+        # Sleep analysis
+        sleep_analysis = self.sleep_stress_ai.analyze_sleep_patterns(user_data.get('sleep', []))
+        
+        # Stress analysis
+        stress_analysis = self.sleep_stress_ai.analyze_stress_patterns(user_data.get('stress', []))
+        
+        # Nutrition analysis
+        nutrition_analysis = self.nutrition_symptoms_ai.analyze_nutrition_patterns(user_data.get('nutrition', []))
+        
+        # Symptom analysis
+        symptom_analysis = self.nutrition_symptoms_ai.analyze_symptom_patterns(user_data.get('symptoms', []))
+        
+        # Generate comprehensive insights
+        insights = self._generate_insights(sleep_analysis, stress_analysis, nutrition_analysis, symptom_analysis)
+        
+        return {
+            'sleep': sleep_analysis,
+            'stress': stress_analysis,
+            'nutrition': nutrition_analysis,
+            'symptoms': symptom_analysis,
+            'insights': insights,
+            'recommendations': self._generate_recommendations(sleep_analysis, stress_analysis, nutrition_analysis, symptom_analysis)
+        }
+    
+    def _get_user_data(self, user_id: str, date: str) -> Dict[str, Any]:
+        """Get user data for analysis."""
+        with get_conn() as conn:
+            # Get sleep data
+            sleep_data = conn.execute(
+                """SELECT * FROM sleep_sessions WHERE user_id=? AND date(start_time)=?""",
+                (user_id, date)
+            ).fetchall()
+            
+            # Get stress data
+            stress_data = conn.execute(
+                """SELECT * FROM daily_logs WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchall()
+            
+            # Get nutrition data
+            nutrition_data = conn.execute(
+                """SELECT * FROM meals WHERE user_id=? AND date(ts)=?""",
+                (user_id, date)
+            ).fetchall()
+            
+            # Get symptom data
+            symptom_data = conn.execute(
+                """SELECT * FROM symptoms WHERE user_id=? AND date=?""",
+                (user_id, date)
+            ).fetchall()
+            
+            return {
+                'sleep': [dict(row) for row in sleep_data],
+                'stress': [dict(row) for row in stress_data],
+                'nutrition': [dict(row) for row in nutrition_data],
+                'symptoms': [dict(row) for row in symptom_data]
+            }
+    
+    def _generate_insights(self, sleep_analysis: Dict, stress_analysis: Dict, nutrition_analysis: Dict, symptom_analysis: Dict) -> List[str]:
+        """Generate comprehensive insights."""
+        insights = []
+        
+        # Sleep insights
+        if sleep_analysis.get('patterns', {}).get('sleep_debt', 0) > 1:
+            insights.append("Sleep debt detected - prioritize rest and recovery")
+        
+        # Stress insights
+        if stress_analysis.get('metrics', {}).get('avg_stress', 0) > 7:
+            insights.append("High stress levels detected - implement stress management strategies")
+        
+        # Nutrition insights
+        if nutrition_analysis.get('metrics', {}).get('avg_fiber', 0) < 25:
+            insights.append("Fiber intake is low - increase fruits, vegetables, and whole grains")
+        
+        # Symptom insights
+        if symptom_analysis.get('avg_severity', {}).get('gut', 0) > 5:
+            insights.append("GI symptoms are elevated - consider dietary modifications")
+        
+        return insights
+    
+    def _generate_recommendations(self, sleep_analysis: Dict, stress_analysis: Dict, nutrition_analysis: Dict, symptom_analysis: Dict) -> List[str]:
+        """Generate comprehensive recommendations."""
+        recommendations = []
+        
+        # Sleep recommendations
+        recommendations.extend(sleep_analysis.get('recommendations', []))
+        
+        # Stress recommendations
+        recommendations.extend(stress_analysis.get('recommendations', []))
+        
+        # Nutrition recommendations
+        recommendations.extend(nutrition_analysis.get('recommendations', []))
+        
+        # Symptom recommendations
+        recommendations.extend(symptom_analysis.get('recommendations', []))
+        
+        return recommendations
+
+# Example usage
+if __name__ == "__main__":
+    # Initialize enhanced health AI
+    health_ai = EnhancedHealthAI()
+    
+    # Get comprehensive analysis
+    analysis = health_ai.get_comprehensive_analysis("user_001", "2025-01-15")
+    
+    print("Comprehensive Health Analysis:")
+    print(json.dumps(analysis, indent=2))

@@ -159,25 +159,20 @@ export default function NutritionPage() {
       </header>
 
       {/* AI Insights */}
-      {nutritionAnalysis?.foodSymptomCorrelations?.length > 0 && (
+      {nutritionAnalysis && nutritionAnalysis.length > 0 && (
         <Alert className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-900/50">
           <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           <AlertTitle className="text-purple-800 dark:text-purple-300 font-semibold">AI Nutrition Insights</AlertTitle>
           <AlertDescription className="text-purple-700 dark:text-purple-400">
             <div className="space-y-2 mt-2">
-              <p className="font-medium">Potential Trigger Foods:</p>
-              <div className="flex flex-wrap gap-2">
-                {nutritionAnalysis.foodSymptomCorrelations.slice(0, 5).map((corr, i) => (
-                  <Badge key={i} variant={Math.abs(corr.correlation) > 0.6 ? "destructive" : "default"}>
-                    {corr.food} ({(Math.abs(corr.correlation) * 100).toFixed(0)}%)
-                  </Badge>
+              <p className="font-medium">Pattern Insights:</p>
+              <div className="space-y-1">
+                {nutritionAnalysis.slice(0, 3).map((insight, i) => (
+                  <p key={i} className="text-sm">
+                    • {insight.description}
+                  </p>
                 ))}
               </div>
-              {nutritionAnalysis?.recommendations?.length > 0 && (
-                <p className="mt-3 text-sm">
-                  💡 <span className="font-medium">Recommendations:</span> {nutritionAnalysis.recommendations.slice(0, 2).join(" • ")}
-                </p>
-              )}
             </div>
           </AlertDescription>
         </Alert>

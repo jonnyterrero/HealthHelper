@@ -245,7 +245,7 @@ export default function RemediesPage() {
       }
       if (entry.mental) {
         if (entry.mental.anxiety > 7) symptoms.add("anxiety");
-        if (entry.mental.sleepHours < 6) symptoms.add("sleep_issues");
+        if (entry.mental.sleepHours !== undefined && entry.mental.sleepHours < 6) symptoms.add("sleep_issues");
         if (entry.mental.stressLevel > 7) symptoms.add("stress");
       }
     });

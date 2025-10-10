@@ -114,5 +114,10 @@
         "tailwindcss": "^4",
         "tw-animate-css": "^1.3.8",
         "typescript": "^5"
+    },
+    "overrides": {
+        "node-domexception": "npm:domexception@^4.0.0",
+        "@esbuild-kit/esm-loader": "tsx",
+        "@esbuild-kit/core-utils": "tsx"
     }
 }

@@ -6,6 +6,8 @@ import path from "path";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Export ZIP endpoint for downloading project files
+
 // Folders to skip entirely
 const EXCLUDED_DIRS = new Set([
   "node_modules",

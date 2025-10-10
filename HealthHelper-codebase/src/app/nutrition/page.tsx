@@ -19,7 +19,7 @@ export default function NutritionPage() {
   const [entries, setEntries] = React.useState(() => loadEntries());
   const [date, setDate] = React.useState(todayISO());
   
-  const [meals, setMeals] = React.useState<NutritionEntry["meals"]>([]);
+  const [meals, setMeals] = React.useState<Array<{ time: string; type: string; foods: string[]; notes: string }>>([]);
   const [newMeal, setNewMeal] = React.useState({
     time: "",
     type: "breakfast" as "breakfast" | "lunch" | "dinner" | "snack",

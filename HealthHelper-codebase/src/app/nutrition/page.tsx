@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, Bar, BarChart } from "recharts";
-import { loadEntries, todayISO, lastNDays, analyzeNutritionPatterns, type NutritionEntry } from "@/lib/health";
+import { loadEntries, todayISO, lastNDays, analyzeNutritionPatterns, type NutritionEntry, type MealEntry } from "@/lib/health";
 import { ArrowLeft, Plus, Trash2, Sparkles, AlertCircle, TrendingUp, Apple } from "lucide-react";
 
 export default function NutritionPage() {
@@ -88,11 +88,18 @@ export default function NutritionPage() {
     const allEntries = loadEntries();
     const existingEntry = allEntries.find((e) => e.date === date);
     
+    const mealEntry: MealEntry = {
+      date,
+      meals: meals.map(m => ({
+        name: m.foods.join(", "),
+        portion: "1 serving",
+        time: m.time,
+      })) as any
+    };
+    
     const nutritionEntry: NutritionEntry = {
       date,
-      meals,
-      hydration: 0,
-      supplements: []
+      meals: mealEntry
     };
 
     const updatedEntry = {

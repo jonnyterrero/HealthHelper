@@ -1,5 +1,6 @@
 "use client"
 
+// MindTrack: Mental health tracking with mood, stress, sleep analytics
 import React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

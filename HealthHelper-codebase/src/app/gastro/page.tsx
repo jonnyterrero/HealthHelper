@@ -236,13 +236,13 @@ export default function GastroPage() {
     doc.setFontSize(16); doc.text("GastroGuard Report", pageWidth/2, y, { align: "center" }); y += 10
     doc.setFontSize(11); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
 
-    doc.setFont(undefined, "bold"); doc.text("Top Remedies", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); doc.text("Top Remedies", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const tops = effectivenessByRemedy(logs)
     if (tops.length === 0) { doc.text("No remedy data yet.", 14, y); y += 8 } else {
       for (const r of tops) { doc.text(`${r.remedy}: ${(r.effectiveness*100).toFixed(0)}% (${r.uses} uses)`, 14, y); y += 6 }
     }
 
-    doc.setFont(undefined, "bold"); y += 4; doc.text("Recent Logs", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); y += 4; doc.text("Recent Logs", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const recent = logs.slice().sort((a,b)=>a.datetime.localeCompare(b.datetime)).slice(-12)
     for (const l of recent) {
       if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }

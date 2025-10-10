@@ -386,11 +386,11 @@ export default function MindTrackPage() {
     doc.setFontSize(16); doc.text("MindTrack Report", pageWidth/2, y, { align: "center" }); y += 10
     doc.setFontSize(11); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
 
-    doc.setFont(undefined, "bold"); doc.text("Profile", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); doc.text("Profile", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const profileLine = `Name: ${profile.name || '-'} • Age: ${profile.age ?? '-'} • Gender: ${profile.gender || '-'}`
     doc.text(doc.splitTextToSize(profileLine, pageWidth - 28), 14, y); y += 6
 
-    doc.setFont(undefined, "bold"); doc.text("Recent Entries", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); doc.text("Recent Entries", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const recent = entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-12)
     for (const e of recent) {
       if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }

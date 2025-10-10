@@ -210,8 +210,8 @@ export default function SkinTrackPage() {
     doc.setFontSize(11)
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
 
-    doc.setFont(undefined, "bold");
-    doc.text("Recent Records", 14, y); y += 6; doc.setFont(undefined, "normal")
+    doc.setFont("helvetica", "bold");
+    doc.text("Recent Records", 14, y); y += 6; doc.setFont("helvetica", "normal")
     const recent = lesions.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-10)
     for (const r of recent) {
       if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }

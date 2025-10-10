@@ -83,10 +83,10 @@ export async function GET() {
 
     const buffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 6 } });
 
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename=orchids-app.zip` ,
+        "Content-Disposition": `attachment; filename=health-helper-export.zip` ,
         "Cache-Control": "no-store",
       },
     });

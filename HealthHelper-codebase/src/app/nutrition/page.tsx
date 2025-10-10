@@ -133,13 +133,9 @@ export default function NutritionPage() {
   }, [entries]);
 
   const symptomCorrelationData = React.useMemo(() => {
-    if (!nutritionAnalysis?.foodSymptomCorrelations) {
-      return [];
-    }
-    return nutritionAnalysis.foodSymptomCorrelations.slice(0, 6).map(corr => ({
-      food: corr.food,
-      score: Math.abs(corr.correlation) * 100
-    }));
+    // TODO: Implement food-symptom correlation analysis
+    // For now, return empty array as analyzeNutritionPatterns returns Insight[] not correlation data
+    return [];
   }, [nutritionAnalysis]);
 
   return (

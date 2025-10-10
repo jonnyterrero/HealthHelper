@@ -297,7 +297,7 @@ export default function SkinTrackPage() {
       } catch {
         // Fallback to local rule-based responder
         const reply = generateSkinResponse(q)
-        setChat([...base, { role: "assistant", text: reply, time: new Date().toISOString() }])
+        setChat([...base, { role: "assistant" as const, text: reply, time: new Date().toISOString() }])
       }
     })()
   }

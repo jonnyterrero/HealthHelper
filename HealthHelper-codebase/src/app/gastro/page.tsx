@@ -383,7 +383,7 @@ export default function GastroPage() {
       } catch {
         // fallback to local responder
         const reply = generateGastroResponse(q)
-        setChat(prev => [...base, { role: "assistant", text: reply, time: new Date().toISOString() }])
+        setChat(prev => [...base, { role: "assistant" as const, text: reply, time: new Date().toISOString() }])
       }
     })()
   }

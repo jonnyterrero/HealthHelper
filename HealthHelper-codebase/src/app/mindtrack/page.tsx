@@ -346,7 +346,7 @@ export default function MindTrackPage() {
       } catch {
         // graceful fallback to local keyword responder
         const reply = respond(userText, profile, entries)
-        const next = [...base, { role: "assistant", text: reply, time: new Date().toISOString() }]
+        const next: ChatMessage[] = [...base, { role: "assistant" as const, text: reply, time: new Date().toISOString() }]
         setChat(next)
         saveChat(next)
       }

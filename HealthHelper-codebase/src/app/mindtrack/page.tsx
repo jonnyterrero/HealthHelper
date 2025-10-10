@@ -824,7 +824,7 @@ export default function MindTrackPage() {
                 <YAxis yAxisId="left" domain={[0, 10]} tick={{ fontSize: 12 }} label={{ value: "Mood/Stress (0-10)", angle: -90, position: "insideLeft", style: { fontSize: 11 } }} />
                 <YAxis yAxisId="right" orientation="right" domain={[0, 'auto']} tick={{ fontSize: 12 }} label={{ value: "Journal Entries", angle: 90, position: "insideRight", style: { fontSize: 11 } }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line yAxisId="right" type="monotone" dataKey="journalCount" stroke="var(--color-journalCount)" strokeWidth={3} dot={{ r: 4 }} name="Journal Entries" />
                 <Line yAxisId="left" type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} name="Mood" />
                 <Line yAxisId="left" type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} name="Stress" />
@@ -850,7 +850,7 @@ export default function MindTrackPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="energy" stroke="var(--color-energy)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />

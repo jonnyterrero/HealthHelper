@@ -377,7 +377,7 @@ export default function SleepTrackPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line type="monotone" dataKey="sleep" stroke="var(--color-sleep)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
               </LineChart>

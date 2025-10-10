@@ -1537,7 +1537,7 @@ export default function HomePage() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="anxiety" stroke="var(--color-anxiety)" strokeWidth={2} dot={false} />
               </LineChart>

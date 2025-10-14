@@ -159,7 +159,7 @@ export default function AnalyticsPage() {
             </Select>
           </div>
           <CardDescription>
-            Viewing data from the last {timePeriod} days • {data14.length} data points
+            Viewing data from the last {timePeriod} days • {lastNDays(entries, timePeriod).length} entries tracked
           </CardDescription>
         </CardHeader>
       </Card>

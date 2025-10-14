@@ -202,7 +202,7 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
       nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
     }
   } else {
-    entries.push({ date: partial.date, ...partial } as HealthEntry)
+    entries.push({ ...partial } as HealthEntry)
   }
   saveEntries(entries)
   return entries

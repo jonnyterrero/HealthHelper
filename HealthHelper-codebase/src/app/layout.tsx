@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   applicationName: "Health Helper",
   manifest: "/manifest.json",
   themeColor: "#a855f7",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   // Apple specific install experience
   appleWebApp: {
     capable: true,

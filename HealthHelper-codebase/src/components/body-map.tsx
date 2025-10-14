@@ -42,13 +42,27 @@ export function BodyMap({ view, onViewChange, selectedLocation, onLocationClick,
   const svgRef = React.useRef<SVGSVGElement>(null);
   const [hoveredRegion, setHoveredRegion] = React.useState<string | null>(null);
 
-  const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleSvgClick = (e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>) => {
     if (!svgRef.current) return;
     
     const svg = svgRef.current;
     const rect = svg.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 320;
-    const y = ((e.clientY - rect.top) / rect.height) * 300;
+    
+    // Handle both mouse and touch events
+    let clientX: number, clientY: number;
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if ('changedTouches' in e && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    } else {
+      clientX = (e as React.MouseEvent<SVGSVGElement>).clientX;
+      clientY = (e as React.MouseEvent<SVGSVGElement>).clientY;
+    }
+    
+    const x = ((clientX - rect.left) / rect.width) * 320;
+    const y = ((clientY - rect.top) / rect.height) * 300;
     
     // Determine which region was clicked
     let clickedRegion = "other";
@@ -98,8 +112,9 @@ export function BodyMap({ view, onViewChange, selectedLocation, onLocationClick,
         <svg
           ref={svgRef}
           viewBox="0 0 320 300"
-          className="w-full h-auto cursor-crosshair"
+          className="w-full h-auto cursor-crosshair touch-none"
           onClick={handleSvgClick}
+          onTouchEnd={handleSvgClick}
         >
           {/* Body regions */}
           {BODY_REGIONS[view].map((region) => (

@@ -318,7 +318,7 @@ export default function HomePage() {
       )}
 
       {/* Desktop Navigation Tabs */}
-      <nav className="block">
+      <nav className="hidden md:block">
         <div className="flex items-center gap-2 p-1 bg-muted rounded-lg flex-wrap">
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/analytics" className="flex items-center justify-center gap-2">

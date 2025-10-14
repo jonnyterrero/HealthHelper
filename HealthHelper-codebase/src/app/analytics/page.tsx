@@ -9,15 +9,17 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { exportCSV, exportPDF } from "@/lib/export"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Calendar } from "lucide-react"
 
 export default function AnalyticsPage() {
   const [entries, setEntries] = React.useState(() => loadEntries())
   const [gastro, setGastro] = React.useState<any[]>([])
   const [mind, setMind] = React.useState<any[]>([])
   const [lesions, setLesions] = React.useState<any[]>([])
+  const [timePeriod, setTimePeriod] = React.useState<number>(30) // days
 
-  const data14 = toTimeSeries(lastNDays(entries, 30))
+  const data14 = toTimeSeries(lastNDays(entries, timePeriod))
   const insights = React.useMemo(() => generateInsights(entries), [entries])
 
   React.useEffect(() => {
@@ -119,6 +121,35 @@ export default function AnalyticsPage() {
         </div>
       </header>
 
+      {/* Time Period Selector */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-lg">Time Period</CardTitle>
+            </div>
+            <Select value={String(timePeriod)} onValueChange={(v) => setTimePeriod(Number(v))}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 Days</SelectItem>
+                <SelectItem value="14">Last 14 Days</SelectItem>
+                <SelectItem value="30">Last 30 Days</SelectItem>
+                <SelectItem value="60">Last 60 Days</SelectItem>
+                <SelectItem value="90">Last 90 Days</SelectItem>
+                <SelectItem value="180">Last 6 Months</SelectItem>
+                <SelectItem value="365">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <CardDescription>
+            Viewing data from the last {timePeriod} days • {data14.length} data points
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
       {/* Mobile: charts in tabs to reduce clutter */}
       <div className="md:hidden">
         <Tabs defaultValue="all">
@@ -132,7 +163,7 @@ export default function AnalyticsPage() {
           <TabsContent value="all" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Symptom Trends (30d)</CardTitle>
+                <CardTitle className="text-base">Symptom Trends ({timePeriod}d)</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer className="w-full h-[240px]" config={{

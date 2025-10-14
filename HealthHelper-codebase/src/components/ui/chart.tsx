@@ -114,7 +114,7 @@ interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
   nameKey?: string
   labelKey?: string
   labelFormatter?: (value: any, payload: any[]) => string
-  formatter?: (value: any, name: string, item: any, index: number) => React.ReactNode
+  formatter?: (value: any, name: string, item: any, index: number, payload: any) => React.ReactNode
   color?: string
   labelClassName?: string
 }

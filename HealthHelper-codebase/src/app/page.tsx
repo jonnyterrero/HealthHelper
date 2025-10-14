@@ -255,7 +255,7 @@ export default function HomePage() {
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Health Dashboard</h1>
-          <p className="text-muted-foreground">AI-powered tracking for stomach, skin, and mental health</p>
+          <p className="text-muted-foreground">AI-powered tracking for stomach, skin, mental health, and lifestyle</p>
         </div>
         <div className="relative">
           <div className="flex gap-2 flex-wrap">

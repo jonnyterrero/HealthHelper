@@ -10,7 +10,7 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { exportCSV, exportPDF } from "@/lib/export"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Calendar } from "lucide-react"
+import { ArrowLeft, Calendar, Activity, TrendingUp } from "lucide-react"
 
 export default function AnalyticsPage() {
   const [entries, setEntries] = React.useState(() => loadEntries())
@@ -72,6 +72,20 @@ export default function AnalyticsPage() {
     }
     return Array.from(byDate.entries()).map(([date, area]) => ({ date, area }))
   }, [lesions])
+
+  const workoutSeries = React.useMemo(() => {
+    return entries
+      .filter(e => e.workout && e.workout.duration > 0)
+      .map(e => ({
+        date: e.date,
+        duration: e.workout!.duration,
+        intensity: e.workout!.intensity,
+        calories: e.workout!.caloriesBurned || 0,
+        type: e.workout!.type,
+        feeling: e.workout!.feeling
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [entries])
 
   // Overlay series from app logs (normalize where needed)
   const overlaySeries = React.useMemo(() => {
@@ -364,6 +378,129 @@ export default function AnalyticsPage() {
           </ChartContainer>
         </CardContent>
       </Card>
+
+      {/* Workout Activity Charts */}
+      {workoutSeries.length > 0 && (
+        <>
+          <Card className="border-orange-200 dark:border-orange-900/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-orange-600" />
+                Workout Activity Trends
+              </CardTitle>
+              <CardDescription>Exercise duration and intensity over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer className="w-full h-[280px]" config={{ 
+                duration: { label: "Duration (min)", color: "var(--chart-1)" }, 
+                intensity: { label: "Intensity (1-10)", color: "var(--chart-4)" } 
+              }}>
+                <LineChart data={workoutSeries}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="right" orientation="right" domain={[0,10]} tick={{ fontSize: 12 }} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
+                  <Line yAxisId="left" type="monotone" dataKey="duration" stroke="var(--color-duration)" strokeWidth={2} dot={true} />
+                  <Line yAxisId="right" type="monotone" dataKey="intensity" stroke="var(--color-intensity)" strokeWidth={2} dot={true} />
+                </LineChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-200 dark:border-orange-900/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
+                Workout Impact on Health
+              </CardTitle>
+              <CardDescription>How exercise correlates with your symptoms and well-being</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Workout Summary</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Workouts:</span>
+                      <span className="font-medium">{workoutSeries.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Avg Duration:</span>
+                      <span className="font-medium">
+                        {Math.round(workoutSeries.reduce((sum, w) => sum + w.duration, 0) / workoutSeries.length)} min
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Avg Intensity:</span>
+                      <span className="font-medium">
+                        {(workoutSeries.reduce((sum, w) => sum + w.intensity, 0) / workoutSeries.length).toFixed(1)}/10
+                      </span>
+                    </div>
+                    {workoutSeries.some(w => w.calories > 0) && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total Calories:</span>
+                        <span className="font-medium">
+                          {workoutSeries.reduce((sum, w) => sum + w.calories, 0).toLocaleString()} kcal
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Health Impact (Correlation)</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Mood on workout days:</span>
+                      <span className="font-medium text-green-600">
+                        {(() => {
+                          const workoutDates = new Set(workoutSeries.map(w => w.date))
+                          const workoutDayMood = entries.filter(e => workoutDates.has(e.date) && e.mental?.mood).map(e => e.mental!.mood)
+                          const nonWorkoutDayMood = entries.filter(e => !workoutDates.has(e.date) && e.mental?.mood).map(e => e.mental!.mood)
+                          const avgWorkout = workoutDayMood.length > 0 ? (workoutDayMood.reduce((a, b) => a + b, 0) / workoutDayMood.length).toFixed(1) : "N/A"
+                          const avgNonWorkout = nonWorkoutDayMood.length > 0 ? (nonWorkoutDayMood.reduce((a, b) => a + b, 0) / nonWorkoutDayMood.length).toFixed(1) : "N/A"
+                          return `${avgWorkout} vs ${avgNonWorkout}`
+                        })()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Stress on workout days:</span>
+                      <span className="font-medium text-blue-600">
+                        {(() => {
+                          const workoutDates = new Set(workoutSeries.map(w => w.date))
+                          const workoutDayStress = entries.filter(e => workoutDates.has(e.date) && e.mental?.stressLevel).map(e => e.mental!.stressLevel!)
+                          const nonWorkoutDayStress = entries.filter(e => !workoutDates.has(e.date) && e.mental?.stressLevel).map(e => e.mental!.stressLevel!)
+                          const avgWorkout = workoutDayStress.length > 0 ? (workoutDayStress.reduce((a, b) => a + b, 0) / workoutDayStress.length).toFixed(1) : "N/A"
+                          const avgNonWorkout = nonWorkoutDayStress.length > 0 ? (nonWorkoutDayStress.reduce((a, b) => a + b, 0) / nonWorkoutDayStress.length).toFixed(1) : "N/A"
+                          return `${avgWorkout} vs ${avgNonWorkout}`
+                        })()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Sleep on workout days:</span>
+                      <span className="font-medium text-purple-600">
+                        {(() => {
+                          const workoutDates = new Set(workoutSeries.map(w => w.date))
+                          const workoutDaySleep = entries.filter(e => workoutDates.has(e.date) && e.mental?.sleepHours).map(e => e.mental!.sleepHours!)
+                          const nonWorkoutDaySleep = entries.filter(e => !workoutDates.has(e.date) && e.mental?.sleepHours).map(e => e.mental!.sleepHours!)
+                          const avgWorkout = workoutDaySleep.length > 0 ? (workoutDaySleep.reduce((a, b) => a + b, 0) / workoutDaySleep.length).toFixed(1) : "N/A"
+                          const avgNonWorkout = nonWorkoutDaySleep.length > 0 ? (nonWorkoutDaySleep.reduce((a, b) => a + b, 0) / nonWorkoutDaySleep.length).toFixed(1) : "N/A"
+                          return `${avgWorkout}h vs ${avgNonWorkout}h`
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Comparing workout days vs non-workout days
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Card>
         <CardHeader>

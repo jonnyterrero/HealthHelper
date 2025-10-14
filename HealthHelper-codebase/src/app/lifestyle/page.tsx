@@ -5,13 +5,65 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Activity, Apple, Leaf } from "lucide-react";
-
-// Import the content from nutrition and remedies pages
-import NutritionPage from "../nutrition/page";
-import RemediesPage from "../remedies/page";
+import { Badge } from "@/components/ui/badge";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
+import { loadEntries } from "@/lib/health";
+import { ArrowLeft, Activity, Apple, Leaf, TrendingUp, Clock, Flame, Heart } from "lucide-react";
 
 export default function LifestylePage() {
+  const [entries] = React.useState(() => loadEntries());
+
+  // Extract workout data
+  const workoutData = React.useMemo(() => {
+    return entries
+      .filter(e => e.workout && e.workout.duration > 0)
+      .map(e => ({
+        date: e.date,
+        type: e.workout!.type,
+        duration: e.workout!.duration,
+        intensity: e.workout!.intensity,
+        calories: e.workout!.caloriesBurned || 0,
+        feeling: e.workout!.feeling,
+        location: e.workout!.location,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [entries]);
+
+  // Calculate stats
+  const stats = React.useMemo(() => {
+    if (workoutData.length === 0) return null;
+    
+    const totalWorkouts = workoutData.length;
+    const totalMinutes = workoutData.reduce((sum, w) => sum + w.duration, 0);
+    const avgDuration = Math.round(totalMinutes / totalWorkouts);
+    const avgIntensity = (workoutData.reduce((sum, w) => sum + w.intensity, 0) / totalWorkouts).toFixed(1);
+    const totalCalories = workoutData.reduce((sum, w) => sum + w.calories, 0);
+    const last7Days = workoutData.filter(w => {
+      const wDate = new Date(w.date);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return wDate >= weekAgo;
+    }).length;
+    
+    // Group by type
+    const typeCount: Record<string, number> = {};
+    workoutData.forEach(w => {
+      typeCount[w.type] = (typeCount[w.type] || 0) + 1;
+    });
+    const mostCommon = Object.entries(typeCount).sort((a, b) => b[1] - a[1])[0];
+    
+    return {
+      totalWorkouts,
+      totalMinutes,
+      avgDuration,
+      avgIntensity,
+      totalCalories,
+      last7Days,
+      mostCommonType: mostCommon ? mostCommon[0] : "N/A",
+    };
+  }, [workoutData]);
+
   return (
     <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
@@ -25,6 +77,20 @@ export default function LifestylePage() {
             <h1 className="text-2xl font-semibold">Lifestyle & Wellness</h1>
             <p className="text-muted-foreground">Track workouts, nutrition, and natural remedies</p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/nutrition">
+              <Apple className="w-4 h-4 mr-2" />
+              Nutrition
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/remedies">
+              <Leaf className="w-4 h-4 mr-2" />
+              Remedies
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -44,42 +110,234 @@ export default function LifestylePage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="workouts" className="mt-6">
-          <Card className="border-orange-200 dark:border-orange-900/50">
+        <TabsContent value="workouts" className="mt-6 space-y-6">
+          {/* Workout Stats */}
+          {stats ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="border-orange-200">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="text-xs">Total Workouts</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">{stats.totalWorkouts}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {stats.last7Days} in last 7 days
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-orange-200">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="text-xs">Total Time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">{stats.totalMinutes}</div>
+                    <p className="text-xs text-muted-foreground mt-1">minutes exercised</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-orange-200">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="text-xs">Avg Duration</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">{stats.avgDuration}</div>
+                    <p className="text-xs text-muted-foreground mt-1">min per session</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-orange-200">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="text-xs">Avg Intensity</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">{stats.avgIntensity}/10</div>
+                    <p className="text-xs text-muted-foreground mt-1 capitalize">{stats.mostCommonType}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Workout Chart */}
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Workout Trends
+                  </CardTitle>
+                  <CardDescription>Duration and intensity over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer className="w-full h-[300px]" config={{
+                    duration: { label: "Duration (min)", color: "hsl(var(--chart-1))" },
+                    intensity: { label: "Intensity", color: "hsl(var(--chart-4))" },
+                  }}>
+                    <LineChart data={workoutData.slice().reverse()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                      <YAxis yAxisId="right" orientation="right" domain={[0, 10]} tick={{ fontSize: 12 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
+                      <Line yAxisId="left" type="monotone" dataKey="duration" stroke="var(--color-duration)" strokeWidth={2} dot={true} />
+                      <Line yAxisId="right" type="monotone" dataKey="intensity" stroke="var(--color-intensity)" strokeWidth={2} dot={true} />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Workout Type Distribution */}
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle>Workout Types</CardTitle>
+                  <CardDescription>Distribution of your exercise activities</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer className="w-full h-[250px]" config={{
+                    count: { label: "Workouts", color: "hsl(var(--chart-2))" },
+                  }}>
+                    <BarChart data={Object.entries(
+                      workoutData.reduce((acc, w) => {
+                        acc[w.type] = (acc[w.type] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>)
+                    ).map(([type, count]) => ({ type, count }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="type" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="count" fill="hsl(var(--chart-2))" />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Recent Workouts List */}
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle>Recent Workouts</CardTitle>
+                  <CardDescription>Your latest exercise sessions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {workoutData.slice(0, 10).map((workout, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="capitalize">{workout.type}</Badge>
+                            <span className="text-sm font-medium">{workout.date}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            <Clock className="w-3 h-3 inline mr-1" />
+                            {workout.duration} min
+                            <span className="mx-2">•</span>
+                            <TrendingUp className="w-3 h-3 inline mr-1" />
+                            Intensity: {workout.intensity}/10
+                            {workout.calories > 0 && (
+                              <>
+                                <span className="mx-2">•</span>
+                                <Flame className="w-3 h-3 inline mr-1" />
+                                {workout.calories} cal
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={workout.feeling === "energized" ? "default" : "secondary"}
+                          className="capitalize"
+                        >
+                          {workout.feeling}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-6 flex gap-2">
+                    <Button asChild className="flex-1">
+                      <Link href="/">
+                        <Activity className="w-4 h-4 mr-2" />
+                        Log New Workout
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="flex-1">
+                      <Link href="/analytics">
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        View Analytics
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="border-orange-200">
+              <CardContent className="py-12 text-center space-y-4">
+                <Activity className="w-16 h-16 mx-auto text-muted-foreground" />
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">No Workouts Logged Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Start tracking your exercise sessions to see trends and health correlations
+                  </p>
+                  <Button asChild>
+                    <Link href="/">
+                      <Activity className="w-4 h-4 mr-2" />
+                      Log Your First Workout
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="nutrition" className="mt-6">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Workout History
+                <Apple className="w-5 h-5" />
+                Nutrition Tracking
               </CardTitle>
               <CardDescription>
-                Your exercise sessions are logged on the <Link href="/" className="text-primary underline">Home</Link> page
+                Log meals and discover food-symptom patterns
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                To log a new workout, go to the Home page and fill out the Workout & Activity Tracking form.
+                Track your meals, macros, and discover how food affects your health
               </p>
-              <div className="mt-4">
-                <Button asChild>
-                  <Link href="/">Go to Home Page</Link>
-                </Button>
-              </div>
-              <div className="mt-6">
-                <p className="text-sm font-medium mb-2">View your workout analytics:</p>
-                <Button asChild variant="outline">
-                  <Link href="/analytics">View Workout Analytics & Correlations</Link>
-                </Button>
-              </div>
+              <Button asChild size="lg" className="w-full">
+                <Link href="/nutrition">
+                  <Apple className="w-4 h-4 mr-2" />
+                  Go to Nutrition Tracker
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="nutrition" className="mt-6">
-          <NutritionPage />
-        </TabsContent>
-
         <TabsContent value="remedies" className="mt-6">
-          <RemediesPage />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Leaf className="w-5 h-5" />
+                Natural Remedies
+              </CardTitle>
+              <CardDescription>
+                Evidence-based recommendations for symptom relief
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                Get personalized remedy recommendations based on your symptoms
+              </p>
+              <Button asChild size="lg" className="w-full">
+                <Link href="/remedies">
+                  <Leaf className="w-4 h-4 mr-2" />
+                  View Remedy Recommendations
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

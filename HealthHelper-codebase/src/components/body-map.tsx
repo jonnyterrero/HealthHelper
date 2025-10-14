@@ -8,7 +8,7 @@ type BodyMapProps = {
   view: "front" | "back";
   onViewChange: (view: "front" | "back") => void;
   selectedLocation?: { x: number; y: number; region: string };
-  onLocationClick: (x: number; y: number, region: string) => void;
+  onLocationClick: (x: number, y: number, region: string) => void;
   lesionMarkers?: Array<{ x: number; y: number; label: string; color?: string }>;
 };
 

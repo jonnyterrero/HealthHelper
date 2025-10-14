@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateSkinResponse } from "@/lib/chat/skin-chat"
 import { ArrowLeft } from "lucide-react"
+import { BodyMap } from "@/components/body-map"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -38,6 +39,12 @@ type LesionRecord = {
   }
   imageDataUrl?: string
   notes?: string
+  bodyMap?: {
+    view: "front" | "back"
+    x: number
+    y: number
+    region: string
+  }
 }
 
 function loadLesions(): LesionRecord[] {
@@ -92,6 +99,10 @@ export default function SkinTrackPage() {
   const [label, setLabel] = React.useState("left forearm A")
   const [condition, setCondition] = React.useState<string>("eczema")
   const [bodyLocation, setBodyLocation] = React.useState<string>("forearm")
+  
+  // Body map state
+  const [bodyMapView, setBodyMapView] = React.useState<"front" | "back">("front")
+  const [bodyMapCoords, setBodyMapCoords] = React.useState<{ x: number; y: number; region: string } | undefined>(undefined)
 
   // Image inputs (placeholders; no CV processing here)
   const [useAruco, setUseAruco] = React.useState(false)
@@ -258,6 +269,12 @@ export default function SkinTrackPage() {
         asymmetry: undefined,
         deltaE: undefined,
       },
+      bodyMap: bodyMapCoords ? {
+        view: bodyMapView,
+        x: bodyMapCoords.x,
+        y: bodyMapCoords.y,
+        region: bodyMapCoords.region,
+      } : undefined,
     }
     const next = [rec, ...lesions.filter((l) => l.id !== rec.id)].slice(0, 200)
     setLesions(next)
@@ -882,108 +899,28 @@ export default function SkinTrackPage() {
         <Card>
           <CardHeader>
             <CardTitle>Interactive Body Map</CardTitle>
-            <CardDescription>Tap a region to select location</CardDescription>
+            <CardDescription>Click on the body to mark lesion location</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={bodyLocation === "head" ? "default" : "secondary"} 
-                className={bodyLocation === "head" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("head")}
-              >
-                Head/Face
-              </Button>
-              <Button 
-                variant={bodyLocation === "neck" ? "default" : "secondary"} 
-                className={bodyLocation === "neck" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("neck")}
-              >
-                Neck
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={bodyLocation === "shoulders" ? "default" : "secondary"} 
-                className={bodyLocation === "shoulders" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("shoulders")}
-              >
-                Shoulders
-              </Button>
-              <Button 
-                variant={bodyLocation === "chest" ? "default" : "secondary"} 
-                className={bodyLocation === "chest" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("chest")}
-              >
-                Chest
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={bodyLocation === "arms" ? "default" : "secondary"} 
-                className={bodyLocation === "arms" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("arms")}
-              >
-                Arms
-              </Button>
-              <Button 
-                variant={bodyLocation === "forearm" ? "default" : "secondary"} 
-                className={bodyLocation === "forearm" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("forearm")}
-              >
-                Forearms
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={bodyLocation === "hands" ? "default" : "secondary"} 
-                className={bodyLocation === "hands" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("hands")}
-              >
-                Hands
-              </Button>
-              <Button 
-                variant={bodyLocation === "back" ? "default" : "secondary"} 
-                className={bodyLocation === "back" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("back")}
-              >
-                Back
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={bodyLocation === "abdomen" ? "default" : "secondary"} 
-                className={bodyLocation === "abdomen" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("abdomen")}
-              >
-                Abdomen
-              </Button>
-              <Button 
-                variant={bodyLocation === "legs" ? "default" : "secondary"} 
-                className={bodyLocation === "legs" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("legs")}
-              >
-                Legs
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={bodyLocation === "feet" ? "default" : "secondary"} 
-                className={bodyLocation === "feet" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("feet")}
-              >
-                Feet
-              </Button>
-              <Button 
-                variant={bodyLocation === "other" ? "default" : "secondary"} 
-                className={bodyLocation === "other" ? "" : "bg-pink-50 text-pink-700 hover:bg-pink-100"} 
-                onClick={() => setBodyLocation("other")}
-              >
-                Other
-              </Button>
-            </div>
-            <div className="pt-2 text-sm text-muted-foreground">
-              Selected: <span className="font-medium capitalize">{bodyLocation}</span>
-            </div>
+          <CardContent>
+            <BodyMap
+              view={bodyMapView}
+              onViewChange={setBodyMapView}
+              selectedLocation={bodyMapCoords}
+              onLocationClick={(x, y, region) => {
+                setBodyMapCoords({ x, y, region });
+                setBodyLocation(region);
+              }}
+              lesionMarkers={lesions
+                .filter(l => l.bodyMap && l.bodyMap.view === bodyMapView)
+                .map(l => ({
+                  x: l.bodyMap!.x,
+                  y: l.bodyMap!.y,
+                  label: l.label.slice(0, 10),
+                  color: l.condition === "eczema" ? "#FF6B6B" : 
+                         l.condition === "psoriasis" ? "#4ECDC4" : 
+                         l.condition === "melanoma" ? "#8B4513" : "#FFA07A"
+                }))}
+            />
           </CardContent>
         </Card>
 

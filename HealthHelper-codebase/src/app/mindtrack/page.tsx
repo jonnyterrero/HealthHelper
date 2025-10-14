@@ -503,8 +503,8 @@ export default function MindTrackPage() {
             </Link>
           </Button>
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold">MindTrack</h1>
-            <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
+            <h1 className="text-2xl font-semibold">MindMap</h1>
+            <p className="text-muted-foreground">Mental health tracking with mood, stress, and body mapping</p>
           </div>
         </div>
         <div className="flex gap-2">

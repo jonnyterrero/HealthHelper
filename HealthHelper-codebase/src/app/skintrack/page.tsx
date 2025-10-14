@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +17,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateSkinResponse } from "@/lib/chat/skin-chat"
+import { ArrowLeft } from "lucide-react"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -546,9 +548,16 @@ export default function SkinTrackPage() {
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
-          <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon">
+            <Link href="/">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
+            <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />

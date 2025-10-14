@@ -207,13 +207,17 @@ export default function IntegrationsPage() {
   return (
     <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Integrations</h1>
-          <p className="text-sm text-muted-foreground">Connect this app with your other applications</p>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon">
+            <Link href="/">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">Integrations</h1>
+            <p className="text-sm text-muted-foreground">Connect this app with your other applications</p>
+          </div>
         </div>
-        <Button asChild variant="outline" className="w-full sm:w-auto">
-          <Link href="/">← Back to Dashboard</Link>
-        </Button>
       </header>
 
       <div className="grid gap-6">

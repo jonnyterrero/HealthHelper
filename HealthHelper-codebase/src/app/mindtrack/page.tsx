@@ -216,7 +216,6 @@ export default function MindTrackPage() {
         setSymptom(String(rec[0]).toLowerCase())
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // remove separate profile save; Profile is managed via shared ProfileMenu

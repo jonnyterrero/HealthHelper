@@ -198,7 +198,6 @@ export default function GastroPage() {
         if (map[k as keyof typeof map]) { setCondition(map[k as keyof typeof map]); break }
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // exports

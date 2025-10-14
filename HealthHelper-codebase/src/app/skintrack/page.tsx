@@ -174,7 +174,6 @@ export default function SkinTrackPage() {
         setMedsTaken((v) => v || meds[0])
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // exports
@@ -832,7 +831,6 @@ export default function SkinTrackPage() {
             {imageDataUrl && (
               <div className="rounded border overflow-hidden">
                 {/* Preview only */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageDataUrl} alt="Lesion" className="w-full h-48 object-cover" />
               </div>
             )}
@@ -999,7 +997,6 @@ export default function SkinTrackPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {recent.map((r) => (
                 <div key={r.id} className="rounded border overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {r.imageDataUrl ? (
                     <img src={r.imageDataUrl} alt={r.label} className="w-full h-28 object-cover" />
                   ) : (

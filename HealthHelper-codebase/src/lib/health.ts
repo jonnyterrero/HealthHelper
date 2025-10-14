@@ -111,6 +111,18 @@ export type NutritionEntry = {
   correlations?: string[] // detected food-symptom correlations
 }
 
+export type WorkoutEntry = {
+  date: string
+  type: "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other"
+  duration: number // minutes
+  intensity: number // 1-10 scale
+  caloriesBurned?: number
+  heartRateAvg?: number
+  notes?: string
+  feeling?: "energized" | "tired" | "normal" | "sore"
+  location?: "gym" | "home" | "outdoors" | "other"
+}
+
 export type HealthEntry = {
   date: string
   stomach?: StomachEntry
@@ -119,6 +131,7 @@ export type HealthEntry = {
   sleep?: SleepEntry
   symptoms?: SymptomEntry
   nutrition?: NutritionEntry
+  workout?: WorkoutEntry
 }
 
 // Advanced ML prediction types
@@ -200,6 +213,7 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
       sleep: { ...entries[idx].sleep, ...partial.sleep } as SleepEntry,
       symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomEntry,
       nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
+      workout: { ...entries[idx].workout, ...partial.workout } as WorkoutEntry,
     }
   } else {
     entries.push({ ...partial } as HealthEntry)

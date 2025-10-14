@@ -92,6 +92,18 @@ export default function HomePage() {
   // Quick sleep check-in state
   const [quickSleep, setQuickSleep] = React.useState({ hours: 7, stress: 5 });
 
+  // Workout tracking state
+  const [workout, setWorkout] = React.useState({
+    type: "walking" as "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other",
+    duration: 30,
+    intensity: 5,
+    caloriesBurned: 0,
+    heartRateAvg: 0,
+    notes: "",
+    feeling: "normal" as "energized" | "tired" | "normal" | "sore",
+    location: "outdoors" as "gym" | "home" | "outdoors" | "other"
+  });
+
   // Enhanced nutrition tracking with all macros/micros from Python backend
   const [nutrition, setNutrition] = React.useState({
     mealTime: "",
@@ -220,7 +232,8 @@ export default function HomePage() {
       stomach: { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
-      symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined }
+      symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
+      workout: workout.duration > 0 ? { date, type: workout.type, duration: workout.duration, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
     });
     setEntries(updated);
   }
@@ -763,31 +776,29 @@ export default function HomePage() {
       {/* NEW: Workout Tracking Card */}
       <Card className="border-orange-200 dark:border-orange-900/50">
         <CardHeader>
-          <CardTitle>💪 Workout & Activity Tracking</CardTitle>
-          <CardDescription>Exercise sessions with heart rate and intensity</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Workout & Activity Tracking
+          </CardTitle>
+          <CardDescription>Log your exercise sessions and track how they affect your health</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Workout Time</Label>
-              <Input 
-                type="datetime-local" 
-                value={workout.timestamp} 
-                onChange={(e) => setWorkout({ ...workout, timestamp: e.target.value })} 
-              />
-            </div>
-            <div className="space-y-2">
               <Label>Workout Type</Label>
-              <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v })}>
+              <Select value={workout.type} onValueChange={(v: any) => setWorkout({ ...workout, type: v })}>
                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="run">Running</SelectItem>
-                  <SelectItem value="weights">Weights</SelectItem>
+                  <SelectItem value="cardio">Cardio</SelectItem>
+                  <SelectItem value="strength">Strength Training</SelectItem>
                   <SelectItem value="yoga">Yoga</SelectItem>
+                  <SelectItem value="stretching">Stretching</SelectItem>
+                  <SelectItem value="sports">Sports</SelectItem>
+                  <SelectItem value="walking">Walking</SelectItem>
+                  <SelectItem value="running">Running</SelectItem>
                   <SelectItem value="cycling">Cycling</SelectItem>
                   <SelectItem value="swimming">Swimming</SelectItem>
                   <SelectItem value="hiit">HIIT</SelectItem>
-                  <SelectItem value="walking">Walking</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -797,54 +808,72 @@ export default function HomePage() {
               <Input 
                 type="number" 
                 min={0} 
-                value={workout.durationMin || ""} 
-                onChange={(e) => setWorkout({ ...workout, durationMin: Number(e.target.value) })} 
+                value={workout.duration || ""} 
+                onChange={(e) => setWorkout({ ...workout, duration: Number(e.target.value) })} 
+                placeholder="30"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Intensity (1-10)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                max={10} 
+                value={workout.intensity} 
+                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-4 gap-3">
             <div className="space-y-2">
-              <Label>Intensity (1-5)</Label>
-              <Input 
-                type="number" 
-                min={1} 
-                max={5} 
-                value={workout.intensity} 
-                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Calories Burned</Label>
+              <Label>Calories Burned (optional)</Label>
               <Input 
                 type="number" 
                 min={0} 
                 value={workout.caloriesBurned || ""} 
                 onChange={(e) => setWorkout({ ...workout, caloriesBurned: Number(e.target.value) })} 
+                placeholder="200"
               />
             </div>
             <div className="space-y-2">
-              <Label>Avg Heart Rate</Label>
+              <Label>Avg Heart Rate (optional)</Label>
               <Input 
                 type="number" 
                 min={0} 
                 value={workout.heartRateAvg || ""} 
                 onChange={(e) => setWorkout({ ...workout, heartRateAvg: Number(e.target.value) })} 
+                placeholder="140 bpm"
               />
             </div>
             <div className="space-y-2">
-              <Label>Max Heart Rate</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                value={workout.heartRateMax || ""} 
-                onChange={(e) => setWorkout({ ...workout, heartRateMax: Number(e.target.value) })} 
-              />
+              <Label>How You Feel</Label>
+              <Select value={workout.feeling} onValueChange={(v: any) => setWorkout({ ...workout, feeling: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="energized">Energized</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="tired">Tired</SelectItem>
+                  <SelectItem value="sore">Sore</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select value={workout.location} onValueChange={(v: any) => setWorkout({ ...workout, location: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gym">Gym</SelectItem>
+                  <SelectItem value="home">Home</SelectItem>
+                  <SelectItem value="outdoors">Outdoors</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Notes</Label>
+            <Label>Notes (optional)</Label>
             <Input 
               value={workout.notes} 
               onChange={(e) => setWorkout({ ...workout, notes: e.target.value })} 

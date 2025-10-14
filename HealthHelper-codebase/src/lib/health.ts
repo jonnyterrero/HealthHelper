@@ -198,7 +198,7 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
       skin: { ...entries[idx].skin, ...partial.skin } as SkinEntry,
       mental: { ...entries[idx].mental, ...partial.mental } as MentalEntry,
       sleep: { ...entries[idx].sleep, ...partial.sleep } as SleepEntry,
-      symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomsEntry,
+      symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomEntry,
       nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
     }
   } else {

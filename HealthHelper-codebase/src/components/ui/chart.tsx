@@ -260,7 +260,7 @@ const ChartLegend = RechartsPrimitive.Legend
 
 interface ChartLegendContentProps extends React.ComponentProps<"div"> {
   payload?: readonly any[]
-  verticalAlign?: "top" | "bottom"
+  verticalAlign?: "top" | "bottom" | "middle"
   hideIcon?: boolean
   nameKey?: string
 }

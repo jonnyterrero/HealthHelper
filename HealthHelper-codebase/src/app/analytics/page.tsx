@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { loadEntries, toTimeSeries, generateInsights, lastNDays } from "@/lib/health"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +9,7 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { exportCSV, exportPDF } from "@/lib/export"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft } from "lucide-react"
 
 export default function AnalyticsPage() {
   const [entries, setEntries] = React.useState(() => loadEntries())
@@ -99,16 +101,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">Analytics</h1>
-          <p className="text-muted-foreground">Trends, correlations, and exports</p>
+      <header className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon">
+            <Link href="/">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">Analytics</h1>
+            <p className="text-muted-foreground">Comprehensive health insights and data visualizations</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportCSV(entries)}>Export CSV</Button>
           <Button onClick={() => exportPDF(entries, insights)}>Export PDF</Button>
         </div>
-      </div>
+      </header>
 
       {/* Mobile: charts in tabs to reduce clutter */}
       <div className="md:hidden">

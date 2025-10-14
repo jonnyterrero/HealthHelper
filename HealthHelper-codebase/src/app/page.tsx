@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf, Dumbbell } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -327,15 +327,9 @@ export default function HomePage() {
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/nutrition" className="flex items-center justify-center gap-2">
-              <Apple className="w-4 h-4" />
-              Nutrition
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/remedies" className="flex items-center justify-center gap-2">
-              <Leaf className="w-4 h-4" />
-              Remedies
+            <Link href="/lifestyle" className="flex items-center justify-center gap-2">
+              <Dumbbell className="w-4 h-4" />
+              Lifestyle
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
@@ -353,13 +347,13 @@ export default function HomePage() {
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/mindtrack" className="flex items-center justify-center gap-2">
               <Brain className="w-4 h-4" />
-              MindTrack
+              MindMap
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/sleeptrack" className="flex items-center justify-center gap-2">
               <Moon className="w-4 h-4" />
-              SleepTrack
+              Sleep
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">

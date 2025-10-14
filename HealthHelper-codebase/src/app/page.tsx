@@ -138,18 +138,6 @@ export default function HomePage() {
     artificialSweeteners: false,
   });
 
-  // Workout tracking from Python backend
-  const [workout, setWorkout] = React.useState({
-    timestamp: "",
-    type: "",
-    durationMin: 0,
-    intensity: 5,
-    caloriesBurned: 0,
-    heartRateAvg: 0,
-    heartRateMax: 0,
-    notes: "",
-  });
-
   // Vital signs tracking from Python backend
   const [vitals, setVitals] = React.useState({
     hrMean: 0,

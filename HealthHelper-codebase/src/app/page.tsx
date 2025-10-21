@@ -148,8 +148,8 @@ export default function HomePage() {
     if (e?.skin) setSkin({
       severity: e.skin.severity,
       area: e.skin.area ?? "",
-      rash: e.skin.rash,
-      itch: e.skin.itch,
+      rash: e.skin.rash ?? false,
+      itch: e.skin.itch ?? false,
       triggers: { ...e.skin.triggers },
       notes: e.skin.notes ?? "",
     });

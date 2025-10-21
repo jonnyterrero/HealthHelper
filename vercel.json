@@ -4,6 +4,7 @@
   "devCommand": "next dev",
   "installCommand": "npm install",
   "outputDirectory": ".next",
+  "rootDirectory": ".",
   "env": {
     "NODE_ENV": "production"
   },

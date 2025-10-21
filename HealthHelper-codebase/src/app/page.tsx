@@ -156,8 +156,8 @@ export default function HomePage() {
     if (e?.mental) setMental({
       mood: e.mental.mood,
       anxiety: e.mental.anxiety,
-      sleepHours: e.mental.sleepHours,
-      stressLevel: e.mental.stressLevel,
+      sleepHours: e.mental.sleepHours ?? 7,
+      stressLevel: e.mental.stressLevel ?? 5,
       notes: e.mental.notes ?? "",
     });
     if (e?.symptoms) setSymptoms({

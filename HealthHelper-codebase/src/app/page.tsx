@@ -251,28 +251,37 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
-      <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Health Dashboard</h1>
-          <p className="text-muted-foreground">AI-powered tracking for stomach, skin, mental health, and lifestyle</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="container mx-auto max-w-7xl p-4 md:p-6">
+        {/* Compact Header */}
+        <header className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <HeartPulse className="w-6 h-6 text-white" />
         </div>
-        <div className="relative">
-          <div className="flex gap-2 flex-wrap">
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Health Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground">AI-powered health tracking</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
+              size="sm"
               onClick={handleLoadSampleData}
-              className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-900/50 dark:text-green-400 dark:hover:bg-green-900/20"
+              className="border-green-200 text-green-700 hover:bg-green-50"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Load Sample Data
+              <Sparkles className="w-4 h-4 mr-1" />
+              Sample Data
             </Button>
             <ProfileMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Data
+                <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                  <Download className="w-4 h-4 mr-1" />
+                  Export
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -283,7 +292,6 @@ export default function HomePage() {
                 <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
         </div>
       </header>
 
@@ -317,53 +325,161 @@ export default function HomePage() {
         </Alert>
       )}
 
-      {/* Desktop Navigation Tabs */}
-      <nav className="hidden md:block">
-        <div className="flex items-center gap-2 p-1 bg-muted rounded-lg flex-wrap">
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/analytics" className="flex items-center justify-center gap-2">
-              <Activity className="w-4 h-4" />
-              Analytics
-            </Link>
+        {/* Quick Stats Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Today's Entries</p>
+                  <p className="text-2xl font-bold text-blue-600">{entries.filter(e => e.date === date).length}</p>
+                </div>
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Health Score</p>
+                  <p className="text-2xl font-bold text-green-600">8.2</p>
+                </div>
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Streak</p>
+                  <p className="text-2xl font-bold text-purple-600">12 days</p>
+                </div>
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Insights</p>
+                  <p className="text-2xl font-bold text-orange-600">{insights.length}</p>
+                </div>
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Health Services Grid */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Health Services</h2>
+              <p className="text-sm text-muted-foreground">Select the services from below</p>
+            </div>
+            <Button variant="ghost" size="sm" className="text-blue-600">
+              VIEW ALL →
           </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/lifestyle" className="flex items-center justify-center gap-2">
-              <Dumbbell className="w-4 h-4" />
-              Lifestyle
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Link href="/analytics" className="p-6 text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Activity className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="font-medium text-sm">Analytics</h3>
+                <p className="text-xs text-muted-foreground mt-1">Health insights</p>
             </Link>
-          </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/skintrack" className="flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              SkinTrack+
+            </Card>
+            
+            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Link href="/lifestyle" className="p-6 text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Dumbbell className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="font-medium text-sm">Lifestyle</h3>
+                <p className="text-xs text-muted-foreground mt-1">Workouts & nutrition</p>
             </Link>
-          </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/gastro" className="flex items-center justify-center gap-2">
-              <HeartPulse className="w-4 h-4" />
-              GastroGuard
+            </Card>
+            
+            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Link href="/skintrack" className="p-6 text-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Sparkles className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="font-medium text-sm">SkinTrack+</h3>
+                <p className="text-xs text-muted-foreground mt-1">Skin monitoring</p>
             </Link>
-          </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/mindtrack" className="flex items-center justify-center gap-2">
-              <Brain className="w-4 h-4" />
-              MindMap
+            </Card>
+            
+            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Link href="/gastro" className="p-6 text-center">
+                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <HeartPulse className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="font-medium text-sm">GastroGuard</h3>
+                <p className="text-xs text-muted-foreground mt-1">Digestive health</p>
             </Link>
-          </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/sleeptrack" className="flex items-center justify-center gap-2">
-              <Moon className="w-4 h-4" />
-              Sleep
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
-            <Link href="/integrations" className="flex items-center justify-center gap-2">
-              <Plug className="w-4 h-4" />
-              Integrations
-            </Link>
+            </Card>
+        </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Recent Activity</h2>
+              <p className="text-sm text-muted-foreground">Your latest health entries</p>
+            </div>
+            <Button variant="ghost" size="sm" className="text-blue-600">
+              VIEW ALL →
           </Button>
         </div>
-      </nav>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {entries.slice(0, 4).map((entry, idx) => (
+              <Card key={idx} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Activity className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{entry.date}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {entry.stomach && 'Stomach • '}
+                          {entry.skin && 'Skin • '}
+                          {entry.mental && 'Mental • '}
+                          {entry.sleep && 'Sleep • '}
+                          {entry.workout && 'Workout'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {new Date(entry.date).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
 
       {/* AI Insights Dashboard */}
       {insights.length > 0 && (
@@ -394,13 +510,27 @@ export default function HomePage() {
         </Card>
       )}
 
-      {/* Enhanced Daily Log Card */}
-      <Card className="border-blue-200 dark:border-blue-900/50">
-        <CardHeader>
-          <CardTitle>📋 Daily Health Log</CardTitle>
-          <CardDescription>Comprehensive daily tracking aligned with AI backend</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        {/* Quick Entry Forms */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Quick Entry</h2>
+              <p className="text-sm text-muted-foreground">Log your daily health data</p>
+            </div>
+          </div>
+          
+          <Tabs defaultValue="daily" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="daily">Daily</TabsTrigger>
+              <TabsTrigger value="workout">Workout</TabsTrigger>
+              <TabsTrigger value="sleep">Sleep</TabsTrigger>
+              <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="daily" className="mt-4">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="grid md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>Energy (1-10)</Label>

@@ -348,45 +348,53 @@ export default function HomePage() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-              <Link href="/analytics" className="p-6 text-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                  <Activity className="w-6 h-6 text-blue-600" />
+            <Link href="/analytics" className="block">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Activity className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-medium text-sm">Analytics</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Health insights</p>
                 </div>
-                <h3 className="font-medium text-sm">Analytics</h3>
-                <p className="text-xs text-muted-foreground mt-1">Health insights</p>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
             
-            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-              <Link href="/lifestyle" className="p-6 text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                  <Dumbbell className="w-6 h-6 text-green-600" />
+            <Link href="/lifestyle" className="block">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Dumbbell className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h3 className="font-medium text-sm">Lifestyle</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Workouts & nutrition</p>
                 </div>
-                <h3 className="font-medium text-sm">Lifestyle</h3>
-                <p className="text-xs text-muted-foreground mt-1">Workouts & nutrition</p>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
             
-            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-              <Link href="/skintrack" className="p-6 text-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-6 h-6 text-purple-600" />
+            <Link href="/skintrack" className="block">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h3 className="font-medium text-sm">SkinTrack+</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Skin monitoring</p>
                 </div>
-                <h3 className="font-medium text-sm">SkinTrack+</h3>
-                <p className="text-xs text-muted-foreground mt-1">Skin monitoring</p>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
             
-            <Card asChild className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-              <Link href="/gastro" className="p-6 text-center">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                  <HeartPulse className="w-6 h-6 text-red-600" />
+            <Link href="/gastro" className="block">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <HeartPulse className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h3 className="font-medium text-sm">GastroGuard</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Digestive health</p>
                 </div>
-                <h3 className="font-medium text-sm">GastroGuard</h3>
-                <p className="text-xs text-muted-foreground mt-1">Digestive health</p>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
           </div>
         </div>
 

@@ -82,6 +82,19 @@ export type SymptomEntry = {
   notes?: string
 }
 
+// Workout tracking for exercise monitoring
+export type WorkoutEntry = {
+  date: string
+  type: "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other"
+  duration: number // in minutes
+  intensity: number // 0-10
+  caloriesBurned?: number
+  heartRateAvg?: number
+  notes?: string
+  feeling: "energized" | "tired" | "normal" | "sore"
+  location: "gym" | "home" | "outdoors" | "other"
+}
+
 // Nutrition tracking types
 export type FoodItem = {
   name: string
@@ -119,6 +132,7 @@ export type HealthEntry = {
   sleep?: SleepEntry
   symptoms?: SymptomEntry
   nutrition?: NutritionEntry
+  workout?: WorkoutEntry
 }
 
 // Advanced ML prediction types

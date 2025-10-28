@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +17,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateSkinResponse } from "@/lib/chat/skin-chat"
+import { ArrowLeft } from "lucide-react"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -544,7 +546,8 @@ export default function SkinTrackPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100/30 to-pink-50">
+      <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
@@ -1028,6 +1031,7 @@ export default function SkinTrackPage() {
           </div>
         }
       />
+      </div>
     </div>
   )
 }

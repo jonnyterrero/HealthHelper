@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { loadEntries, toTimeSeries, generateInsights, lastNDays } from "@/lib/health"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +9,7 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { exportCSV, exportPDF } from "@/lib/export"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft, Activity, TrendingUp } from "lucide-react"
 
 export default function AnalyticsPage() {
   const [entries, setEntries] = React.useState(() => loadEntries())
@@ -98,11 +100,20 @@ export default function AnalyticsPage() {
   }, [gastroSeries, mindSeries, skinSeries])
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100/30 to-purple-50">
+      <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">Analytics</h1>
-          <p className="text-muted-foreground">Trends, correlations, and exports</p>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">Analytics</h1>
+            <p className="text-muted-foreground">Trends, correlations, and exports</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportCSV(entries)}>Export CSV</Button>
@@ -344,6 +355,7 @@ export default function AnalyticsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

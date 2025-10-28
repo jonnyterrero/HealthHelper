@@ -2,6 +2,7 @@
 
 // MindTrack: Mental health tracking with mood, stress, sleep analytics
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +15,7 @@ import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { generateMindResponse } from "@/lib/chat/mind-chat"
-import { Pill, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { Pill, CheckCircle2, XCircle, Clock, ArrowLeft } from "lucide-react"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.profile.v1"
@@ -493,11 +494,20 @@ export default function MindTrackPage() {
   }, [medications])
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100/30 to-pink-50">
+      <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">MindTrack</h1>
-          <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">MindMap</h1>
+            <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />
@@ -1008,6 +1018,7 @@ export default function MindTrackPage() {
           setInput={setChatInput}
           onSend={askAssistant}
         />
+      </div>
       </div>
     </div>
   )

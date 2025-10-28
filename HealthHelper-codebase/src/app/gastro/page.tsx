@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateGastroResponse } from "@/lib/chat/gastro-chat"
+import { ArrowLeft } from "lucide-react"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -388,11 +390,20 @@ export default function GastroPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-red-100/30 to-pink-50">
+      <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
-          <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
+            <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />
@@ -871,6 +882,7 @@ export default function GastroPage() {
             </div>
           }
         />
+      </div>
       </div>
     </div>
   )

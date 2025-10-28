@@ -946,7 +946,7 @@ export default function HomePage() {
                       {insightsDetails.insights.map((insight, index) => (
                         <Card key={index}>
                           <CardContent className="p-4">
-                            <p className="text-sm">{insight}</p>
+                            <p className="text-sm">{String(insight)}</p>
                           </CardContent>
                         </Card>
                       ))}

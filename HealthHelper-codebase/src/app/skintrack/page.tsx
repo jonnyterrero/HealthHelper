@@ -546,12 +546,22 @@ export default function SkinTrackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100/30 to-pink-50">
-      <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100/30 to-pink-50 relative">
+      {/* Full-coverage purple glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-100/40 via-purple-200/30 to-purple-50/50 backdrop-blur-sm pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
-          <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
+            <Link href="/">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
+            <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />

@@ -65,8 +65,10 @@ export default function LifestylePage() {
   }, [workoutData]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-100/30 to-pink-50">
-      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-100/30 to-pink-50 relative">
+      {/* Full-coverage green glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-green-100/40 via-green-200/30 to-green-50/50 backdrop-blur-sm pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="icon">

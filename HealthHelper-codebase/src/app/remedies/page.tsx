@@ -313,9 +313,10 @@ export default function RemediesPage() {
     <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
             <Link href="/">
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
             </Link>
           </Button>
           <div className="space-y-1">

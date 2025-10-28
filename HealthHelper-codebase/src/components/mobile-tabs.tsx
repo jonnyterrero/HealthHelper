@@ -6,13 +6,12 @@ import { Home, Activity, HeartPulse, Sparkles, Brain, Apple, Leaf } from "lucide
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/analytics", label: "Insights", icon: Activity },
-  { href: "/nutrition", label: "Nutrition", icon: Apple },
-  { href: "/remedies", label: "Remedies", icon: Leaf },
-  { href: "/skintrack", label: "Skin", icon: Sparkles },
-  { href: "/gastro", label: "Gastro", icon: HeartPulse },
-  { href: "/mindtrack", label: "Mind", icon: Brain },
+  { href: "/", label: "Home", icon: Home, color: "blue" },
+  { href: "/analytics", label: "Analytics", icon: Activity, color: "blue" },
+  { href: "/lifestyle", label: "Lifestyle", icon: Apple, color: "green" },
+  { href: "/skintrack", label: "SkinTrack+", icon: Sparkles, color: "purple" },
+  { href: "/gastro", label: "GastroGuard", icon: HeartPulse, color: "red" },
+  { href: "/mindtrack", label: "MindMap", icon: Brain, color: "orange" },
 ];
 
 export const MobileTabs = () => {
@@ -20,12 +19,12 @@ export const MobileTabs = () => {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-gradient-to-r from-blue-50/95 via-pink-50/95 to-purple-50/95 backdrop-blur supports-[backdrop-filter]:bg-gradient-to-r from-blue-50/80 via-pink-50/80 to-purple-50/80"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Primary"
       role="navigation"
     >
-      <ul className="grid grid-cols-7">
+      <ul className="grid grid-cols-6">
         {TABS.map((tab) => {
           const active = pathname === tab.href;
           const Icon = tab.icon;
@@ -34,13 +33,15 @@ export const MobileTabs = () => {
               <Link
                 href={tab.href}
                 className={cn(
-                  "flex h-14 flex-col items-center justify-center gap-1 text-xs",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  "flex h-14 flex-col items-center justify-center gap-1 text-xs transition-all duration-200",
+                  active 
+                    ? "text-primary bg-white/20 rounded-lg mx-1 shadow-lg" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/10 rounded-lg mx-1"
                 )}
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className={cn("h-5 w-5", active && "scale-110")} />
-                <span>{tab.label}</span>
+                <span className="text-[10px] font-medium">{tab.label}</span>
               </Link>
             </li>
           );

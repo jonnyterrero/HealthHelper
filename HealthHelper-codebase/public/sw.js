@@ -1,5 +1,5 @@
 /* Health Helper PWA Service Worker */
-const CACHE_NAME = "health-helper-cache-v1";
+const CACHE_NAME = "health-helper-cache-v2";
 const ASSETS = [
   "/",
   "/manifest.json",
@@ -7,23 +7,53 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (event) => {
+  console.log("Service Worker: Installing...");
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => {
+      console.log("Service Worker: Installed");
+      self.skipWaiting();
+    })
   );
 });
 
 self.addEventListener("activate", (event) => {
+  console.log("Service Worker: Activating...");
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.map((k) => (k === CACHE_NAME ? null : caches.delete(k))))
-    ).then(() => self.clients.claim())
+    ).then(() => {
+      console.log("Service Worker: Activated");
+      self.clients.claim();
+    })
   );
 });
 
 // Listen for skip waiting message from client
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
+    console.log("Service Worker: Skipping waiting...");
     self.skipWaiting();
+  }
+});
+
+// Handle app updates
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "CHECK_UPDATE") {
+    // Check for updates by fetching the main page
+    fetch("/", { cache: "no-cache" })
+      .then(response => {
+        if (response.ok) {
+          // Notify all clients that an update is available
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: "UPDATE_AVAILABLE" });
+            });
+          });
+        }
+      })
+      .catch(() => {
+        // Ignore fetch errors
+      });
   }
 });
 

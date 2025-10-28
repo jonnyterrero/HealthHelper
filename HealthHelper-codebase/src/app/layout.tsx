@@ -5,6 +5,7 @@ import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import SwRegister from "@/components/pwa/sw-register";
 import { MobileTabs } from "@/components/mobile-tabs";
+import { PWAUpdate } from "@/components/pwa-update";
 
 export const metadata: Metadata = {
   title: "Health Helper",
@@ -63,6 +64,7 @@ export default function RootLayout({
         <div className="pb-16 md:pb-0">{children}</div>
         <MobileTabs />
         <SwRegister />
+        <PWAUpdate />
         <VisualEditsMessenger />
       </body>
     </html>

@@ -1125,6 +1125,209 @@ export default function HomePage() {
           </DialogContent>
         </Dialog>
 
+        {/* Quick Entry Forms */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Quick Entry</h2>
+              <p className="text-sm text-muted-foreground">Log your daily health data</p>
+            </div>
+          </div>
+
+          <Tabs defaultValue="daily" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="daily">Daily</TabsTrigger>
+              <TabsTrigger value="workout">Workout</TabsTrigger>
+              <TabsTrigger value="sleep">Sleep</TabsTrigger>
+              <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="daily" className="mt-4">
+              <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                      <Label>Energy (1-10)</Label>
+                    <Input 
+                      type="number" 
+                        min={1} 
+                        max={10} 
+                        value={dailyLog.energy} 
+                        onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Focus (1-10)</Label>
+                    <Input 
+                      type="number" 
+                        min={1} 
+                        max={10} 
+                        value={dailyLog.focus} 
+                        onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Meditation (min)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                        value={dailyLog.meditation} 
+                        onChange={(e) => setDailyLog({ ...dailyLog, meditation: Number(e.target.value) })} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Water (glasses)</Label>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                        value={dailyLog.water} 
+                        onChange={(e) => setDailyLog({ ...dailyLog, water: Number(e.target.value) })} 
+                    />
+                  </div>
+                  </div>
+                  <div className="mt-4">
+                    <Button onClick={saveAll} className="w-full">Save Today</Button>
+                  </div>
+        </CardContent>
+      </Card>
+            </TabsContent>
+            
+            <TabsContent value="workout" className="mt-4">
+              <Card className="bg-gradient-to-br from-white/90 via-green-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Workout Type</Label>
+                      <Select value={workout.type} onValueChange={(v: any) => setWorkout({ ...workout, type: v })}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                          <SelectItem value="cardio">Cardio</SelectItem>
+                          <SelectItem value="strength">Strength Training</SelectItem>
+                  <SelectItem value="yoga">Yoga</SelectItem>
+                          <SelectItem value="stretching">Stretching</SelectItem>
+                          <SelectItem value="sports">Sports</SelectItem>
+                          <SelectItem value="walking">Walking</SelectItem>
+                          <SelectItem value="running">Running</SelectItem>
+                  <SelectItem value="cycling">Cycling</SelectItem>
+                  <SelectItem value="swimming">Swimming</SelectItem>
+                  <SelectItem value="hiit">HIIT</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Duration (minutes)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                        value={workout.duration || ""} 
+                        onChange={(e) => setWorkout({ ...workout, duration: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+                      <Label>Intensity (1-10)</Label>
+              <Input 
+                type="number" 
+                min={1} 
+                        max={10} 
+                value={workout.intensity} 
+                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
+              />
+            </div>
+            </div>
+                  <div className="mt-4">
+                    <Button onClick={saveAll} className="w-full">Save Workout</Button>
+          </div>
+        </CardContent>
+      </Card>
+            </TabsContent>
+            
+            <TabsContent value="sleep" className="mt-4">
+              <Card className="bg-gradient-to-br from-white/90 via-indigo-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                      <Label>Sleep Hours</Label>
+                  <Input 
+                    type="number" 
+                    min={0} 
+                    max={24} 
+                    value={quickSleep.hours} 
+                    onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} 
+                  />
+                </div>
+                <div className="space-y-2">
+                      <Label>Stress Level (1-10)</Label>
+                  <Input 
+                    type="number" 
+                        min={1} 
+                    max={10} 
+                    value={quickSleep.stress} 
+                    onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} 
+                  />
+                </div>
+              </div>
+                  <div className="mt-4">
+                    <Button onClick={saveQuickSleep} className="w-full">Save Sleep</Button>
+            </div>
+          </CardContent>
+        </Card>
+            </TabsContent>
+            
+            <TabsContent value="symptoms" className="mt-4">
+              <Card className="bg-gradient-to-br from-white/90 via-red-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+                      <Label>GI Flare (1-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.giFlare} 
+                onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+                      <Label>Skin Flare (1-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.skinFlare} 
+                onChange={(e) => setSymptoms({ ...symptoms, skinFlare: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+                      <Label>Migraine (1-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.migraine} 
+                onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
+                      <Label>Fatigue (1-10)</Label>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.fatigue} 
+                onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
+              />
+            </div>
+            </div>
+                  <div className="mt-4">
+                    <Button onClick={saveAll} className="w-full">Save Symptoms</Button>
+            </div>
+          </CardContent>
+        </Card>
+            </TabsContent>
+          </Tabs>
+            </div>
+
         {/* Comprehensive Health Overview */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -1385,209 +1588,6 @@ export default function HomePage() {
             </div>
             </div>
 
-        {/* Quick Entry Forms */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Quick Entry</h2>
-              <p className="text-sm text-muted-foreground">Log your daily health data</p>
-            </div>
-          </div>
-
-          <Tabs defaultValue="daily" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="daily">Daily</TabsTrigger>
-              <TabsTrigger value="workout">Workout</TabsTrigger>
-              <TabsTrigger value="sleep">Sleep</TabsTrigger>
-              <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="daily" className="mt-4">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                      <Label>Energy (1-10)</Label>
-                    <Input 
-                      type="number" 
-                        min={1} 
-                        max={10} 
-                        value={dailyLog.energy} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Focus (1-10)</Label>
-                    <Input 
-                      type="number" 
-                        min={1} 
-                        max={10} 
-                        value={dailyLog.focus} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Meditation (min)</Label>
-                    <Input 
-                      type="number" 
-                      min={0} 
-                        value={dailyLog.meditation} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, meditation: Number(e.target.value) })} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Water (glasses)</Label>
-                    <Input 
-                      type="number" 
-                      min={0} 
-                        value={dailyLog.water} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, water: Number(e.target.value) })} 
-                    />
-                  </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button onClick={saveAll} className="w-full">Save Today</Button>
-                  </div>
-        </CardContent>
-      </Card>
-            </TabsContent>
-            
-            <TabsContent value="workout" className="mt-4">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Workout Type</Label>
-                      <Select value={workout.type} onValueChange={(v: any) => setWorkout({ ...workout, type: v })}>
-                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                <SelectContent>
-                          <SelectItem value="cardio">Cardio</SelectItem>
-                          <SelectItem value="strength">Strength Training</SelectItem>
-                  <SelectItem value="yoga">Yoga</SelectItem>
-                          <SelectItem value="stretching">Stretching</SelectItem>
-                          <SelectItem value="sports">Sports</SelectItem>
-                          <SelectItem value="walking">Walking</SelectItem>
-                          <SelectItem value="running">Running</SelectItem>
-                  <SelectItem value="cycling">Cycling</SelectItem>
-                  <SelectItem value="swimming">Swimming</SelectItem>
-                  <SelectItem value="hiit">HIIT</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Duration (minutes)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                        value={workout.duration || ""} 
-                        onChange={(e) => setWorkout({ ...workout, duration: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Intensity (1-10)</Label>
-              <Input 
-                type="number" 
-                min={1} 
-                        max={10} 
-                value={workout.intensity} 
-                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
-              />
-            </div>
-            </div>
-                  <div className="mt-4">
-                    <Button onClick={saveAll} className="w-full">Save Workout</Button>
-          </div>
-        </CardContent>
-      </Card>
-            </TabsContent>
-            
-            <TabsContent value="sleep" className="mt-4">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                      <Label>Sleep Hours</Label>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    max={24} 
-                    value={quickSleep.hours} 
-                    onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} 
-                  />
-                </div>
-                <div className="space-y-2">
-                      <Label>Stress Level (1-10)</Label>
-                  <Input 
-                    type="number" 
-                        min={1} 
-                    max={10} 
-                    value={quickSleep.stress} 
-                    onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} 
-                  />
-                </div>
-              </div>
-                  <div className="mt-4">
-                    <Button onClick={saveQuickSleep} className="w-full">Save Sleep</Button>
-            </div>
-          </CardContent>
-        </Card>
-            </TabsContent>
-            
-            <TabsContent value="symptoms" className="mt-4">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-                      <Label>GI Flare (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.giFlare} 
-                onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Skin Flare (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.skinFlare} 
-                onChange={(e) => setSymptoms({ ...symptoms, skinFlare: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Migraine (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.migraine} 
-                onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Fatigue (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.fatigue} 
-                onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
-              />
-            </div>
-            </div>
-                  <div className="mt-4">
-                    <Button onClick={saveAll} className="w-full">Save Symptoms</Button>
-            </div>
-          </CardContent>
-        </Card>
-            </TabsContent>
-          </Tabs>
-            </div>
-              </div>
               </div>
   );
 }

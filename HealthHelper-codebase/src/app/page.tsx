@@ -757,11 +757,11 @@ export default function HomePage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600 mb-2">{healthScoreDetails.score}/{healthScoreDetails.maxScore}</div>
+                  <div className="text-4xl font-bold text-green-600 mb-2">{healthScoreDetails.score}/{healthScoreDetails.maxScore || 100}</div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
                       className="bg-green-600 h-3 rounded-full transition-all duration-500" 
-                      style={{ width: `${(healthScoreDetails.score / healthScoreDetails.maxScore) * 100}%` }}
+                      style={{ width: `${((healthScoreDetails.score / (healthScoreDetails.maxScore || 100)) * 100)}%` }}
                     ></div>
                   </div>
                 </div>

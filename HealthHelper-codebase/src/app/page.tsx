@@ -30,6 +30,8 @@ import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
   const [entries, setEntries] = React.useState(() => loadEntries());
+  const [showAllServices, setShowAllServices] = React.useState(false);
+  const [showAllActivity, setShowAllActivity] = React.useState(false);
 
   // Enhanced daily log state
   const [dailyLog, setDailyLog] = React.useState({
@@ -239,7 +241,7 @@ export default function HomePage() {
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <HeartPulse className="w-6 h-6 text-white" />
-            </div>
+        </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Health Dashboard
@@ -257,6 +259,16 @@ export default function HomePage() {
               <Sparkles className="w-4 h-4 mr-1" />
               Sample Data
             </Button>
+            <Link href="/integrations">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              >
+                <Plug className="w-4 h-4 mr-1" />
+                Integrations
+              </Button>
+            </Link>
             <ProfileMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -273,8 +285,8 @@ export default function HomePage() {
                 <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </header>
+        </div>
+      </header>
 
         {/* Quick Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -284,13 +296,13 @@ export default function HomePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Today's Entries</p>
                   <p className="text-2xl font-bold text-blue-600">{entries.filter(e => e.date === date).length}</p>
-                </div>
+        </div>
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Activity className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            </div>
+          </CardContent>
+        </Card>
           
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-4">
@@ -298,11 +310,11 @@ export default function HomePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Health Score</p>
                   <p className="text-2xl font-bold text-green-600">8.2</p>
-                </div>
+            </div>
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-              </div>
+            </div>
+            </div>
             </CardContent>
           </Card>
           
@@ -312,10 +324,10 @@ export default function HomePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Streak</p>
                   <p className="text-2xl font-bold text-purple-600">12 days</p>
-                </div>
+            </div>
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-purple-600" />
-                </div>
+          </div>
               </div>
             </CardContent>
           </Card>
@@ -326,14 +338,14 @@ export default function HomePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Insights</p>
                   <p className="text-2xl font-bold text-orange-600">{insights.length}</p>
-                </div>
+            </div>
                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                   <Brain className="w-5 h-5 text-orange-600" />
                 </div>
-              </div>
+                </div>
             </CardContent>
           </Card>
-        </div>
+                </div>
 
         {/* Health Services Grid */}
         <div className="mb-6">
@@ -341,22 +353,27 @@ export default function HomePage() {
             <div>
               <h2 className="text-xl font-semibold">Health Services</h2>
               <p className="text-sm text-muted-foreground">Select the services from below</p>
-            </div>
-            <Button variant="ghost" size="sm" className="text-blue-600">
-              VIEW ALL →
+              </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-blue-600"
+              onClick={() => setShowAllServices(!showAllServices)}
+            >
+              {showAllServices ? 'SHOW LESS' : 'VIEW ALL'} →
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link href="/analytics" className="block">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <Activity className="w-6 h-6 text-blue-600" />
-                  </div>
+            </div>
                   <h3 className="font-medium text-sm">Analytics</h3>
                   <p className="text-xs text-muted-foreground mt-1">Health insights</p>
-                </div>
+            </div>
               </Card>
             </Link>
             
@@ -365,7 +382,7 @@ export default function HomePage() {
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <Dumbbell className="w-6 h-6 text-green-600" />
-                  </div>
+          </div>
                   <h3 className="font-medium text-sm">Lifestyle</h3>
                   <p className="text-xs text-muted-foreground mt-1">Workouts & nutrition</p>
                 </div>
@@ -377,11 +394,11 @@ export default function HomePage() {
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <Sparkles className="w-6 h-6 text-purple-600" />
-                  </div>
+          </div>
                   <h3 className="font-medium text-sm">SkinTrack+</h3>
                   <p className="text-xs text-muted-foreground mt-1">Skin monitoring</p>
                 </div>
-              </Card>
+      </Card>
             </Link>
             
             <Link href="/gastro" className="block">
@@ -395,8 +412,60 @@ export default function HomePage() {
                 </div>
               </Card>
             </Link>
+            
+            {showAllServices && (
+              <>
+                <Link href="/mindtrack" className="block">
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <Brain className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <h3 className="font-medium text-sm">MindMap</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Mental health</p>
+                    </div>
+                  </Card>
+                </Link>
+                
+                <Link href="/sleeptrack" className="block">
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <Moon className="w-6 h-6 text-indigo-600" />
+                      </div>
+                      <h3 className="font-medium text-sm">Sleep</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Sleep tracking</p>
+                    </div>
+                  </Card>
+                </Link>
+                
+                <Link href="/nutrition" className="block">
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <Apple className="w-6 h-6 text-yellow-600" />
+                      </div>
+                      <h3 className="font-medium text-sm">Nutrition</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Food tracking</p>
+                    </div>
+                  </Card>
+                </Link>
+                
+                <Link href="/remedies" className="block">
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <Leaf className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <h3 className="font-medium text-sm">Remedies</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Natural remedies</p>
+                    </div>
+                  </Card>
+                </Link>
+              </>
+            )}
           </div>
-        </div>
+          </div>
 
         {/* Recent Activity */}
         <div className="mb-6">
@@ -405,20 +474,25 @@ export default function HomePage() {
               <h2 className="text-xl font-semibold">Recent Activity</h2>
               <p className="text-sm text-muted-foreground">Your latest health entries</p>
             </div>
-            <Button variant="ghost" size="sm" className="text-blue-600">
-              VIEW ALL →
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-blue-600"
+              onClick={() => setShowAllActivity(!showAllActivity)}
+            >
+              {showAllActivity ? 'SHOW LESS' : 'VIEW ALL'} →
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {entries.slice(0, 4).map((entry, idx) => (
+            {entries.slice(0, showAllActivity ? 8 : 4).map((entry, idx) => (
               <Card key={idx} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                         <Activity className="w-5 h-5 text-blue-600" />
-                      </div>
+            </div>
                       <div>
                         <p className="font-medium text-sm">{entry.date}</p>
                         <p className="text-xs text-muted-foreground">
@@ -428,17 +502,17 @@ export default function HomePage() {
                           {entry.sleep && 'Sleep • '}
                           {entry.workout && 'Workout'}
                         </p>
-                      </div>
-                    </div>
+            </div>
+            </div>
                     <Badge variant="secondary" className="text-xs">
                       {new Date(entry.date).toLocaleDateString()}
                     </Badge>
-                  </div>
+            </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
+            </div>
+            </div>
 
         {/* Quick Entry Forms */}
         <div className="mb-6">
@@ -448,7 +522,7 @@ export default function HomePage() {
               <p className="text-sm text-muted-foreground">Log your daily health data</p>
             </div>
           </div>
-          
+
           <Tabs defaultValue="daily" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="daily">Daily</TabsTrigger>
@@ -461,189 +535,189 @@ export default function HomePage() {
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
+                  <div className="space-y-2">
                       <Label>Energy (1-10)</Label>
-                      <Input 
-                        type="number" 
+                    <Input 
+                      type="number" 
                         min={1} 
                         max={10} 
                         value={dailyLog.energy} 
                         onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+                    />
+                  </div>
+                  <div className="space-y-2">
                       <Label>Focus (1-10)</Label>
-                      <Input 
-                        type="number" 
+                    <Input 
+                      type="number" 
                         min={1} 
                         max={10} 
                         value={dailyLog.focus} 
                         onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+                    />
+                  </div>
+                  <div className="space-y-2">
                       <Label>Meditation (min)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
+                    <Input 
+                      type="number" 
+                      min={0} 
                         value={dailyLog.meditation} 
                         onChange={(e) => setDailyLog({ ...dailyLog, meditation: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+                    />
+                  </div>
+                  <div className="space-y-2">
                       <Label>Water (glasses)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
+                    <Input 
+                      type="number" 
+                      min={0} 
                         value={dailyLog.water} 
                         onChange={(e) => setDailyLog({ ...dailyLog, water: Number(e.target.value) })} 
-                      />
-                    </div>
+                    />
+                  </div>
                   </div>
                   <div className="mt-4">
                     <Button onClick={saveAll} className="w-full">Save Today</Button>
                   </div>
-                </CardContent>
-              </Card>
+        </CardContent>
+      </Card>
             </TabsContent>
             
             <TabsContent value="workout" className="mt-4">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Workout Type</Label>
+            <div className="space-y-2">
+              <Label>Workout Type</Label>
                       <Select value={workout.type} onValueChange={(v: any) => setWorkout({ ...workout, type: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                        <SelectContent>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
                           <SelectItem value="cardio">Cardio</SelectItem>
                           <SelectItem value="strength">Strength Training</SelectItem>
-                          <SelectItem value="yoga">Yoga</SelectItem>
+                  <SelectItem value="yoga">Yoga</SelectItem>
                           <SelectItem value="stretching">Stretching</SelectItem>
                           <SelectItem value="sports">Sports</SelectItem>
                           <SelectItem value="walking">Walking</SelectItem>
                           <SelectItem value="running">Running</SelectItem>
-                          <SelectItem value="cycling">Cycling</SelectItem>
-                          <SelectItem value="swimming">Swimming</SelectItem>
-                          <SelectItem value="hiit">HIIT</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Duration (minutes)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
+                  <SelectItem value="cycling">Cycling</SelectItem>
+                  <SelectItem value="swimming">Swimming</SelectItem>
+                  <SelectItem value="hiit">HIIT</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Duration (minutes)</Label>
+              <Input 
+                type="number" 
+                min={0} 
                         value={workout.duration || ""} 
                         onChange={(e) => setWorkout({ ...workout, duration: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+              />
+            </div>
+            <div className="space-y-2">
                       <Label>Intensity (1-10)</Label>
-                      <Input 
-                        type="number" 
-                        min={1} 
+              <Input 
+                type="number" 
+                min={1} 
                         max={10} 
-                        value={workout.intensity} 
-                        onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
-                      />
-                    </div>
-                  </div>
+                value={workout.intensity} 
+                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
+              />
+            </div>
+            </div>
                   <div className="mt-4">
                     <Button onClick={saveAll} className="w-full">Save Workout</Button>
-                  </div>
-                </CardContent>
-              </Card>
+          </div>
+        </CardContent>
+      </Card>
             </TabsContent>
             
             <TabsContent value="sleep" className="mt-4">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+            <div className="space-y-2">
                       <Label>Sleep Hours</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
-                        max={24} 
-                        value={quickSleep.hours} 
-                        onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+                  <Input 
+                    type="number" 
+                    min={0} 
+                    max={24} 
+                    value={quickSleep.hours} 
+                    onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} 
+                  />
+                </div>
+                <div className="space-y-2">
                       <Label>Stress Level (1-10)</Label>
-                      <Input 
-                        type="number" 
+                  <Input 
+                    type="number" 
                         min={1} 
-                        max={10} 
-                        value={quickSleep.stress} 
-                        onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} 
-                      />
-                    </div>
-                  </div>
+                    max={10} 
+                    value={quickSleep.stress} 
+                    onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} 
+                  />
+                </div>
+              </div>
                   <div className="mt-4">
                     <Button onClick={saveQuickSleep} className="w-full">Save Sleep</Button>
-                  </div>
-                </CardContent>
-              </Card>
+            </div>
+          </CardContent>
+        </Card>
             </TabsContent>
             
             <TabsContent value="symptoms" className="mt-4">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
+            <div className="space-y-2">
                       <Label>GI Flare (1-10)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
-                        max={10} 
-                        value={symptoms.giFlare} 
-                        onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.giFlare} 
+                onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
                       <Label>Skin Flare (1-10)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
-                        max={10} 
-                        value={symptoms.skinFlare} 
-                        onChange={(e) => setSymptoms({ ...symptoms, skinFlare: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.skinFlare} 
+                onChange={(e) => setSymptoms({ ...symptoms, skinFlare: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
                       <Label>Migraine (1-10)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
-                        max={10} 
-                        value={symptoms.migraine} 
-                        onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.migraine} 
+                onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} 
+              />
+            </div>
+            <div className="space-y-2">
                       <Label>Fatigue (1-10)</Label>
-                      <Input 
-                        type="number" 
-                        min={0} 
-                        max={10} 
-                        value={symptoms.fatigue} 
-                        onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
-                      />
-                    </div>
-                  </div>
+              <Input 
+                type="number" 
+                min={0} 
+                max={10} 
+                value={symptoms.fatigue} 
+                onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
+              />
+            </div>
+            </div>
                   <div className="mt-4">
                     <Button onClick={saveAll} className="w-full">Save Symptoms</Button>
-                  </div>
-                </CardContent>
-              </Card>
+            </div>
+          </CardContent>
+        </Card>
             </TabsContent>
           </Tabs>
-        </div>
-      </div>
-    </div>
+            </div>
+              </div>
+              </div>
   );
 }
 

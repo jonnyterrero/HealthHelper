@@ -208,15 +208,16 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
     entries[idx] = {
       ...entries[idx],
       ...partial,
-      stomach: { ...entries[idx].stomach, ...partial.stomach },
-      skin: { ...entries[idx].skin, ...partial.skin },
-      mental: { ...entries[idx].mental, ...partial.mental },
-      sleep: { ...entries[idx].sleep, ...partial.sleep },
-      symptoms: { ...entries[idx].symptoms, ...partial.symptoms },
-      nutrition: { ...entries[idx].nutrition, ...partial.nutrition },
+      stomach: { ...entries[idx].stomach, ...partial.stomach } as StomachEntry,
+      skin: { ...entries[idx].skin, ...partial.skin } as SkinEntry,
+      mental: { ...entries[idx].mental, ...partial.mental } as MentalEntry,
+      sleep: { ...entries[idx].sleep, ...partial.sleep } as SleepEntry,
+      symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomEntry,
+      nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
+      workout: { ...entries[idx].workout, ...partial.workout } as WorkoutEntry,
     }
   } else {
-    entries.push({ date: partial.date, ...partial })
+    entries.push({ ...partial } as HealthEntry)
   }
   saveEntries(entries)
   return entries

@@ -310,7 +310,10 @@ export default function RemediesPage() {
     : recommendations.filter(r => r.remedy.category === activeCategory);
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-100/30 to-pink-50 relative">
+      {/* Intense green glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-green-200/60 via-green-300/50 to-green-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
@@ -517,6 +520,7 @@ export default function RemediesPage() {
           </Alert>
         </>
       )}
+      </div>
     </div>
   );
 }

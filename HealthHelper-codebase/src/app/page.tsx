@@ -575,7 +575,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50">
       <div className="container mx-auto max-w-7xl p-4 md:p-6">
         {/* Compact Header */}
         <header className="flex items-center justify-between mb-6">
@@ -643,7 +643,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Dialog open={showTodayEntriesModal} onOpenChange={setShowTodayEntriesModal}>
             <DialogTrigger asChild>
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -731,7 +731,7 @@ export default function HomePage() {
           
           <Dialog open={showHealthScoreModal} onOpenChange={setShowHealthScoreModal}>
             <DialogTrigger asChild>
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-green-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -795,7 +795,7 @@ export default function HomePage() {
           
           <Dialog open={showStreakModal} onOpenChange={setShowStreakModal}>
             <DialogTrigger asChild>
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-purple-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -877,7 +877,7 @@ export default function HomePage() {
           
           <Dialog open={showInsightsModal} onOpenChange={setShowInsightsModal}>
             <DialogTrigger asChild>
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-orange-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1134,7 +1134,7 @@ export default function HomePage() {
             </div>
           </div>
           
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -1154,7 +1154,7 @@ export default function HomePage() {
                   skinSeverity: { label: "Skin Severity", color: "#6b21a8" },
                   sleep: { label: "Sleep Hours", color: "#06b6d4" }
                 }}
-                className="h-[300px] w-full"
+                className="h-[200px] w-full"
               >
                 <LineChart data={comprehensiveData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -1237,23 +1237,23 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link href="/analytics" className="block">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <Activity className="w-6 h-6 text-blue-600" />
-            </div>
+                  </div>
                   <h3 className="font-medium text-sm">Analytics</h3>
                   <p className="text-xs text-muted-foreground mt-1">Health insights</p>
-            </div>
+                </div>
               </Card>
             </Link>
             
             <Link href="/lifestyle" className="block">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-green-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <Dumbbell className="w-6 h-6 text-green-600" />
-          </div>
+                  </div>
                   <h3 className="font-medium text-sm">Lifestyle</h3>
                   <p className="text-xs text-muted-foreground mt-1">Workouts & nutrition</p>
                 </div>
@@ -1261,19 +1261,19 @@ export default function HomePage() {
             </Link>
             
             <Link href="/skintrack" className="block">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-purple-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <Sparkles className="w-6 h-6 text-purple-600" />
-          </div>
+                  </div>
                   <h3 className="font-medium text-sm">SkinTrack+</h3>
                   <p className="text-xs text-muted-foreground mt-1">Skin monitoring</p>
                 </div>
-      </Card>
+              </Card>
             </Link>
             
             <Link href="/gastro" className="block">
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
+              <Card className="bg-gradient-to-br from-white/90 via-red-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                     <HeartPulse className="w-6 h-6 text-red-600" />

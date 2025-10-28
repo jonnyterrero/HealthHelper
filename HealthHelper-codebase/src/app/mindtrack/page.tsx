@@ -495,8 +495,8 @@ export default function MindTrackPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100/30 to-pink-50 relative">
-      {/* Full-coverage orange glass morphism overlay */}
-      <div className="fixed inset-0 bg-gradient-to-br from-orange-100/40 via-orange-200/30 to-orange-50/50 backdrop-blur-sm pointer-events-none z-0"></div>
+      {/* Intense orange glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-orange-200/60 via-orange-300/50 to-orange-100/70 backdrop-blur-md pointer-events-none z-0"></div>
       <div className="container mx-auto max-w-6xl p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">

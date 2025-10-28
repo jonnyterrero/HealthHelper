@@ -132,8 +132,10 @@ export default function SleepTrackPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-purple-50">
-      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-purple-50 relative">
+      {/* Intense indigo glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-200/60 via-indigo-300/50 to-indigo-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="icon">

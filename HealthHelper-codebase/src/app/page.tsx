@@ -595,7 +595,7 @@ export default function HomePage() {
               variant="outline" 
               size="sm"
               onClick={handleLoadSampleData}
-              className="border-green-200 text-green-700 hover:bg-green-50"
+              className="border-blue-200 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50"
             >
               <Sparkles className="w-4 h-4 mr-1" />
               Sample Data
@@ -604,7 +604,7 @@ export default function HomePage() {
               <Button 
                 variant="outline" 
                 size="sm"
-                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                className="border-pink-200 text-pink-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50"
               >
                 <Plug className="w-4 h-4 mr-1" />
                 Integrations
@@ -613,7 +613,7 @@ export default function HomePage() {
             <ProfileMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                <Button variant="outline" size="sm" className="border-purple-200 text-purple-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50">
                   <Download className="w-4 h-4 mr-1" />
                   Export
                 </Button>
@@ -630,7 +630,7 @@ export default function HomePage() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="border-green-200 text-green-700 hover:bg-green-50"
+              className="border-pink-200 text-pink-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50"
               onClick={() => setShowImportModal(true)}
             >
               <Upload className="w-4 h-4 mr-1" />

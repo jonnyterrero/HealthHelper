@@ -1147,11 +1147,11 @@ export default function HomePage() {
             <CardContent>
               <ChartContainer
                 config={{
-                  mood: { label: "Mood", color: "#3b82f6" },
-                  stress: { label: "Stress", color: "#ef4444" },
+                  mood: { label: "Mood", color: "#a855f7" },
+                  stress: { label: "Stress", color: "#dc2626" },
                   energy: { label: "Energy", color: "#10b981" },
-                  gastroPain: { label: "Gastro Pain", color: "#f59e0b" },
-                  skinSeverity: { label: "Skin Severity", color: "#8b5cf6" },
+                  gastroPain: { label: "Gastro Pain", color: "#f87171" },
+                  skinSeverity: { label: "Skin Severity", color: "#6b21a8" },
                   sleep: { label: "Sleep Hours", color: "#06b6d4" }
                 }}
                 className="h-[300px] w-full"
@@ -1175,17 +1175,17 @@ export default function HomePage() {
                   <Line 
                     type="monotone" 
                     dataKey="mood" 
-                    stroke="#3b82f6" 
+                    stroke="#a855f7" 
                     strokeWidth={2}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                    dot={{ fill: "#a855f7", strokeWidth: 2, r: 4 }}
                     connectNulls={false}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="stress" 
-                    stroke="#ef4444" 
+                    stroke="#dc2626" 
                     strokeWidth={2}
-                    dot={{ fill: "#ef4444", strokeWidth: 2, r: 4 }}
+                    dot={{ fill: "#dc2626", strokeWidth: 2, r: 4 }}
                     connectNulls={false}
                   />
                   <Line 
@@ -1199,17 +1199,17 @@ export default function HomePage() {
                   <Line 
                     type="monotone" 
                     dataKey="gastroPain" 
-                    stroke="#f59e0b" 
+                    stroke="#f87171" 
                     strokeWidth={2}
-                    dot={{ fill: "#f59e0b", strokeWidth: 2, r: 4 }}
+                    dot={{ fill: "#f87171", strokeWidth: 2, r: 4 }}
                     connectNulls={false}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="skinSeverity" 
-                    stroke="#8b5cf6" 
+                    stroke="#6b21a8" 
                     strokeWidth={2}
-                    dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }}
+                    dot={{ fill: "#6b21a8", strokeWidth: 2, r: 4 }}
                     connectNulls={false}
                   />
                 </LineChart>

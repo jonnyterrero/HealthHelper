@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Key, Webhook, ExternalLink, RefreshCw, Trash2, Smartphone, QrCode, CheckCircle2 } from "lucide-react";
+import { Copy, Key, Webhook, ExternalLink, RefreshCw, Trash2, Smartphone, QrCode, CheckCircle2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -211,8 +211,11 @@ export default function IntegrationsPage() {
           <h1 className="text-2xl font-semibold">Integrations</h1>
           <p className="text-sm text-muted-foreground">Connect this app with your other applications</p>
         </div>
-        <Button asChild variant="outline" className="w-full sm:w-auto">
-          <Link href="/">← Back to Dashboard</Link>
+        <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
+          <Link href="/">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
         </Button>
       </header>
 

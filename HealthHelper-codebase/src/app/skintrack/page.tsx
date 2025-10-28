@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,8 +16,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateSkinResponse } from "@/lib/chat/skin-chat"
-import { ArrowLeft } from "lucide-react"
-import { BodyMap } from "@/components/body-map"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -39,12 +36,6 @@ type LesionRecord = {
   }
   imageDataUrl?: string
   notes?: string
-  bodyMap?: {
-    view: "front" | "back"
-    x: number
-    y: number
-    region: string
-  }
 }
 
 function loadLesions(): LesionRecord[] {
@@ -98,11 +89,6 @@ export default function SkinTrackPage() {
   // Lesion management
   const [label, setLabel] = React.useState("left forearm A")
   const [condition, setCondition] = React.useState<string>("eczema")
-  const [bodyLocation, setBodyLocation] = React.useState<string>("forearm")
-  
-  // Body map state
-  const [bodyMapView, setBodyMapView] = React.useState<"front" | "back">("front")
-  const [bodyMapCoords, setBodyMapCoords] = React.useState<{ x: number; y: number; region: string } | undefined>(undefined)
 
   // Image inputs (placeholders; no CV processing here)
   const [useAruco, setUseAruco] = React.useState(false)
@@ -188,6 +174,7 @@ export default function SkinTrackPage() {
         setMedsTaken((v) => v || meds[0])
       }
     } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // exports
@@ -269,12 +256,6 @@ export default function SkinTrackPage() {
         asymmetry: undefined,
         deltaE: undefined,
       },
-      bodyMap: bodyMapCoords ? {
-        view: bodyMapView,
-        x: bodyMapCoords.x,
-        y: bodyMapCoords.y,
-        region: bodyMapCoords.region,
-      } : undefined,
     }
     const next = [rec, ...lesions.filter((l) => l.id !== rec.id)].slice(0, 200)
     setLesions(next)
@@ -566,16 +547,9 @@ export default function SkinTrackPage() {
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
-            <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
+          <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />
@@ -858,6 +832,7 @@ export default function SkinTrackPage() {
             {imageDataUrl && (
               <div className="rounded border overflow-hidden">
                 {/* Preview only */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageDataUrl} alt="Lesion" className="w-full h-48 object-cover" />
               </div>
             )}
@@ -893,34 +868,6 @@ export default function SkinTrackPage() {
               <label className="flex items-center gap-2 text-sm"><Switch checked={timing.afternoon} onCheckedChange={(c) => setTiming((t) => ({ ...t, afternoon: c }))} />Afternoon</label>
               <label className="flex items-center gap-2 text-sm"><Switch checked={timing.evening} onCheckedChange={(c) => setTiming((t) => ({ ...t, evening: c }))} />Evening</label>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Interactive Body Map</CardTitle>
-            <CardDescription>Click on the body to mark lesion location</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BodyMap
-              view={bodyMapView}
-              onViewChange={setBodyMapView}
-              selectedLocation={bodyMapCoords}
-              onLocationClick={(x, y, region) => {
-                setBodyMapCoords({ x, y, region });
-                setBodyLocation(region);
-              }}
-              lesionMarkers={lesions
-                .filter(l => l.bodyMap && l.bodyMap.view === bodyMapView)
-                .map(l => ({
-                  x: l.bodyMap!.x,
-                  y: l.bodyMap!.y,
-                  label: l.label.slice(0, 10),
-                  color: l.condition === "eczema" ? "#FF6B6B" : 
-                         l.condition === "psoriasis" ? "#4ECDC4" : 
-                         l.condition === "melanoma" ? "#8B4513" : "#FFA07A"
-                }))}
-            />
           </CardContent>
         </Card>
 
@@ -1052,6 +999,7 @@ export default function SkinTrackPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {recent.map((r) => (
                 <div key={r.id} className="rounded border overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {r.imageDataUrl ? (
                     <img src={r.imageDataUrl} alt={r.label} className="w-full h-28 object-cover" />
                   ) : (

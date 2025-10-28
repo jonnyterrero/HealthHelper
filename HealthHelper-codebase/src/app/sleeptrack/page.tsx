@@ -143,9 +143,9 @@ export default function SleepTrackPage() {
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold flex items-center gap-2">
               <Moon className="w-6 h-6 text-purple-500" />
-              Sleep
+              Sleep & Stress Tracker
             </h1>
-            <p className="text-muted-foreground">Track sleep quality and stress patterns</p>
+            <p className="text-muted-foreground">Monitor your sleep patterns and stress levels</p>
           </div>
         </div>
       </header>

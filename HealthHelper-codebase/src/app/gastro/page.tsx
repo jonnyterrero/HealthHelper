@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +15,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateGastroResponse } from "@/lib/chat/gastro-chat"
-import { ArrowLeft } from "lucide-react"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -200,6 +198,7 @@ export default function GastroPage() {
         if (map[k as keyof typeof map]) { setCondition(map[k as keyof typeof map]); break }
       }
     } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // exports
@@ -392,16 +391,9 @@ export default function GastroPage() {
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
-            <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
+          <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />

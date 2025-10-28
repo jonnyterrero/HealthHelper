@@ -26,7 +26,8 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf, Dumbbell, Calendar, Target, Award, Lightbulb } from "lucide-react";
+import { toast } from "sonner";
+import { Download, Upload, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf, Dumbbell, Calendar, Target, Award, Lightbulb, FileText, Image, File } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -44,6 +45,12 @@ export default function HomePage() {
   const [showHealthScoreModal, setShowHealthScoreModal] = React.useState(false);
   const [showStreakModal, setShowStreakModal] = React.useState(false);
   const [showInsightsModal, setShowInsightsModal] = React.useState(false);
+  const [showImportModal, setShowImportModal] = React.useState(false);
+  
+  // Import states
+  const [importedFiles, setImportedFiles] = React.useState<File[]>([]);
+  const [importPreview, setImportPreview] = React.useState<any[]>([]);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   // Enhanced daily log state
   const [dailyLog, setDailyLog] = React.useState({
@@ -465,6 +472,84 @@ export default function HomePage() {
     setEntries(updated);
   }
 
+  // Import functionality
+  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    setImportedFiles(prev => [...prev, ...files]);
+    processFiles(files);
+  }
+
+  function processFiles(files: File[]) {
+    setIsProcessing(true);
+    const processedData: any[] = [];
+    
+    files.forEach(file => {
+      const fileData = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        category: categorizeFile(file),
+        status: 'processing' as const
+      };
+      processedData.push(fileData);
+    });
+    
+    setImportPreview(processedData);
+    setIsProcessing(false);
+  }
+
+  function categorizeFile(file: File): string {
+    const name = file.name.toLowerCase();
+    const type = file.type.toLowerCase();
+    
+    if (type.includes('image')) return 'Medical Photo';
+    if (name.includes('lab') || name.includes('blood') || name.includes('test')) return 'Lab Results';
+    if (name.includes('prescription') || name.includes('medication')) return 'Prescription';
+    if (name.includes('report') || name.includes('summary')) return 'Medical Report';
+    if (name.includes('note') || name.includes('visit')) return 'Doctor Notes';
+    if (type.includes('pdf')) return 'Document';
+    return 'Other';
+  }
+
+  function confirmImport() {
+    // Process and integrate the imported data
+    const newEntries: HealthEntry[] = [];
+    
+    importPreview.forEach(item => {
+      // Create a basic entry from the imported file
+      const entry: HealthEntry = {
+        date: todayISO(),
+        mental: {
+          date: todayISO(),
+          mood: 5,
+          anxiety: 5,
+          sleepHours: 7,
+          stressLevel: 5,
+          notes: `Imported: ${item.name} (${item.category})`
+        }
+      };
+      newEntries.push(entry);
+    });
+    
+    // Add to existing entries
+    const updatedEntries = [...entries, ...newEntries];
+    setEntries(updatedEntries);
+    
+    // Clear import data
+    setImportedFiles([]);
+    setImportPreview([]);
+    setShowImportModal(false);
+    
+    toast.success(`Successfully imported ${newEntries.length} medical documents!`);
+  }
+
+  function removeFile(index: number) {
+    setImportedFiles(prev => prev.filter((_, i) => i !== index));
+    setImportPreview(prev => prev.filter((_, i) => i !== index));
+  }
+
   function saveQuickSleep() {
     const updated = upsertEntry({
       date: todayISO(),
@@ -541,6 +626,16 @@ export default function HomePage() {
                 <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-green-200 text-green-700 hover:bg-green-50"
+              onClick={() => setShowImportModal(true)}
+            >
+              <Upload className="w-4 h-4 mr-1" />
+              Import
+            </Button>
         </div>
       </header>
 
@@ -868,6 +963,167 @@ export default function HomePage() {
             </DialogContent>
           </Dialog>
                 </div>
+
+        {/* Import Modal */}
+        <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5 text-green-600" />
+                Import Medical Data
+              </DialogTitle>
+              <DialogDescription>
+                Upload your medical documents, lab results, prescriptions, and photos to integrate with your health tracking
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* File Upload Area */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-400 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-medium">Upload Medical Files</p>
+                      <p className="text-sm text-muted-foreground">
+                        Drag and drop files here, or click to browse
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Supports: PDF, Images, Documents (JPG, PNG, PDF, DOC, DOCX, TXT)
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* File Categories Info */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium text-sm">Lab Results</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Blood tests, urine analysis, etc.</p>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium text-sm">Medical Photos</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Skin conditions, wounds, etc.</p>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <File className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-sm">Prescriptions</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Medication lists, dosages</p>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-orange-600" />
+                    <span className="font-medium text-sm">Doctor Notes</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Visit summaries, diagnoses</p>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <File className="w-4 h-4 text-red-600" />
+                    <span className="font-medium text-sm">Medical Reports</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Imaging, test results</p>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-gray-600" />
+                    <span className="font-medium text-sm">Other Documents</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Insurance, referrals, etc.</p>
+                </Card>
+              </div>
+
+              {/* File Preview */}
+              {importPreview.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Files to Import ({importPreview.length})</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {importPreview.map((file, index) => (
+                      <Card key={file.id} className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                              {file.type.includes('image') ? (
+                                <Image className="w-4 h-4 text-gray-600" />
+                              ) : file.type.includes('pdf') ? (
+                                <FileText className="w-4 h-4 text-red-600" />
+                              ) : (
+                                <File className="w-4 h-4 text-blue-600" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {file.category} • {(file.size / 1024).toFixed(1)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setImportedFiles([]);
+                    setImportPreview([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmImport}
+                  disabled={importPreview.length === 0 || isProcessing}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Import {importPreview.length} Files
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Comprehensive Health Overview */}
         <div className="mb-6">

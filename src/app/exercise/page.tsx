@@ -152,7 +152,9 @@ export default function ExercisePage() {
   // Statistics
   const stats = React.useMemo(() => {
     const recent = lastNDays(entries, 30);
-    const allWorkouts = recent.flatMap((e) => e.exercise?.workouts || []);
+    const allWorkouts = recent.flatMap((e) => 
+      (e.exercise?.workouts || []).map(w => ({ ...w, date: e.date }))
+    );
     
     return {
       totalWorkouts: allWorkouts.length,

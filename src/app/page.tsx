@@ -189,7 +189,19 @@ export default function HomePage() {
     skin: skin.severity > 0 ? { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined } : undefined,
     mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
     symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-    workout: workout.duration > 0 ? { date, type: workout.type, duration: workout.duration, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+    exercise: workout.duration > 0 ? { 
+      date, 
+      workouts: [{ 
+        type: workout.type, 
+        duration: workout.duration, 
+        intensity: clamp010(workout.intensity as any), 
+        caloriesBurned: workout.caloriesBurned || undefined, 
+        heartRateAvg: workout.heartRateAvg || undefined, 
+        notes: workout.notes || undefined, 
+        feeling: workout.feeling, 
+        location: workout.location 
+      }] 
+    } : undefined
   }), [date, stomach, skin, mental, symptoms, workout]);
   
   const sleepPrediction = React.useMemo(() => predictSleepQuality(currentEntry), [currentEntry]);
@@ -450,7 +462,7 @@ export default function HomePage() {
                           {entry.skin && 'Skin • '}
                           {entry.mental && 'Mental • '}
                           {entry.sleep && 'Sleep • '}
-                          {entry.workout && 'Workout'}
+                          {entry.exercise && 'Workout'}
                         </p>
                       </div>
                     </div>

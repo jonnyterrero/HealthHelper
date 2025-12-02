@@ -10,47 +10,17 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { loadEntries, upsertEntry, todayISO, lastNDays, toTimeSeries, generateInsights, predictSleepQuality, predictSymptoms, type HealthEntry } from "@/lib/health";
-import { loadSampleData } from "@/lib/sampleData";
-import { exportCSV, exportPDF } from "@/lib/export";
-import { ProfileMenu } from "@/components/profile-menu";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Download, Upload, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf, Dumbbell, Calendar, Target, Award, Lightbulb, FileText, Image, File } from "lucide-react";
+import { AlertCircle, Zap, Moon, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
   const [entries, setEntries] = React.useState(() => loadEntries());
-  const [showAllServices, setShowAllServices] = React.useState(false);
-  const [showAllActivity, setShowAllActivity] = React.useState(false);
-  
-  // External app data for comprehensive overview
-  const [gastroData, setGastroData] = React.useState<any[]>([]);
-  const [mindData, setMindData] = React.useState<any[]>([]);
-  const [skinData, setSkinData] = React.useState<any[]>([]);
-  
-  // Modal states
-  const [showTodayEntriesModal, setShowTodayEntriesModal] = React.useState(false);
-  const [showHealthScoreModal, setShowHealthScoreModal] = React.useState(false);
-  const [showStreakModal, setShowStreakModal] = React.useState(false);
-  const [showInsightsModal, setShowInsightsModal] = React.useState(false);
-  const [showImportModal, setShowImportModal] = React.useState(false);
-  
-  // Import states
-  const [importedFiles, setImportedFiles] = React.useState<File[]>([]);
-  const [importPreview, setImportPreview] = React.useState<any[]>([]);
-  const [isProcessing, setIsProcessing] = React.useState(false);
 
   // Enhanced daily log state
   const [dailyLog, setDailyLog] = React.useState({
@@ -58,30 +28,43 @@ export default function HomePage() {
     stress: 5,
     energy: 5,
     focus: 5,
-    meditation: 0,
-    water: 0,
-    steps: 0,
-    sleep: 7,
-    notes: ""
+    notes: "",
+    journalEntry: "",
+    copingStrategies: [] as string[],
+    menstrualPhase: "",
+    cycleDay: 0,
+    dailyFlareStatus: false,
+    flareType: "",
+    flareSeverity: 0,
+    flareDurationHours: 0,
+    recoveryActivities: [] as string[],
+    meditationMinutes: 0,
+    relaxationQuality: 5
   });
 
-  // Enhanced stomach tracking state
+  // Enhanced stomach state with GI specifics
   const [stomach, setStomach] = React.useState({
     severity: 0,
     painLocation: "",
     bowelChanges: "",
     triggers: { dairy: false, gluten: false, spicy: false, alcohol: false, caffeine: false },
-    notes: ""
+    notes: "",
+    refluxSeverity: 0,
+    bloatingSeverity: 0,
+    abdominalPainSeverity: 0,
+    stoolConsistency: 4 // Bristol stool scale 1-7
   });
 
-  // Enhanced skin tracking state
+  // Enhanced skin state
   const [skin, setSkin] = React.useState({
     severity: 0,
     area: "",
     rash: false,
     itch: false,
     triggers: { cosmetics: false, detergent: false, weather: false, sweat: false, dietSugar: false },
-    notes: ""
+    notes: "",
+    skinLocation: "",
+    skinType: ""
   });
 
   const [mental, setMental] = React.useState({ mood: 5, anxiety: 5, sleepHours: 7, stressLevel: 5, notes: "" });
@@ -97,19 +80,8 @@ export default function HomePage() {
     headacheSeverity: 0
   });
 
+  // Quick sleep check-in state
   const [quickSleep, setQuickSleep] = React.useState({ hours: 7, stress: 5 });
-
-  // Workout tracking state
-  const [workout, setWorkout] = React.useState({
-    type: "walking" as "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other",
-    duration: 30,
-    intensity: 5,
-    caloriesBurned: 0,
-    heartRateAvg: 0,
-    notes: "",
-    feeling: "normal" as "energized" | "tired" | "normal" | "sore",
-    location: "outdoors" as "gym" | "home" | "outdoors" | "other"
-  });
 
   // Enhanced nutrition tracking with all macros/micros from Python backend
   const [nutrition, setNutrition] = React.useState({
@@ -145,6 +117,18 @@ export default function HomePage() {
     artificialSweeteners: false,
   });
 
+  // Workout tracking from Python backend
+  const [workout, setWorkout] = React.useState({
+    timestamp: "",
+    type: "",
+    durationMin: 0,
+    intensity: 5,
+    caloriesBurned: 0,
+    heartRateAvg: 0,
+    heartRateMax: 0,
+    notes: "",
+  });
+
   // Vital signs tracking from Python backend
   const [vitals, setVitals] = React.useState({
     hrMean: 0,
@@ -165,21 +149,27 @@ export default function HomePage() {
       bowelChanges: e.stomach.bowelChanges ?? "",
       triggers: { ...e.stomach.triggers },
       notes: e.stomach.notes ?? "",
+      refluxSeverity: 0,
+      bloatingSeverity: 0,
+      abdominalPainSeverity: 0,
+      stoolConsistency: 4
     });
     if (e?.skin) setSkin({
       severity: e.skin.severity,
       area: e.skin.area ?? "",
-      rash: e.skin.rash ?? false,
-      itch: e.skin.itch ?? false,
+      rash: !!e.skin.rash,
+      itch: !!e.skin.itch,
       triggers: { ...e.skin.triggers },
       notes: e.skin.notes ?? "",
+      skinLocation: "",
+      skinType: ""
     });
     if (e?.mental) setMental({
       mood: e.mental.mood,
       anxiety: e.mental.anxiety,
-      sleepHours: e.mental.sleepHours ?? 7,
-      stressLevel: e.mental.stressLevel ?? 5,
-      notes: e.mental.notes ?? "",
+      sleepHours: e.mental.sleepHours ?? 0,
+      stressLevel: e.mental.stressLevel ?? 0,
+      notes: e.mental.notes ?? ""
     });
     if (e?.symptoms) setSymptoms({
       giFlare: e.symptoms.giFlare,
@@ -192,40 +182,6 @@ export default function HomePage() {
     });
   }, [date]);
 
-  // Load data from external health tracking apps
-  React.useEffect(() => {
-    const loadExternalData = () => {
-      try {
-        const gastro = JSON.parse(localStorage.getItem("orchids.gastro.logs.v1") || "[]");
-        setGastroData(Array.isArray(gastro) ? gastro : []);
-      } catch {
-        setGastroData([]);
-      }
-      
-      try {
-        const mind = JSON.parse(localStorage.getItem("orchids.mindtrack.entries.v1") || "[]");
-        setMindData(Array.isArray(mind) ? mind : []);
-      } catch {
-        setMindData([]);
-      }
-      
-      try {
-        const skin = JSON.parse(localStorage.getItem("orchids.skintrack.lesions.v1") || "[]");
-        setSkinData(Array.isArray(skin) ? skin : []);
-      } catch {
-        setSkinData([]);
-      }
-    };
-
-    loadExternalData();
-    
-    // Listen for storage changes to update data in real-time
-    const handleStorageChange = () => loadExternalData();
-    window.addEventListener("storage", handleStorageChange);
-    
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
   const series14 = toTimeSeries(lastNDays(entries, 14));
   const insights = React.useMemo(() => generateInsights(entries), [entries]);
 
@@ -237,225 +193,14 @@ export default function HomePage() {
     return { avgSleep: avgSleep.toFixed(1), avgStress: avgStress.toFixed(1) };
   }, [entries]);
 
-  // Comprehensive health overview data
-  const comprehensiveData = React.useMemo(() => {
-    // Get last 30 days of data
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().slice(0, 10);
-    }).reverse();
-
-    return last30Days.map(date => {
-      // Gastro data
-      const gastroEntry = gastroData.find(g => g.datetime?.startsWith(date));
-      const gastroPain = gastroEntry ? Number(gastroEntry.pain || 0) : null;
-      const gastroStress = gastroEntry ? Number(gastroEntry.stress || 0) : null;
-
-      // Mind data
-      const mindEntry = mindData.find(m => m.date === date);
-      const mood = mindEntry ? Number(mindEntry.mood || 0) : null;
-      const mindStress = mindEntry ? Number(mindEntry.stress || 0) : null;
-      const energy = mindEntry ? Number(mindEntry.energy || 0) : null;
-
-      // Skin data
-      const skinEntry = skinData.find(s => s.date === date);
-      const skinSeverity = skinEntry ? Number(skinEntry.severity || 0) : null;
-      const skinArea = skinEntry ? Number(skinEntry.area || 0) : null;
-
-      // Main app data
-      const mainEntry = entries.find(e => e.date === date);
-      const mainMood = mainEntry?.mental?.mood || null;
-      const mainStress = mainEntry?.mental?.stressLevel || null;
-      const mainSleep = mainEntry?.mental?.sleepHours || null;
-
-      return {
-        date,
-        gastroPain,
-        gastroStress,
-        mood: mood || mainMood,
-        stress: mindStress || mainStress,
-        energy,
-        skinSeverity,
-        skinArea,
-        sleep: mainSleep
-      };
-    });
-  }, [gastroData, mindData, skinData, entries]);
-
-  // Detailed stats calculations for modals
-  const todayEntriesDetails = React.useMemo(() => {
-    const today = todayISO();
-    const todayEntry = entries.find(e => e.date === today);
-    const last7Days = lastNDays(entries, 7);
-    const last30Days = lastNDays(entries, 30);
-    
-    // Count days with entries in last 30 days
-    const daysWithEntries = last30Days.length;
-    const daysMissed = 30 - daysWithEntries;
-    
-    // Previous entries for comparison
-    const previousWeek = lastNDays(entries, 14).slice(0, 7);
-    const previousWeekCount = previousWeek.length;
-    
-    return {
-      todayEntry,
-      last7Days,
-      last30Days,
-      daysWithEntries,
-      daysMissed,
-      previousWeekCount,
-      completionRate: Math.round((daysWithEntries / 30) * 100)
-    };
-  }, [entries]);
-
-  const healthScoreDetails = React.useMemo(() => {
-    const recent = lastNDays(entries, 7);
-    if (recent.length === 0) return { score: 0, factors: [], breakdown: {} };
-    
-    // Calculate health score based on multiple factors
-    let score = 0;
-    let maxScore = 0;
-    const factors = [];
-    
-    // Mood factor (0-10 scale)
-    const avgMood = recent.reduce((acc, e) => acc + (e.mental?.mood ?? 5), 0) / recent.length;
-    const moodScore = (avgMood / 10) * 25; // 25% of total score
-    score += moodScore;
-    maxScore += 25;
-    factors.push({ name: "Mood", value: avgMood.toFixed(1), score: moodScore, max: 25, color: "blue" });
-    
-    // Sleep factor (0-10 scale, optimal around 7-8 hours)
-    const avgSleep = recent.reduce((acc, e) => acc + (e.mental?.sleepHours ?? 7), 0) / recent.length;
-    const sleepScore = Math.max(0, 25 - Math.abs(avgSleep - 7.5) * 3); // Penalty for deviation from 7.5h
-    score += sleepScore;
-    maxScore += 25;
-    factors.push({ name: "Sleep", value: `${avgSleep.toFixed(1)}h`, score: sleepScore, max: 25, color: "purple" });
-    
-    // Stress factor (0-10 scale, lower is better)
-    const avgStress = recent.reduce((acc, e) => acc + (e.mental?.stressLevel ?? 5), 0) / recent.length;
-    const stressScore = (10 - avgStress) / 10 * 25; // Inverted: lower stress = higher score
-    score += stressScore;
-    maxScore += 25;
-    factors.push({ name: "Stress", value: avgStress.toFixed(1), score: stressScore, max: 25, color: "red" });
-    
-    // Activity factor (workout frequency)
-    const workoutDays = recent.filter(e => e.workout && e.workout.duration > 0).length;
-    const activityScore = (workoutDays / 7) * 25;
-    score += activityScore;
-    maxScore += 25;
-    factors.push({ name: "Activity", value: `${workoutDays}/7 days`, score: activityScore, max: 25, color: "green" });
-    
-    return {
-      score: Math.round(score),
-      maxScore,
-      factors,
-      breakdown: { mood: avgMood, sleep: avgSleep, stress: avgStress, activity: workoutDays }
-    };
-  }, [entries]);
-
-  const streakDetails = React.useMemo(() => {
-    const allEntries = entries.sort((a, b) => b.date.localeCompare(a.date));
-    const today = todayISO();
-    
-    // Current streak
-    let currentStreak = 0;
-    let checkDate = new Date(today);
-    
-    while (true) {
-      const dateStr = checkDate.toISOString().slice(0, 10);
-      const hasEntry = allEntries.some(e => e.date === dateStr);
-      if (hasEntry) {
-        currentStreak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-    
-    // Previous streaks
-    const streaks = [];
-    let tempStreak = 0;
-    let lastDate = null;
-    
-    for (const entry of allEntries) {
-      if (!lastDate || new Date(entry.date).getTime() === new Date(lastDate).getTime() - 86400000) {
-        tempStreak++;
-      } else {
-        if (tempStreak > 1) streaks.push(tempStreak);
-        tempStreak = 1;
-      }
-      lastDate = entry.date;
-    }
-    if (tempStreak > 1) streaks.push(tempStreak);
-    
-    const longestStreak = streaks.length > 0 ? Math.max(...streaks) : 0;
-    const averageStreak = streaks.length > 0 ? Math.round(streaks.reduce((a, b) => a + b, 0) / streaks.length) : 0;
-    
-    // Missed days in current streak period
-    const streakStartDate = new Date(today);
-    streakStartDate.setDate(streakStartDate.getDate() - currentStreak);
-    const totalDays = Math.ceil((new Date(today).getTime() - streakStartDate.getTime()) / 86400000);
-    const missedDays = totalDays - currentStreak;
-    
-    return {
-      currentStreak,
-      longestStreak,
-      averageStreak,
-      missedDays,
-      totalStreaks: streaks.length,
-      streaks: streaks.slice(0, 5) // Last 5 streaks
-    };
-  }, [entries]);
-
-  const insightsDetails = React.useMemo(() => {
-    const recent = lastNDays(entries, 14);
-    const insights = generateInsights(entries);
-    
-    // Analyze what's affecting insights
-    const factors = [];
-    
-    // Mood trends
-    const moodTrend = recent.map(e => e.mental?.mood ?? 5);
-    const moodImproving = moodTrend.length > 1 && moodTrend[0] > moodTrend[moodTrend.length - 1];
-    if (moodImproving) factors.push({ type: "positive", text: "Mood is improving over time" });
-    else if (!moodImproving && moodTrend.length > 1) factors.push({ type: "negative", text: "Mood has been declining" });
-    
-    // Sleep patterns
-    const sleepHours = recent.map(e => e.mental?.sleepHours ?? 7);
-    const avgSleep = sleepHours.reduce((a, b) => a + b, 0) / sleepHours.length;
-    if (avgSleep < 6) factors.push({ type: "negative", text: "Sleep duration is below recommended 7-8 hours" });
-    else if (avgSleep > 9) factors.push({ type: "warning", text: "Sleep duration is above recommended range" });
-    else factors.push({ type: "positive", text: "Sleep duration is within healthy range" });
-    
-    // Stress levels
-    const stressLevels = recent.map(e => e.mental?.stressLevel ?? 5);
-    const avgStress = stressLevels.reduce((a, b) => a + b, 0) / stressLevels.length;
-    if (avgStress > 7) factors.push({ type: "negative", text: "High stress levels detected" });
-    else if (avgStress < 4) factors.push({ type: "positive", text: "Stress levels are well managed" });
-    
-    // Activity levels
-    const workoutDays = recent.filter(e => e.workout && e.workout.duration > 0).length;
-    if (workoutDays < 3) factors.push({ type: "warning", text: "Low activity levels - consider more exercise" });
-    else if (workoutDays > 5) factors.push({ type: "positive", text: "Excellent activity levels" });
-    
-    return {
-      insights,
-      factors,
-      dataPoints: recent.length,
-      timeRange: "14 days"
-    };
-  }, [entries]);
-
   // ML Predictions for current entry
   const currentEntry: HealthEntry = React.useMemo(() => ({
     date,
     stomach: stomach.severity > 0 ? { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined } : undefined,
     skin: skin.severity > 0 ? { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined } : undefined,
     mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
-    symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-    workout: workout.duration > 0 ? { date, type: workout.type, duration: workout.duration, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
-  }), [date, stomach, skin, mental, symptoms, workout]);
+    symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined }
+  }), [date, stomach, skin, mental, symptoms]);
   
   const sleepPrediction = React.useMemo(() => predictSleepQuality(currentEntry), [currentEntry]);
   const symptomPrediction = React.useMemo(() => predictSymptoms(currentEntry), [currentEntry]);
@@ -467,87 +212,9 @@ export default function HomePage() {
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
       symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-      workout: workout.duration > 0 ? { date, type: workout.type, duration: workout.duration, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+      workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined } : undefined
     });
     setEntries(updated);
-  }
-
-  // Import functionality
-  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files || []);
-    setImportedFiles(prev => [...prev, ...files]);
-    processFiles(files);
-  }
-
-  function processFiles(files: File[]) {
-    setIsProcessing(true);
-    const processedData: any[] = [];
-    
-    files.forEach(file => {
-      const fileData = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        lastModified: file.lastModified,
-        category: categorizeFile(file),
-        status: 'processing' as const
-      };
-      processedData.push(fileData);
-    });
-    
-    setImportPreview(processedData);
-    setIsProcessing(false);
-  }
-
-  function categorizeFile(file: File): string {
-    const name = file.name.toLowerCase();
-    const type = file.type.toLowerCase();
-    
-    if (type.includes('image')) return 'Medical Photo';
-    if (name.includes('lab') || name.includes('blood') || name.includes('test')) return 'Lab Results';
-    if (name.includes('prescription') || name.includes('medication')) return 'Prescription';
-    if (name.includes('report') || name.includes('summary')) return 'Medical Report';
-    if (name.includes('note') || name.includes('visit')) return 'Doctor Notes';
-    if (type.includes('pdf')) return 'Document';
-    return 'Other';
-  }
-
-  function confirmImport() {
-    // Process and integrate the imported data
-    const newEntries: HealthEntry[] = [];
-    
-    importPreview.forEach(item => {
-      // Create a basic entry from the imported file
-      const entry: HealthEntry = {
-        date: todayISO(),
-        mental: {
-          date: todayISO(),
-          mood: 5,
-          anxiety: 5,
-          sleepHours: 7,
-          stressLevel: 5,
-          notes: `Imported: ${item.name} (${item.category})`
-        }
-      };
-      newEntries.push(entry);
-    });
-    
-    // Add to existing entries
-    const updatedEntries = [...entries, ...newEntries];
-    setEntries(updatedEntries);
-    
-    // Clear import data
-    setImportedFiles([]);
-    setImportPreview([]);
-    setShowImportModal(false);
-    
-    toast.success(`Successfully imported ${newEntries.length} medical documents!`);
-  }
-
-  function removeFile(index: number) {
-    setImportedFiles(prev => prev.filter((_, i) => i !== index));
-    setImportPreview(prev => prev.filter((_, i) => i !== index));
   }
 
   function saveQuickSleep() {
@@ -568,1033 +235,269 @@ export default function HomePage() {
     setEntries(updated);
   }
 
-  function handleLoadSampleData() {
-    const sampleData = loadSampleData();
-    setEntries(sampleData);
-    window.location.reload();
-  }
+  const GlassCard = ({ className, children, ...props }: React.ComponentProps<typeof Card>) => (
+    <Card className={cn("glass-panel rounded-3xl border-white/40 shadow-sm hover:shadow-md transition-shadow duration-300", className)} {...props}>
+        {children}
+    </Card>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50">
-      <div className="container mx-auto max-w-7xl p-4 md:p-6">
-        {/* Compact Header */}
-        <header className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <HeartPulse className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Health Dashboard
-              </h1>
-              <p className="text-sm text-muted-foreground">AI-powered health tracking</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleLoadSampleData}
-              className="border-blue-200 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50"
-            >
-              <Sparkles className="w-4 h-4 mr-1" />
-              Sample Data
-            </Button>
-            <Link href="/integrations">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="border-pink-200 text-pink-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50"
-              >
-                <Plug className="w-4 h-4 mr-1" />
-                Integrations
-              </Button>
-            </Link>
-            <ProfileMenu />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="border-purple-200 text-purple-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50">
-                  <Download className="w-4 h-4 mr-1" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link href="/api/export-zip">Download ZIP</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportCSV(entries)}>Export CSV</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportPDF(entries, insights)}>Export PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-pink-200 text-pink-700 hover:bg-gradient-to-r hover:from-blue-50 hover:via-pink-50 hover:to-purple-50"
-              onClick={() => setShowImportModal(true)}
-            >
-              <Upload className="w-4 h-4 mr-1" />
-              Import
-            </Button>
+    <div className="container mx-auto p-4 md:p-6 space-y-8">
+      {/* Header Area */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Dashboard</h2>
+          <p className="text-slate-500 dark:text-slate-400">Welcome back. Here's your health overview.</p>
         </div>
-      </header>
+        
+        <div className="flex items-center gap-4 bg-white/30 p-2 rounded-2xl border border-white/50">
+            <div className="px-3 text-sm font-medium text-slate-600">Date:</div>
+            <Input 
+                id="date" 
+                type="date" 
+                value={date} 
+                onChange={(e) => setDate(e.target.value)} 
+                className="bg-transparent border-0 w-auto focus-visible:ring-0"
+            />
+            <Button onClick={saveAll} className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-purple-200">Save Changes</Button>
+        </div>
+      </div>
 
-        {/* Quick Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Dialog open={showTodayEntriesModal} onOpenChange={setShowTodayEntriesModal}>
-            <DialogTrigger asChild>
-              <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Today's Entries</p>
-                      <p className="text-2xl font-bold text-blue-600">{entries.filter(e => e.date === date).length}</p>
-                    </div>
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Activity className="w-5 h-5 text-blue-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-blue-600" />
-                  Today's Entries Details
-                </DialogTitle>
-                <DialogDescription>
-                  Detailed breakdown of your daily entries and tracking consistency
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-blue-600">{todayEntriesDetails.daysWithEntries}</p>
-                      <p className="text-sm text-muted-foreground">Days with entries (30 days)</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-orange-600">{todayEntriesDetails.daysMissed}</p>
-                      <p className="text-sm text-muted-foreground">Days missed</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-green-600">{todayEntriesDetails.completionRate}%</p>
-                      <p className="text-sm text-muted-foreground">Completion rate</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-purple-600">{todayEntriesDetails.previousWeekCount}</p>
-                      <p className="text-sm text-muted-foreground">Previous week entries</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                {todayEntriesDetails.todayEntry && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Today's Entry</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {todayEntriesDetails.todayEntry.mental && (
-                          <div className="flex justify-between">
-                            <span>Mood:</span>
-                            <span className="font-medium">{todayEntriesDetails.todayEntry.mental.mood}/10</span>
-                          </div>
-                        )}
-                        {todayEntriesDetails.todayEntry.mental && (
-                          <div className="flex justify-between">
-                            <span>Sleep:</span>
-                            <span className="font-medium">{todayEntriesDetails.todayEntry.mental.sleepHours}h</span>
-                          </div>
-                        )}
-                        {todayEntriesDetails.todayEntry.workout && (
-                          <div className="flex justify-between">
-                            <span>Workout:</span>
-                            <span className="font-medium">{todayEntriesDetails.todayEntry.workout.duration}min</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Dialog open={showHealthScoreModal} onOpenChange={setShowHealthScoreModal}>
-            <DialogTrigger asChild>
-              <Card className="bg-gradient-to-br from-white/90 via-green-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Health Score</p>
-                      <p className="text-2xl font-bold text-green-600">{healthScoreDetails.score}</p>
-                    </div>
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Target className="w-5 h-5 text-green-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-green-600" />
-                  Health Score Breakdown
-                </DialogTitle>
-                <DialogDescription>
-                  Your health score is calculated based on multiple factors over the last 7 days
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600 mb-2">{healthScoreDetails.score}/{healthScoreDetails.maxScore || 100}</div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className="bg-green-600 h-3 rounded-full transition-all duration-500" 
-                      style={{ width: `${((healthScoreDetails.score / (healthScoreDetails.maxScore || 100)) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {healthScoreDetails.factors.map((factor, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full bg-${factor.color}-500`}></div>
-                            <span className="font-medium">{factor.name}</span>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold">{factor.value}</div>
-                            <div className="text-sm text-muted-foreground">{factor.score.toFixed(1)}/{factor.max}</div>
-                          </div>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`bg-${factor.color}-500 h-2 rounded-full transition-all duration-500`}
-                            style={{ width: `${(factor.score / factor.max) * 100}%` }}
-                          ></div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Dialog open={showStreakModal} onOpenChange={setShowStreakModal}>
-            <DialogTrigger asChild>
-              <Card className="bg-gradient-to-br from-white/90 via-purple-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Streak</p>
-                      <p className="text-2xl font-bold text-purple-600">{streakDetails.currentStreak} days</p>
-                    </div>
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Award className="w-5 h-5 text-purple-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-purple-600" />
-                  Streak Details
-                </DialogTitle>
-                <DialogDescription>
-                  Your tracking consistency and streak history
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-purple-600">{streakDetails.currentStreak}</p>
-                      <p className="text-sm text-muted-foreground">Current Streak</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-orange-600">{streakDetails.longestStreak}</p>
-                      <p className="text-sm text-muted-foreground">Longest Streak</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-green-600">{streakDetails.averageStreak}</p>
-                      <p className="text-sm text-muted-foreground">Average Streak</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-red-600">{streakDetails.missedDays}</p>
-                      <p className="text-sm text-muted-foreground">Days Missed</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-blue-600">{streakDetails.totalStreaks}</p>
-                      <p className="text-sm text-muted-foreground">Total Streaks</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                {streakDetails.streaks.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Recent Streaks</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {streakDetails.streaks.map((streak, index) => (
-                          <div key={index} className="flex justify-between items-center">
-                            <span>Streak #{index + 1}</span>
-                            <span className="font-medium">{streak} days</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Dialog open={showInsightsModal} onOpenChange={setShowInsightsModal}>
-            <DialogTrigger asChild>
-              <Card className="bg-gradient-to-br from-white/90 via-orange-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Insights</p>
-                      <p className="text-2xl font-bold text-orange-600">{insightsDetails.insights.length}</p>
-                    </div>
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Lightbulb className="w-5 h-5 text-orange-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5 text-orange-600" />
-                  Health Insights Analysis
-                </DialogTitle>
-                <DialogDescription>
-                  AI-generated insights based on your health data over the last {insightsDetails.timeRange}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-orange-600">{insightsDetails.insights.length}</p>
-                      <p className="text-sm text-muted-foreground">Total Insights</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-blue-600">{insightsDetails.dataPoints}</p>
-                      <p className="text-sm text-muted-foreground">Data Points</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="space-y-3">
-                  <h4 className="font-semibold">Factors Affecting Your Insights:</h4>
-                  {insightsDetails.factors.map((factor, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-3 h-3 rounded-full mt-1 ${
-                            factor.type === 'positive' ? 'bg-green-500' : 
-                            factor.type === 'negative' ? 'bg-red-500' : 'bg-yellow-500'
-                          }`}></div>
-                          <p className={`text-sm ${
-                            factor.type === 'positive' ? 'text-green-700' : 
-                            factor.type === 'negative' ? 'text-red-700' : 'text-yellow-700'
-                          }`}>
-                            {factor.text}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+      {/* Alerts Section */}
+      <div className="space-y-4">
+        {symptomPrediction.overallRisk === 'high' && (
+            <Alert className="glass-panel border-red-200/50 bg-red-50/50 dark:bg-red-900/20">
+            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <AlertTitle className="text-red-800 dark:text-red-300 font-semibold">High Risk Alert</AlertTitle>
+            <AlertDescription className="text-red-700 dark:text-red-400">
+                <p>Your patterns suggest elevated risk for symptoms. Check Insights for details.</p>
+            </AlertDescription>
+            </Alert>
+        )}
+        {sleepPrediction.riskFactors.length > 0 && sleepPrediction.confidence > 60 && (
+            <Alert className="glass-panel border-yellow-200/50 bg-yellow-50/50 dark:bg-yellow-900/20">
+            <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <AlertTitle className="text-yellow-800 dark:text-yellow-300 font-semibold">Sleep Quality Alert</AlertTitle>
+            <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+                <p>Risk Factors: {sleepPrediction.riskFactors.join(', ')}</p>
+            </AlertDescription>
+            </Alert>
+        )}
+      </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-semibold">Generated Insights:</h4>
-                  {insightsDetails.insights.length > 0 ? (
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        
+        {/* Column 1: Daily Log & Vitals */}
+        <div className="space-y-6">
+            <GlassCard className="h-fit">
+                <CardHeader>
+                <CardTitle>📋 Daily Log</CardTitle>
+                <CardDescription>Energy, focus, and daily factors</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                        <Label>Energy</Label>
+                        <Input type="number" min={1} max={10} value={dailyLog.energy} onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                        <Label>Focus</Label>
+                        <Input type="number" min={1} max={10} value={dailyLog.focus} onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                        </div>
+                    </div>
                     <div className="space-y-2">
-                      {insightsDetails.insights.map((insight, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4">
-                            <p className="text-sm">{String(insight)}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
+                        <Label>Journal</Label>
+                        <Textarea 
+                        value={dailyLog.journalEntry} 
+                        onChange={(e) => setDailyLog({ ...dailyLog, journalEntry: e.target.value })} 
+                        placeholder="How are you feeling?"
+                        className="bg-white/50 rounded-xl border-0 resize-none"
+                        rows={3}
+                        />
                     </div>
-                  ) : (
-                    <Card>
-                      <CardContent className="p-4 text-center text-muted-foreground">
-                        <p>No insights available yet. Keep tracking your health data to generate personalized insights!</p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-                </div>
+                </CardContent>
+            </GlassCard>
 
-        {/* Import Modal */}
-        <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-green-600" />
-                Import Medical Data
-              </DialogTitle>
-              <DialogDescription>
-                Upload your medical documents, lab results, prescriptions, and photos to integrate with your health tracking
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              {/* File Upload Area */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-400 transition-colors">
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                      <Upload className="w-8 h-8 text-green-600" />
+            <GlassCard>
+                <CardHeader>
+                <CardTitle>❤️ Vitals</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Steps</Label>
+                        <Input type="number" value={vitals.steps || ""} onChange={(e) => setVitals({ ...vitals, steps: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
                     </div>
-                    <div>
-                      <p className="text-lg font-medium">Upload Medical Files</p>
-                      <p className="text-sm text-muted-foreground">
-                        Drag and drop files here, or click to browse
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Supports: PDF, Images, Documents (JPG, PNG, PDF, DOC, DOCX, TXT)
-                      </p>
+                    <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">HRV</Label>
+                        <Input type="number" value={vitals.hrvMs || ""} onChange={(e) => setVitals({ ...vitals, hrvMs: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
                     </div>
-                  </div>
-                </label>
-              </div>
-
-              {/* File Categories Info */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-sm">Lab Results</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Blood tests, urine analysis, etc.</p>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Image className="w-4 h-4 text-purple-600" />
-                    <span className="font-medium text-sm">Medical Photos</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Skin conditions, wounds, etc.</p>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <File className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-sm">Prescriptions</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Medication lists, dosages</p>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-orange-600" />
-                    <span className="font-medium text-sm">Doctor Notes</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Visit summaries, diagnoses</p>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <File className="w-4 h-4 text-red-600" />
-                    <span className="font-medium text-sm">Medical Reports</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Imaging, test results</p>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-gray-600" />
-                    <span className="font-medium text-sm">Other Documents</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Insurance, referrals, etc.</p>
-                </Card>
-              </div>
-
-              {/* File Preview */}
-              {importPreview.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Files to Import ({importPreview.length})</h4>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {importPreview.map((file, index) => (
-                      <Card key={file.id} className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                              {file.type.includes('image') ? (
-                                <Image className="w-4 h-4 text-gray-600" />
-                              ) : file.type.includes('pdf') ? (
-                                <FileText className="w-4 h-4 text-red-600" />
-                              ) : (
-                                <File className="w-4 h-4 text-blue-600" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{file.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {file.category} • {(file.size / 1024).toFixed(1)} KB
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowImportModal(false);
-                    setImportedFiles([]);
-                    setImportPreview([]);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={confirmImport}
-                  disabled={importPreview.length === 0 || isProcessing}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isProcessing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Import {importPreview.length} Files
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Quick Entry Forms */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Quick Entry</h2>
-              <p className="text-sm text-muted-foreground">Log your daily health data</p>
-            </div>
-          </div>
-
-          <Tabs defaultValue="daily" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="daily">Daily</TabsTrigger>
-              <TabsTrigger value="workout">Workout</TabsTrigger>
-              <TabsTrigger value="sleep">Sleep</TabsTrigger>
-              <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="daily" className="mt-4">
-              <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                      <Label>Energy (1-10)</Label>
-                    <Input 
-                      type="number" 
-                        min={1} 
-                        max={10} 
-                        value={dailyLog.energy} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Focus (1-10)</Label>
-                    <Input 
-                      type="number" 
-                        min={1} 
-                        max={10} 
-                        value={dailyLog.focus} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Meditation (min)</Label>
-                    <Input 
-                      type="number" 
-                      min={0} 
-                        value={dailyLog.meditation} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, meditation: Number(e.target.value) })} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Water (glasses)</Label>
-                    <Input 
-                      type="number" 
-                      min={0} 
-                        value={dailyLog.water} 
-                        onChange={(e) => setDailyLog({ ...dailyLog, water: Number(e.target.value) })} 
-                    />
-                  </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button onClick={saveAll} className="w-full">Save Today</Button>
-                  </div>
-        </CardContent>
-      </Card>
-            </TabsContent>
-            
-            <TabsContent value="workout" className="mt-4">
-              <Card className="bg-gradient-to-br from-white/90 via-green-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Workout Type</Label>
-                      <Select value={workout.type} onValueChange={(v: any) => setWorkout({ ...workout, type: v })}>
-                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                <SelectContent>
-                          <SelectItem value="cardio">Cardio</SelectItem>
-                          <SelectItem value="strength">Strength Training</SelectItem>
-                  <SelectItem value="yoga">Yoga</SelectItem>
-                          <SelectItem value="stretching">Stretching</SelectItem>
-                          <SelectItem value="sports">Sports</SelectItem>
-                          <SelectItem value="walking">Walking</SelectItem>
-                          <SelectItem value="running">Running</SelectItem>
-                  <SelectItem value="cycling">Cycling</SelectItem>
-                  <SelectItem value="swimming">Swimming</SelectItem>
-                  <SelectItem value="hiit">HIIT</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Duration (minutes)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                        value={workout.duration || ""} 
-                        onChange={(e) => setWorkout({ ...workout, duration: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Intensity (1-10)</Label>
-              <Input 
-                type="number" 
-                min={1} 
-                        max={10} 
-                value={workout.intensity} 
-                onChange={(e) => setWorkout({ ...workout, intensity: Number(e.target.value) })} 
-              />
-            </div>
-            </div>
-                  <div className="mt-4">
-                    <Button onClick={saveAll} className="w-full">Save Workout</Button>
-          </div>
-        </CardContent>
-      </Card>
-            </TabsContent>
-            
-            <TabsContent value="sleep" className="mt-4">
-              <Card className="bg-gradient-to-br from-white/90 via-indigo-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                      <Label>Sleep Hours</Label>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    max={24} 
-                    value={quickSleep.hours} 
-                    onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} 
-                  />
-                </div>
-                <div className="space-y-2">
-                      <Label>Stress Level (1-10)</Label>
-                  <Input 
-                    type="number" 
-                        min={1} 
-                    max={10} 
-                    value={quickSleep.stress} 
-                    onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} 
-                  />
-                </div>
-              </div>
-                  <div className="mt-4">
-                    <Button onClick={saveQuickSleep} className="w-full">Save Sleep</Button>
-            </div>
-          </CardContent>
-        </Card>
-            </TabsContent>
-            
-            <TabsContent value="symptoms" className="mt-4">
-              <Card className="bg-gradient-to-br from-white/90 via-red-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-                      <Label>GI Flare (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.giFlare} 
-                onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Skin Flare (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.skinFlare} 
-                onChange={(e) => setSymptoms({ ...symptoms, skinFlare: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Migraine (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.migraine} 
-                onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} 
-              />
-            </div>
-            <div className="space-y-2">
-                      <Label>Fatigue (1-10)</Label>
-              <Input 
-                type="number" 
-                min={0} 
-                max={10} 
-                value={symptoms.fatigue} 
-                onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} 
-              />
-            </div>
-            </div>
-                  <div className="mt-4">
-                    <Button onClick={saveAll} className="w-full">Save Symptoms</Button>
-            </div>
-          </CardContent>
-        </Card>
-            </TabsContent>
-          </Tabs>
-            </div>
-
-        {/* Comprehensive Health Overview */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Health Overview</h2>
-              <p className="text-sm text-muted-foreground">Comprehensive view of all your health data</p>
-            </div>
-          </div>
-          
-          <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                Health Trends (Last 30 Days)
-              </CardTitle>
-              <CardDescription>
-                Combined data from MindMap, SkinTrack+, and GastroGuard
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={{
-                  mood: { label: "Mood", color: "#a855f7" },
-                  stress: { label: "Stress", color: "#dc2626" },
-                  energy: { label: "Energy", color: "#10b981" },
-                  gastroPain: { label: "Gastro Pain", color: "#f87171" },
-                  skinSeverity: { label: "Skin Severity", color: "#6b21a8" },
-                  sleep: { label: "Sleep Hours", color: "#06b6d4" }
-                }}
-                className="h-[200px] w-full"
-              >
-                <LineChart data={comprehensiveData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  />
-                  <YAxis />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="mood" 
-                    stroke="#a855f7" 
-                    strokeWidth={2}
-                    dot={{ fill: "#a855f7", strokeWidth: 2, r: 4 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="stress" 
-                    stroke="#dc2626" 
-                    strokeWidth={2}
-                    dot={{ fill: "#dc2626", strokeWidth: 2, r: 4 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="energy" 
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="gastroPain" 
-                    stroke="#f87171" 
-                    strokeWidth={2}
-                    dot={{ fill: "#f87171", strokeWidth: 2, r: 4 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="skinSeverity" 
-                    stroke="#6b21a8" 
-                    strokeWidth={2}
-                    dot={{ fill: "#6b21a8", strokeWidth: 2, r: 4 }}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+                    <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Resting HR</Label>
+                        <Input type="number" value={vitals.hrMean || ""} onChange={(e) => setVitals({ ...vitals, hrMean: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
+                    </div>
+                    <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">SpO2</Label>
+                        <Input type="number" value={vitals.spo2 || ""} onChange={(e) => setVitals({ ...vitals, spo2: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
+                    </div>
+                </CardContent>
+            </GlassCard>
         </div>
 
-        {/* Health Services Grid */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Health Services</h2>
-              <p className="text-sm text-muted-foreground">Select the services from below</p>
-              </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-blue-600"
-              onClick={() => setShowAllServices(!showAllServices)}
-            >
-              {showAllServices ? 'SHOW LESS' : 'VIEW ALL'} →
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link href="/analytics" className="block">
-              <Card className="bg-gradient-to-br from-white/90 via-blue-50/50 to-purple-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <div className="p-6 text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <Activity className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-medium text-sm">Analytics</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Health insights</p>
-                </div>
-              </Card>
-            </Link>
-            
-            <Link href="/lifestyle" className="block">
-              <Card className="bg-gradient-to-br from-white/90 via-green-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <div className="p-6 text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <Dumbbell className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="font-medium text-sm">Lifestyle</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Workouts & nutrition</p>
-                </div>
-              </Card>
-            </Link>
-            
-            <Link href="/skintrack" className="block">
-              <Card className="bg-gradient-to-br from-white/90 via-purple-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <div className="p-6 text-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <Sparkles className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <h3 className="font-medium text-sm">SkinTrack+</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Skin monitoring</p>
-                </div>
-              </Card>
-            </Link>
-            
-            <Link href="/gastro" className="block">
-              <Card className="bg-gradient-to-br from-white/90 via-red-50/50 to-pink-50/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                <div className="p-6 text-center">
-                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <HeartPulse className="w-6 h-6 text-red-600" />
-                  </div>
-                  <h3 className="font-medium text-sm">GastroGuard</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Digestive health</p>
-                </div>
-              </Card>
-            </Link>
-            
-            {showAllServices && (
-              <>
-                <Link href="/mindtrack" className="block">
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                    <div className="p-6 text-center">
-                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <Brain className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <h3 className="font-medium text-sm">MindMap</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Mental health</p>
+        {/* Column 2: Nutrition & Workout */}
+        <div className="space-y-6">
+            <GlassCard>
+                <CardHeader>
+                    <CardTitle>🍎 Nutrition</CardTitle>
+                    <CardDescription>Track meals & macros</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="col-span-2 space-y-2">
+                            <Label>Food Items</Label>
+                            <Input value={nutrition.foodItems} onChange={(e) => setNutrition({ ...nutrition, foodItems: e.target.value })} placeholder="e.g. Oatmeal, Coffee" className="bg-white/50 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs">Calories</Label>
+                            <Input type="number" value={nutrition.calories || ""} onChange={(e) => setNutrition({ ...nutrition, calories: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs">Protein (g)</Label>
+                            <Input type="number" value={nutrition.proteinG || ""} onChange={(e) => setNutrition({ ...nutrition, proteinG: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                        </div>
                     </div>
-                  </Card>
-                </Link>
-                
-                <Link href="/sleeptrack" className="block">
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                    <div className="p-6 text-center">
-                      <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <Moon className="w-6 h-6 text-indigo-600" />
-                      </div>
-                      <h3 className="font-medium text-sm">Sleep</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Sleep tracking</p>
-                    </div>
-                  </Card>
-                </Link>
-                
-                <Link href="/nutrition" className="block">
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                    <div className="p-6 text-center">
-                      <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <Apple className="w-6 h-6 text-yellow-600" />
-                      </div>
-                      <h3 className="font-medium text-sm">Nutrition</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Food tracking</p>
-                    </div>
-                  </Card>
-                </Link>
-                
-                <Link href="/remedies" className="block">
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group">
-                    <div className="p-6 text-center">
-                      <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <Leaf className="w-6 h-6 text-emerald-600" />
-                      </div>
-                      <h3 className="font-medium text-sm">Remedies</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Natural remedies</p>
-                    </div>
-                  </Card>
-                </Link>
-              </>
-            )}
-          </div>
-          </div>
-
-        {/* Recent Activity */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Recent Activity</h2>
-              <p className="text-sm text-muted-foreground">Your latest health entries</p>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-blue-600"
-              onClick={() => setShowAllActivity(!showAllActivity)}
-            >
-              {showAllActivity ? 'SHOW LESS' : 'VIEW ALL'} →
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {entries.slice(0, showAllActivity ? 8 : 4).map((entry, idx) => (
-              <Card key={idx} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Activity className="w-5 h-5 text-blue-600" />
-            </div>
-                      <div>
-                        <p className="font-medium text-sm">{entry.date}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {entry.stomach && 'Stomach • '}
-                          {entry.skin && 'Skin • '}
-                          {entry.mental && 'Mental • '}
-                          {entry.sleep && 'Sleep • '}
-                          {entry.workout && 'Workout'}
-                        </p>
-            </div>
-            </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {new Date(entry.date).toLocaleDateString()}
-                    </Badge>
-            </div>
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="details" className="border-0">
+                            <AccordionTrigger className="text-sm py-2 hover:no-underline hover:bg-white/20 rounded-lg px-2">More Details</AccordionTrigger>
+                            <AccordionContent className="pt-2 grid grid-cols-3 gap-2">
+                                <Input placeholder="Carbs" type="number" value={nutrition.carbsG || ""} onChange={(e) => setNutrition({ ...nutrition, carbsG: Number(e.target.value) })} className="bg-white/50 rounded-xl h-8 text-xs" />
+                                <Input placeholder="Fat" type="number" value={nutrition.fatG || ""} onChange={(e) => setNutrition({ ...nutrition, fatG: Number(e.target.value) })} className="bg-white/50 rounded-xl h-8 text-xs" />
+                                <Input placeholder="Sugar" type="number" value={nutrition.sugarG || ""} onChange={(e) => setNutrition({ ...nutrition, sugarG: Number(e.target.value) })} className="bg-white/50 rounded-xl h-8 text-xs" />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </CardContent>
-              </Card>
-            ))}
-            </div>
-            </div>
+            </GlassCard>
 
+            <GlassCard>
+                <CardHeader>
+                    <CardTitle>💪 Workout</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Type</Label>
+                        <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v })}>
+                            <SelectTrigger className="bg-white/50 rounded-xl border-0"><SelectValue placeholder="Type" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="run">Run</SelectItem>
+                                <SelectItem value="weights">Weights</SelectItem>
+                                <SelectItem value="yoga">Yoga</SelectItem>
+                                <SelectItem value="walking">Walking</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Duration (m)</Label>
+                        <Input type="number" value={workout.durationMin || ""} onChange={(e) => setWorkout({ ...workout, durationMin: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                    </div>
+                </CardContent>
+            </GlassCard>
+        </div>
+
+        {/* Column 3: Sleep & Symptoms */}
+        <div className="space-y-6">
+            <GlassCard>
+                <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Moon className="w-5 h-5 text-purple-500" />
+                            <CardTitle>Quick Sleep</CardTitle>
+                        </div>
+                        <Button variant="ghost" size="sm" asChild className="h-6 text-xs"><Link href="/sleeptrack">Full <ArrowRight className="w-3 h-3 ml-1" /></Link></Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Hours</Label>
+                            <Input type="number" step={0.5} value={quickSleep.hours} onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Stress</Label>
+                            <Input type="number" min={0} max={10} value={quickSleep.stress} onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
+                        </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/40 text-xs space-y-1">
+                        <div className="flex justify-between"><span>7d Avg Sleep:</span> <span className="font-semibold">{sleepStats.avgSleep}h</span></div>
+                        <div className="flex justify-between"><span>7d Avg Stress:</span> <span className="font-semibold">{sleepStats.avgStress}/10</span></div>
+                    </div>
+                </CardContent>
+            </GlassCard>
+
+            <GlassCard>
+                <CardHeader>
+                    <CardTitle>Symptoms</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm"><Label>GI Flare</Label> <span className="text-muted-foreground">{symptoms.giFlare}/10</span></div>
+                        <Input type="range" min={0} max={10} value={symptoms.giFlare} onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} className="accent-purple-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm"><Label>Migraine</Label> <span className="text-muted-foreground">{symptoms.migraine}/10</span></div>
+                        <Input type="range" min={0} max={10} value={symptoms.migraine} onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} className="accent-purple-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm"><Label>Fatigue</Label> <span className="text-muted-foreground">{symptoms.fatigue}/10</span></div>
+                        <Input type="range" min={0} max={10} value={symptoms.fatigue} onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} className="accent-purple-600" />
+                    </div>
+                </CardContent>
+            </GlassCard>
+        </div>
+      </div>
+
+      {/* Trends Section - Full Width */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <GlassCard>
+            <CardHeader><CardTitle>Stomach Trend</CardTitle></CardHeader>
+            <CardContent>
+                <ChartContainer className="w-full h-[150px]" config={{ stomach: { label: "Severity", color: "var(--color-stomach)" } }}>
+                    <LineChart data={series14.stomach}>
+                        <XAxis dataKey="date" hide />
+                        <YAxis domain={[0, 10]} hide />
+                        <Line type="monotone" dataKey="severity" stroke="var(--color-stomach)" strokeWidth={3} dot={false} />
+                    </LineChart>
+                </ChartContainer>
+            </CardContent>
+         </GlassCard>
+         <GlassCard>
+            <CardHeader><CardTitle>Skin Trend</CardTitle></CardHeader>
+            <CardContent>
+                <ChartContainer className="w-full h-[150px]" config={{ skin: { label: "Severity", color: "var(--color-skin)" } }}>
+                    <LineChart data={series14.skin}>
+                        <XAxis dataKey="date" hide />
+                        <YAxis domain={[0, 10]} hide />
+                        <Line type="monotone" dataKey="severity" stroke="var(--color-skin)" strokeWidth={3} dot={false} />
+                    </LineChart>
+                </ChartContainer>
+            </CardContent>
+         </GlassCard>
+         <GlassCard>
+            <CardHeader><CardTitle>Mood Trend</CardTitle></CardHeader>
+            <CardContent>
+                <ChartContainer className="w-full h-[150px]" config={{ mood: { label: "Mood", color: "var(--color-mood)" } }}>
+                    <LineChart data={series14.mentalMood}>
+                        <XAxis dataKey="date" hide />
+                        <YAxis domain={[0, 10]} hide />
+                        <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={3} dot={false} />
+                    </LineChart>
+                </ChartContainer>
+            </CardContent>
+         </GlassCard>
       </div>
     </div>
   );
 }
-
-function capitalize(s: string) {return s.charAt(0).toUpperCase() + s.slice(1);}
-function pretty(s: string) {return s.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());}
 
 function clamp010(x: any) {
   return Math.max(0, Math.min(10, x));

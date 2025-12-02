@@ -83,17 +83,21 @@ export type SymptomEntry = {
 }
 
 // Workout tracking for exercise monitoring
-export type WorkoutEntry = {
-  date: string
-  type: "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other"
-  duration: number // in minutes
-  intensity: number // 0-10
-  caloriesBurned?: number
-  heartRateAvg?: number
-  notes?: string
-  feeling: "energized" | "tired" | "normal" | "sore"
-  location: "gym" | "home" | "outdoors" | "other"
-}
+export type Workout = {
+  type: "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other";
+  duration: number; // in minutes
+  intensity: number; // 0-10
+  caloriesBurned?: number;
+  heartRateAvg?: number;
+  notes?: string;
+  feeling: "energized" | "tired" | "normal" | "sore";
+  location: "gym" | "home" | "outdoors" | "other";
+};
+
+export type ExerciseEntry = {
+  date: string;
+  workouts: Workout[];
+};
 
 // Nutrition tracking types
 export type FoodItem = {
@@ -132,7 +136,7 @@ export type HealthEntry = {
   sleep?: SleepEntry
   symptoms?: SymptomEntry
   nutrition?: NutritionEntry
-  workout?: WorkoutEntry
+  exercise?: ExerciseEntry
 }
 
 // Advanced ML prediction types
@@ -214,7 +218,7 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
       sleep: { ...entries[idx].sleep, ...partial.sleep } as SleepEntry,
       symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomEntry,
       nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
-      workout: { ...entries[idx].workout, ...partial.workout } as WorkoutEntry,
+      exercise: { ...entries[idx].exercise, ...partial.exercise } as ExerciseEntry,
     }
   } else {
     entries.push({ ...partial } as HealthEntry)

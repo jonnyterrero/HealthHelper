@@ -12,43 +12,33 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, Bar, BarChart, ResponsiveContainer } from "recharts";
-import { loadEntries, todayISO, lastNDays, saveEntry, type HealthEntry } from "@/lib/health";
-import { ArrowLeft, Plus, Trash2, Upload, Activity, TrendingUp, Calendar, Zap, Heart } from "lucide-react";
+import { loadEntries, todayISO, lastNDays, upsertEntry, type HealthEntry, type Workout, type ExerciseEntry } from "@/lib/health";
+import { ArrowLeft, Plus, Trash2, Upload, Activity, TrendingUp, Calendar, Zap, Heart, AlertCircle } from "lucide-react";
 
-type WorkoutEntry = {
-  id: string;
-  date: string;
-  type: string;
-  duration: number;
-  intensity: number;
-  caloriesBurned?: number;
-  heartRateAvg?: number;
-  notes?: string;
-  feeling?: "energized" | "tired" | "normal" | "sore";
-};
+type WorkoutWithId = Workout & { id: string };
 
 export default function ExercisePage() {
   const [entries, setEntries] = React.useState(() => loadEntries());
   const [date, setDate] = React.useState(todayISO());
-  const [workouts, setWorkouts] = React.useState<WorkoutEntry[]>([]);
+  const [workouts, setWorkouts] = React.useState<WorkoutWithId[]>([]);
   
   const [newWorkout, setNewWorkout] = React.useState({
-    type: "walking",
+    type: "walking" as Workout['type'],
     duration: 30,
     intensity: 5,
     caloriesBurned: 0,
     heartRateAvg: 0,
     notes: "",
-    feeling: "normal" as "energized" | "tired" | "normal" | "sore"
+    feeling: "normal" as Workout['feeling'],
+    location: "outdoors" as Workout['location'],
   });
 
   // Load workouts for selected date
   React.useEffect(() => {
     const entry = entries.find((e) => e.date === date);
     if (entry?.exercise?.workouts) {
-      setWorkouts(entry.exercise.workouts.map((w: any, i: number) => ({
+      setWorkouts(entry.exercise.workouts.map((w, i) => ({
         id: `${date}-${i}`,
-        date,
         ...w
       })));
     } else {
@@ -57,29 +47,27 @@ export default function ExercisePage() {
   }, [date, entries]);
 
   const addWorkout = () => {
-    const workout: WorkoutEntry = {
+    const workout: WorkoutWithId = {
       id: `${date}-${Date.now()}`,
       date,
       ...newWorkout
     };
 
     const updatedWorkouts = [...workouts, workout];
-    setWorkouts(updatedWorkouts);
+    
+    const { id, ...workoutData } = workout;
 
-    // Save to entry
-    let entry = entries.find((e) => e.date === date);
-    if (!entry) {
-      entry = { date, nutrition: {}, sleep: {}, symptoms: {}, exercise: {} };
-      entries.push(entry);
-    }
+    const currentWorkouts = entries.find(e => e.date === date)?.exercise?.workouts || [];
+    const newWorkouts = [...currentWorkouts, workoutData];
 
-    entry.exercise = {
-      ...entry.exercise,
-      workouts: updatedWorkouts.map(({ id, ...w }) => w)
-    };
-
-    saveEntry(entry);
-    setEntries([...entries]);
+    const updatedEntries = upsertEntry({
+      date,
+      exercise: {
+        date,
+        workouts: newWorkouts
+      }
+    });
+    setEntries(updatedEntries);
 
     // Reset form
     setNewWorkout({
@@ -89,23 +77,22 @@ export default function ExercisePage() {
       caloriesBurned: 0,
       heartRateAvg: 0,
       notes: "",
-      feeling: "normal"
+      feeling: "normal",
+      location: "outdoors"
     });
   };
 
   const deleteWorkout = (id: string) => {
-    const updated = workouts.filter((w) => w.id !== id);
-    setWorkouts(updated);
-
-    const entry = entries.find((e) => e.date === date);
-    if (entry) {
-      entry.exercise = {
-        ...entry.exercise,
-        workouts: updated.map(({ id, ...w }) => w)
-      };
-      saveEntry(entry);
-      setEntries([...entries]);
-    }
+    const updatedWorkouts = workouts.filter((w) => w.id !== id);
+    
+    const updatedEntries = upsertEntry({
+      date,
+      exercise: {
+        date,
+        workouts: updatedWorkouts.map(({ id, ...w }) => w)
+      }
+    });
+    setEntries(updatedEntries);
   };
 
   const handleCSVImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +105,7 @@ export default function ExercisePage() {
       const lines = text.split("\n").filter((l) => l.trim());
       const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
 
-      const imported: WorkoutEntry[] = [];
+      const imported: Workout[] = [];
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(",").map((v) => v.trim());
         const workout: any = {
@@ -128,32 +115,33 @@ export default function ExercisePage() {
           duration: parseInt(values[headers.indexOf("duration")] || "30"),
           intensity: parseInt(values[headers.indexOf("intensity")] || "5"),
           caloriesBurned: parseInt(values[headers.indexOf("calories")] || "0") || undefined,
-          heartRateAvg: parseInt(values[headers.indexOf("heartrate")] || "0") || undefined
+          heartRateAvg: parseInt(values[headers.indexOf("heartrate")] || "0") || undefined,
+          feeling: (values[headers.indexOf("feeling")] as Workout['feeling']) || "normal",
+          location: (values[headers.indexOf("location")] as Workout['location']) || "other",
         };
         imported.push(workout);
       }
 
-      // Add imported workouts
-      const allWorkouts = [...workouts, ...imported];
-      setWorkouts(allWorkouts);
-
-      // Save to entries
-      imported.forEach((workout) => {
-        let entry = entries.find((e) => e.date === workout.date);
-        if (!entry) {
-          entry = { date: workout.date, nutrition: {}, sleep: {}, symptoms: {}, exercise: {} };
-          entries.push(entry);
-        }
-
-        if (!entry.exercise) entry.exercise = {};
-        if (!entry.exercise.workouts) entry.exercise.workouts = [];
-        
-        const { id, ...workoutData } = workout;
-        entry.exercise.workouts.push(workoutData);
-        saveEntry(entry);
+      // Group workouts by date
+      const workoutsByDate: Record<string, Workout[]> = {};
+      [...workouts, ...imported].forEach(w => {
+        if (!workoutsByDate[w.date]) workoutsByDate[w.date] = [];
+        const { id, ...workoutData } = w;
+        workoutsByDate[w.date].push(workoutData);
       });
 
-      setEntries([...entries]);
+      let updatedEntries = [...entries];
+      Object.keys(workoutsByDate).forEach(d => {
+        updatedEntries = upsertEntry({
+          date: d,
+          exercise: {
+            date: d,
+            workouts: workoutsByDate[d]
+          }
+        });
+      });
+      
+      setEntries(updatedEntries);
       alert(`Imported ${imported.length} workouts successfully!`);
     };
     reader.readAsText(file);

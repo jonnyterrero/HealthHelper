@@ -1,4 +1,6 @@
 # Health Helper
+An intelligent health tracking application.
+<!-- Trigger Vercel Re-deploy -->
 
 A comprehensive health tracking and AI-powered analysis platform built with Next.js 15 and React 19.
 

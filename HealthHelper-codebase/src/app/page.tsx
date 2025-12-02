@@ -120,13 +120,15 @@ export default function HomePage() {
   // Workout tracking from Python backend
   const [workout, setWorkout] = React.useState({
     timestamp: "",
-    type: "",
-    durationMin: 0,
+    type: "walking",
+    durationMin: 30,
     intensity: 5,
     caloriesBurned: 0,
     heartRateAvg: 0,
     heartRateMax: 0,
     notes: "",
+    feeling: "normal" as "energized" | "tired" | "normal" | "sore",
+    location: "outdoors" as "gym" | "home" | "outdoors" | "other"
   });
 
   // Vital signs tracking from Python backend
@@ -199,8 +201,9 @@ export default function HomePage() {
     stomach: stomach.severity > 0 ? { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined } : undefined,
     skin: skin.severity > 0 ? { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined } : undefined,
     mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
-    symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined }
-  }), [date, stomach, skin, mental, symptoms]);
+    symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
+    workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+  }), [date, stomach, skin, mental, symptoms, workout]);
   
   const sleepPrediction = React.useMemo(() => predictSleepQuality(currentEntry), [currentEntry]);
   const symptomPrediction = React.useMemo(() => predictSymptoms(currentEntry), [currentEntry]);
@@ -212,7 +215,7 @@ export default function HomePage() {
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
       symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-      workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined } : undefined
+      workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
     });
     setEntries(updated);
   }

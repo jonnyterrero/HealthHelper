@@ -121,6 +121,7 @@ export type ExerciseEntry = {
     heartRateAvg?: number
     notes?: string
     feeling?: "energized" | "tired" | "normal" | "sore"
+    location?: string
   }>
 }
 

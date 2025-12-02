@@ -213,7 +213,8 @@ export default function HomePage() {
           caloriesBurned: workout.caloriesBurned || undefined, 
           heartRateAvg: workout.heartRateAvg || undefined, 
           notes: workout.notes || undefined, 
-          feeling: workout.feeling
+          feeling: workout.feeling,
+          location: workout.location
       }]
   } : undefined
   }), [date, stomach, skin, mental, symptoms, workout]);
@@ -237,7 +238,8 @@ export default function HomePage() {
             caloriesBurned: workout.caloriesBurned || undefined, 
             heartRateAvg: workout.heartRateAvg || undefined, 
             notes: workout.notes || undefined, 
-            feeling: workout.feeling
+            feeling: workout.feeling,
+            location: workout.location
         }]
     } : undefined
     });

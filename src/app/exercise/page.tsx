@@ -49,12 +49,9 @@ export default function ExercisePage() {
   const addWorkout = () => {
     const workout: WorkoutWithId = {
       id: `${date}-${Date.now()}`,
-      date,
       ...newWorkout
     };
 
-    const updatedWorkouts = [...workouts, workout];
-    
     const { id, ...workoutData } = workout;
 
     const currentWorkouts = entries.find(e => e.date === date)?.exercise?.workouts || [];

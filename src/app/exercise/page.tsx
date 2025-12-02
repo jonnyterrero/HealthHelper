@@ -102,38 +102,43 @@ export default function ExercisePage() {
       const lines = text.split("\n").filter((l) => l.trim());
       const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
 
-      const imported: Workout[] = [];
+      type CsvWorkout = Workout & { date: string };
+      const imported: CsvWorkout[] = [];
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(",").map((v) => v.trim());
-        const workout: any = {
-          id: `imported-${Date.now()}-${i}`,
+        const workout: CsvWorkout = {
           date: values[headers.indexOf("date")] || todayISO(),
-          type: values[headers.indexOf("type")] || "other",
+          type: (values[headers.indexOf("type")] as Workout['type']) || "other",
           duration: parseInt(values[headers.indexOf("duration")] || "30"),
           intensity: parseInt(values[headers.indexOf("intensity")] || "5"),
           caloriesBurned: parseInt(values[headers.indexOf("calories")] || "0") || undefined,
           heartRateAvg: parseInt(values[headers.indexOf("heartrate")] || "0") || undefined,
           feeling: (values[headers.indexOf("feeling")] as Workout['feeling']) || "normal",
           location: (values[headers.indexOf("location")] as Workout['location']) || "other",
+          notes: values[headers.indexOf("notes")] || "",
         };
         imported.push(workout);
       }
 
-      // Group workouts by date
+      // Group imported workouts by date
       const workoutsByDate: Record<string, Workout[]> = {};
-      [...workouts, ...imported].forEach(w => {
+      imported.forEach(w => {
         if (!workoutsByDate[w.date]) workoutsByDate[w.date] = [];
-        const { id, ...workoutData } = w;
+        const { date, ...workoutData } = w;
         workoutsByDate[w.date].push(workoutData);
       });
 
-      let updatedEntries = [...entries];
+      // Merge with existing entries and save
+      let updatedEntries = loadEntries();
       Object.keys(workoutsByDate).forEach(d => {
+        const existingWorkouts = updatedEntries.find(e => e.date === d)?.exercise?.workouts || [];
+        const newWorkouts = workoutsByDate[d];
+        
         updatedEntries = upsertEntry({
           date: d,
           exercise: {
             date: d,
-            workouts: workoutsByDate[d]
+            workouts: [...existingWorkouts, ...newWorkouts]
           }
         });
       });

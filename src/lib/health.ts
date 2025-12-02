@@ -213,8 +213,11 @@ export function saveEntry(entry: HealthEntry) {
   saveEntries(entries)
 }
 
-export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): HealthEntry[] {
+export function upsertEntry(partial: Partial<HealthEntry>): HealthEntry[] {
   const entries = loadEntries()
+  if (!partial.date) {
+    throw new Error("Date is required to upsert an entry.");
+  }
   const idx = entries.findIndex((e) => e.date === partial.date)
   if (idx >= 0) {
     entries[idx] = {

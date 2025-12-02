@@ -257,7 +257,7 @@ export default function ExercisePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Workout Type</Label>
-                    <Select value={newWorkout.type} onValueChange={(v) => setNewWorkout({ ...newWorkout, type: v })}>
+                    <Select value={newWorkout.type} onValueChange={(v) => setNewWorkout({ ...newWorkout, type: v as Workout['type'] })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

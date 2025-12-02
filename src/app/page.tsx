@@ -18,6 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Zap, Moon, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type WorkoutType = "other" | "walking" | "cardio" | "strength" | "yoga" | "stretching" | "sports" | "running" | "cycling" | "swimming" | "hiit";
+
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
   const [entries, setEntries] = React.useState(() => loadEntries());
@@ -120,7 +122,7 @@ export default function HomePage() {
   // Workout tracking from Python backend
   const [workout, setWorkout] = React.useState({
     timestamp: "",
-    type: "walking",
+    type: "walking" as WorkoutType,
     durationMin: 30,
     intensity: 5,
     caloriesBurned: 0,
@@ -202,7 +204,18 @@ export default function HomePage() {
     skin: skin.severity > 0 ? { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined } : undefined,
     mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
     symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-    workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+    exercise: workout.durationMin > 0 ? { 
+      date, 
+      workouts: [{
+          type: workout.type, 
+          duration: workout.durationMin, 
+          intensity: clamp010(workout.intensity as any), 
+          caloriesBurned: workout.caloriesBurned || undefined, 
+          heartRateAvg: workout.heartRateAvg || undefined, 
+          notes: workout.notes || undefined, 
+          feeling: workout.feeling
+      }]
+  } : undefined
   }), [date, stomach, skin, mental, symptoms, workout]);
   
   const sleepPrediction = React.useMemo(() => predictSleepQuality(currentEntry), [currentEntry]);
@@ -215,7 +228,18 @@ export default function HomePage() {
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
       symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-      workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+      exercise: workout.durationMin > 0 ? { 
+        date, 
+        workouts: [{
+            type: workout.type, 
+            duration: workout.durationMin, 
+            intensity: clamp010(workout.intensity as any), 
+            caloriesBurned: workout.caloriesBurned || undefined, 
+            heartRateAvg: workout.heartRateAvg || undefined, 
+            notes: workout.notes || undefined, 
+            feeling: workout.feeling
+        }]
+    } : undefined
     });
     setEntries(updated);
   }
@@ -389,7 +413,7 @@ export default function HomePage() {
                 <CardContent className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Type</Label>
-                        <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v })}>
+                        <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v as WorkoutType })}>
                             <SelectTrigger className="bg-white/50 rounded-xl border-0"><SelectValue placeholder="Type" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="run">Run</SelectItem>

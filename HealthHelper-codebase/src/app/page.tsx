@@ -18,6 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Zap, Moon, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type WorkoutType = "other" | "walking" | "cardio" | "strength" | "yoga" | "stretching" | "sports" | "running" | "cycling" | "swimming" | "hiit";
+
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
   const [entries, setEntries] = React.useState(() => loadEntries());
@@ -120,7 +122,7 @@ export default function HomePage() {
   // Workout tracking from Python backend
   const [workout, setWorkout] = React.useState({
     timestamp: "",
-    type: "walking",
+    type: "walking" as WorkoutType,
     durationMin: 30,
     intensity: 5,
     caloriesBurned: 0,
@@ -202,7 +204,18 @@ export default function HomePage() {
     skin: skin.severity > 0 ? { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined } : undefined,
     mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
     symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-    workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+    exercise: workout.durationMin > 0 ? { 
+      date, 
+      workouts: [{
+          type: workout.type, 
+          duration: workout.durationMin, 
+          intensity: clamp010(workout.intensity as any), 
+          caloriesBurned: workout.caloriesBurned || undefined, 
+          heartRateAvg: workout.heartRateAvg || undefined, 
+          notes: workout.notes || undefined, 
+          feeling: workout.feeling
+      }]
+  } : undefined
   }), [date, stomach, skin, mental, symptoms, workout]);
   
   const sleepPrediction = React.useMemo(() => predictSleepQuality(currentEntry), [currentEntry]);
@@ -215,7 +228,18 @@ export default function HomePage() {
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
       symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-      workout: workout.durationMin > 0 ? { date, type: workout.type, duration: workout.durationMin, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
+      exercise: workout.durationMin > 0 ? { 
+        date, 
+        workouts: [{
+            type: workout.type, 
+            duration: workout.durationMin, 
+            intensity: clamp010(workout.intensity as any), 
+            caloriesBurned: workout.caloriesBurned || undefined, 
+            heartRateAvg: workout.heartRateAvg || undefined, 
+            notes: workout.notes || undefined, 
+            feeling: workout.feeling
+        }]
+    } : undefined
     });
     setEntries(updated);
   }
@@ -248,10 +272,10 @@ export default function HomePage() {
     <div className="container mx-auto p-4 md:p-6 space-y-8">
       {/* Header Area */}
       <div className="flex items-center justify-between">
-        <div>
+            <div>
           <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Dashboard</h2>
           <p className="text-slate-500 dark:text-slate-400">Welcome back. Here's your health overview.</p>
-        </div>
+            </div>
         
         <div className="flex items-center gap-4 bg-white/30 p-2 rounded-2xl border border-white/50">
             <div className="px-3 text-sm font-medium text-slate-600">Date:</div>
@@ -264,10 +288,10 @@ export default function HomePage() {
             />
             <Button onClick={saveAll} className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-purple-200">Save Changes</Button>
         </div>
-      </div>
+                    </div>
 
       {/* Alerts Section */}
-      <div className="space-y-4">
+              <div className="space-y-4">
         {symptomPrediction.overallRisk === 'high' && (
             <Alert className="glass-panel border-red-200/50 bg-red-50/50 dark:bg-red-900/20">
             <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -286,7 +310,7 @@ export default function HomePage() {
             </AlertDescription>
             </Alert>
         )}
-      </div>
+                          </div>
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -294,21 +318,21 @@ export default function HomePage() {
         {/* Column 1: Daily Log & Vitals */}
         <div className="space-y-6">
             <GlassCard className="h-fit">
-                <CardHeader>
+                    <CardHeader>
                 <CardTitle>📋 Daily Log</CardTitle>
                 <CardDescription>Energy, focus, and daily factors</CardDescription>
-                </CardHeader>
+                    </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                      <div className="space-y-2">
                         <Label>Energy</Label>
                         <Input type="number" min={1} max={10} value={dailyLog.energy} onChange={(e) => setDailyLog({ ...dailyLog, energy: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                        </div>
+                          </div>
                         <div className="space-y-2">
                         <Label>Focus</Label>
                         <Input type="number" min={1} max={10} value={dailyLog.focus} onChange={(e) => setDailyLog({ ...dailyLog, focus: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                        </div>
-                    </div>
+                      </div>
+              </div>
                     <div className="space-y-2">
                         <Label>Journal</Label>
                         <Textarea 
@@ -318,7 +342,7 @@ export default function HomePage() {
                         className="bg-white/50 rounded-xl border-0 resize-none"
                         rows={3}
                         />
-                    </div>
+                  </div>
                 </CardContent>
             </GlassCard>
 
@@ -330,11 +354,11 @@ export default function HomePage() {
                     <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Steps</Label>
                         <Input type="number" value={vitals.steps || ""} onChange={(e) => setVitals({ ...vitals, steps: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
-                    </div>
+                        </div>
                     <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">HRV</Label>
                         <Input type="number" value={vitals.hrvMs || ""} onChange={(e) => setVitals({ ...vitals, hrvMs: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
-                    </div>
+                </div>
                     <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Resting HR</Label>
                         <Input type="number" value={vitals.hrMean || ""} onChange={(e) => setVitals({ ...vitals, hrMean: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
@@ -343,12 +367,12 @@ export default function HomePage() {
                         <Label className="text-xs text-muted-foreground">SpO2</Label>
                         <Input type="number" value={vitals.spo2 || ""} onChange={(e) => setVitals({ ...vitals, spo2: Number(e.target.value) })} className="bg-white/50 rounded-xl h-9" />
                     </div>
-                </CardContent>
+                      </CardContent>
             </GlassCard>
-        </div>
+                </div>
 
         {/* Column 2: Nutrition & Workout */}
-        <div className="space-y-6">
+            <div className="space-y-6">
             <GlassCard>
                 <CardHeader>
                     <CardTitle>🍎 Nutrition</CardTitle>
@@ -359,16 +383,16 @@ export default function HomePage() {
                         <div className="col-span-2 space-y-2">
                             <Label>Food Items</Label>
                             <Input value={nutrition.foodItems} onChange={(e) => setNutrition({ ...nutrition, foodItems: e.target.value })} placeholder="e.g. Oatmeal, Coffee" className="bg-white/50 rounded-xl" />
-                        </div>
-                        <div className="space-y-2">
+                    </div>
+                  <div className="space-y-2">
                             <Label className="text-xs">Calories</Label>
                             <Input type="number" value={nutrition.calories || ""} onChange={(e) => setNutrition({ ...nutrition, calories: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                        </div>
-                        <div className="space-y-2">
+                  </div>
+                  <div className="space-y-2">
                             <Label className="text-xs">Protein (g)</Label>
                             <Input type="number" value={nutrition.proteinG || ""} onChange={(e) => setNutrition({ ...nutrition, proteinG: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                        </div>
-                    </div>
+                  </div>
+                  </div>
                     <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="details" className="border-0">
                             <AccordionTrigger className="text-sm py-2 hover:no-underline hover:bg-white/20 rounded-lg px-2">More Details</AccordionTrigger>
@@ -379,7 +403,7 @@ export default function HomePage() {
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
-                </CardContent>
+        </CardContent>
             </GlassCard>
 
             <GlassCard>
@@ -387,25 +411,25 @@ export default function HomePage() {
                     <CardTitle>💪 Workout</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+            <div className="space-y-2">
                         <Label>Type</Label>
-                        <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v })}>
+                        <Select value={workout.type} onValueChange={(v) => setWorkout({ ...workout, type: v as WorkoutType })}>
                             <SelectTrigger className="bg-white/50 rounded-xl border-0"><SelectValue placeholder="Type" /></SelectTrigger>
-                            <SelectContent>
+                <SelectContent>
                                 <SelectItem value="run">Run</SelectItem>
                                 <SelectItem value="weights">Weights</SelectItem>
-                                <SelectItem value="yoga">Yoga</SelectItem>
-                                <SelectItem value="walking">Walking</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
+                  <SelectItem value="yoga">Yoga</SelectItem>
+                          <SelectItem value="walking">Walking</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
                         <Label>Duration (m)</Label>
                         <Input type="number" value={workout.durationMin || ""} onChange={(e) => setWorkout({ ...workout, durationMin: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                    </div>
+            </div>
                 </CardContent>
             </GlassCard>
-        </div>
+            </div>
 
         {/* Column 3: Sleep & Symptoms */}
         <div className="space-y-6">
@@ -415,26 +439,26 @@ export default function HomePage() {
                         <div className="flex items-center gap-2">
                             <Moon className="w-5 h-5 text-purple-500" />
                             <CardTitle>Quick Sleep</CardTitle>
-                        </div>
+            </div>
                         <Button variant="ghost" size="sm" asChild className="h-6 text-xs"><Link href="/sleeptrack">Full <ArrowRight className="w-3 h-3 ml-1" /></Link></Button>
-                    </div>
+          </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
                             <Label>Hours</Label>
                             <Input type="number" step={0.5} value={quickSleep.hours} onChange={(e) => setQuickSleep({ ...quickSleep, hours: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                        </div>
-                        <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                             <Label>Stress</Label>
                             <Input type="number" min={0} max={10} value={quickSleep.stress} onChange={(e) => setQuickSleep({ ...quickSleep, stress: Number(e.target.value) })} className="bg-white/50 rounded-xl" />
-                        </div>
-                    </div>
+                </div>
+              </div>
                     <div className="p-3 rounded-xl bg-white/40 text-xs space-y-1">
                         <div className="flex justify-between"><span>7d Avg Sleep:</span> <span className="font-semibold">{sleepStats.avgSleep}h</span></div>
                         <div className="flex justify-between"><span>7d Avg Stress:</span> <span className="font-semibold">{sleepStats.avgStress}/10</span></div>
-                    </div>
-                </CardContent>
+            </div>
+          </CardContent>
             </GlassCard>
 
             <GlassCard>
@@ -442,23 +466,23 @@ export default function HomePage() {
                     <CardTitle>Symptoms</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
+            <div className="space-y-2">
                         <div className="flex justify-between text-sm"><Label>GI Flare</Label> <span className="text-muted-foreground">{symptoms.giFlare}/10</span></div>
                         <Input type="range" min={0} max={10} value={symptoms.giFlare} onChange={(e) => setSymptoms({ ...symptoms, giFlare: Number(e.target.value) })} className="accent-purple-600" />
-                    </div>
-                    <div className="space-y-2">
+            </div>
+            <div className="space-y-2">
                         <div className="flex justify-between text-sm"><Label>Migraine</Label> <span className="text-muted-foreground">{symptoms.migraine}/10</span></div>
                         <Input type="range" min={0} max={10} value={symptoms.migraine} onChange={(e) => setSymptoms({ ...symptoms, migraine: Number(e.target.value) })} className="accent-purple-600" />
-                    </div>
-                    <div className="space-y-2">
+            </div>
+            <div className="space-y-2">
                         <div className="flex justify-between text-sm"><Label>Fatigue</Label> <span className="text-muted-foreground">{symptoms.fatigue}/10</span></div>
                         <Input type="range" min={0} max={10} value={symptoms.fatigue} onChange={(e) => setSymptoms({ ...symptoms, fatigue: Number(e.target.value) })} className="accent-purple-600" />
-                    </div>
-                </CardContent>
+            </div>
+          </CardContent>
             </GlassCard>
-        </div>
-      </div>
-
+            </div>
+          </div>
+          
       {/* Trends Section - Full Width */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <GlassCard>
@@ -469,8 +493,8 @@ export default function HomePage() {
                         <XAxis dataKey="date" hide />
                         <YAxis domain={[0, 10]} hide />
                         <Line type="monotone" dataKey="severity" stroke="var(--color-stomach)" strokeWidth={3} dot={false} />
-                    </LineChart>
-                </ChartContainer>
+                </LineChart>
+              </ChartContainer>
             </CardContent>
          </GlassCard>
          <GlassCard>
@@ -483,7 +507,7 @@ export default function HomePage() {
                         <Line type="monotone" dataKey="severity" stroke="var(--color-skin)" strokeWidth={3} dot={false} />
                     </LineChart>
                 </ChartContainer>
-            </CardContent>
+                </CardContent>
          </GlassCard>
          <GlassCard>
             <CardHeader><CardTitle>Mood Trend</CardTitle></CardHeader>

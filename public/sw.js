@@ -2,7 +2,7 @@
 const CACHE_NAME = "orchids-cache-v2";
 const ASSETS = [
   "/",
-  "/manifest.webmanifest",
+  "/manifest.json",
   "/favicon.ico",
   "/offline"
 ];

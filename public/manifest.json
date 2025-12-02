@@ -1,6 +1,6 @@
 {
-  "name": "Orchids Health Tracker",
-  "short_name": "Orchids",
+  "name": "Health Helper",
+  "short_name": "Health Helper",
   "description": "Track stomach, skin, and mental health with insights and exports.",
   "start_url": "/",
   "scope": "/",
@@ -9,11 +9,6 @@
   "theme_color": "#a855f7",
   "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "48x48 72x72 96x96 128x128 256x256",
-      "type": "image/x-icon"
-    },
     {
       "src": "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/2c387a36-22e8-4090-af90-b8a7e04d1517/generated_images/minimal%2c-flat-health-app-logo%3a-round-95d912f4-20250920040847.jpg",
       "sizes": "192x192",

@@ -7,16 +7,16 @@ import SwRegister from "@/components/pwa/sw-register";
 import { MobileTabs } from "@/components/mobile-tabs";
 
 export const metadata: Metadata = {
-  title: "Orchids Health Tracker",
+  title: "Health Helper",
   description: "Track stomach, skin, and mental health with insights and exports.",
-  applicationName: "Orchids Health Tracker",
-  manifest: "/manifest.webmanifest",
+  applicationName: "Health Helper",
+  manifest: "/manifest.json",
   themeColor: "#a855f7",
   // Apple specific install experience
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Orchids",
+    title: "Health Helper",
   },
   icons: {
     icon: [{ url: "/favicon.ico" }],

@@ -111,6 +111,19 @@ export type NutritionEntry = {
   correlations?: string[] // detected food-symptom correlations
 }
 
+export type ExerciseEntry = {
+  date: string
+  workouts?: Array<{
+    type: string
+    duration: number
+    intensity: number
+    caloriesBurned?: number
+    heartRateAvg?: number
+    notes?: string
+    feeling?: "energized" | "tired" | "normal" | "sore"
+  }>
+}
+
 export type HealthEntry = {
   date: string
   stomach?: StomachEntry
@@ -119,6 +132,7 @@ export type HealthEntry = {
   sleep?: SleepEntry
   symptoms?: SymptomEntry
   nutrition?: NutritionEntry
+  exercise?: ExerciseEntry
 }
 
 // Advanced ML prediction types
@@ -187,6 +201,18 @@ export function saveEntries(entries: HealthEntry[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
 }
 
+export function saveEntry(entry: HealthEntry) {
+  if (typeof window === "undefined") return
+  const entries = loadEntries()
+  const idx = entries.findIndex((e) => e.date === entry.date)
+  if (idx >= 0) {
+    entries[idx] = entry
+  } else {
+    entries.push(entry)
+  }
+  saveEntries(entries)
+}
+
 export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): HealthEntry[] {
   const entries = loadEntries()
   const idx = entries.findIndex((e) => e.date === partial.date)
@@ -200,6 +226,7 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
       sleep: { ...entries[idx].sleep, ...partial.sleep },
       symptoms: { ...entries[idx].symptoms, ...partial.symptoms },
       nutrition: { ...entries[idx].nutrition, ...partial.nutrition },
+      exercise: { ...entries[idx].exercise, ...partial.exercise },
     }
   } else {
     entries.push({ date: partial.date, ...partial })

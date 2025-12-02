@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf } from "lucide-react";
+import { Download, Activity, Sparkles, HeartPulse, Brain, Plug, Moon, ArrowRight, AlertCircle, TrendingUp, Zap, Apple, Leaf, Dumbbell } from "lucide-react";
 
 export default function HomePage() {
   const [date, setDate] = React.useState(todayISO());
@@ -326,9 +326,21 @@ export default function HomePage() {
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
+            <Link href="/predictions" className="flex items-center justify-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Predictions
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
             <Link href="/nutrition" className="flex items-center justify-center gap-2">
               <Apple className="w-4 h-4" />
               Nutrition
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">
+            <Link href="/exercise" className="flex items-center justify-center gap-2">
+              <Dumbbell className="w-4 h-4" />
+              Exercise
             </Link>
           </Button>
           <Button asChild variant="secondary" size="sm" className="flex-1 bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300">

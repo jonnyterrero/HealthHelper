@@ -17,15 +17,20 @@ export default function LifestylePage() {
   // Extract workout data
   const workoutData = React.useMemo(() => {
     return entries
-      .filter(e => e.workout && e.workout.duration > 0)
-      .map(e => ({
+      .filter(e => e.exercise && e.exercise.workouts && e.exercise.workouts.length > 0)
+      .flatMap(e => e.exercise!.workouts.map(w => ({
         date: e.date,
-        type: e.workout!.type,
-        duration: e.workout!.duration,
-        intensity: e.workout!.intensity,
-        calories: e.workout!.caloriesBurned || 0,
-        feeling: e.workout!.feeling,
-        location: e.workout!.location,
+        ...w
+      })))
+      .filter(w => w.duration > 0)
+      .map(w => ({
+        date: w.date,
+        type: w.type,
+        duration: w.duration,
+        intensity: w.intensity,
+        calories: w.caloriesBurned || 0,
+        feeling: w.feeling,
+        location: w.location,
       }))
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [entries]);

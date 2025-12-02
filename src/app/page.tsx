@@ -196,14 +196,33 @@ export default function HomePage() {
   const symptomPrediction = React.useMemo(() => predictSymptoms(currentEntry), [currentEntry]);
 
   function saveAll() {
-    const updated = upsertEntry({
+    // Create a temporary, explicitly typed object for the entry.
+    const entryToSave: Partial<HealthEntry> = {
       date,
       stomach: { date, severity: clamp010(stomach.severity as any), painLocation: stomach.painLocation || undefined, bowelChanges: stomach.bowelChanges || undefined, triggers: stomach.triggers, notes: stomach.notes || undefined },
       skin: { date, severity: clamp010(skin.severity as any), area: skin.area || undefined, rash: skin.rash, itch: skin.itch, triggers: skin.triggers, notes: skin.notes || undefined },
       mental: { date, mood: clamp010(mental.mood as any), anxiety: clamp010(mental.anxiety as any), sleepHours: clamp024(mental.sleepHours as any), stressLevel: clamp010(mental.stressLevel as any), notes: mental.notes || undefined },
       symptoms: { date, giFlare: clamp010(symptoms.giFlare as any), skinFlare: clamp010(symptoms.skinFlare as any), migraine: clamp010(symptoms.migraine as any), fatigue: clamp010(symptoms.fatigue as any), notes: symptoms.notes || undefined },
-      workout: workout.duration > 0 ? { date, type: workout.type, duration: workout.duration, intensity: clamp010(workout.intensity as any), caloriesBurned: workout.caloriesBurned || undefined, heartRateAvg: workout.heartRateAvg || undefined, notes: workout.notes || undefined, feeling: workout.feeling, location: workout.location } : undefined
-    });
+    };
+
+    // Conditionally add the exercise data.
+    if (workout.duration > 0) {
+      entryToSave.exercise = {
+        date,
+        workouts: [{
+            type: workout.type,
+            duration: workout.duration,
+            intensity: clamp010(workout.intensity as any),
+            caloriesBurned: workout.caloriesBurned || undefined,
+            heartRateAvg: workout.heartRateAvg || undefined,
+            notes: workout.notes || undefined,
+            feeling: workout.feeling,
+            location: workout.location
+        }]
+      };
+    }
+
+    const updated = upsertEntry(entryToSave);
     setEntries(updated);
   }
 

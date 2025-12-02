@@ -26,11 +26,11 @@ function calculatePredictions(entries: any[]): Prediction[] {
   if (recent.length === 0) return [];
 
   // Calculate averages
-  const avgSleep = recent.reduce((sum, e) => sum + (e.sleep?.hours || 7), 0) / recent.length;
-  const avgStress = recent.reduce((sum, e) => sum + (e.sleep?.stress || 5), 0) / recent.length;
+  const avgSleep = recent.reduce((sum, e) => sum + (e.sleep?.durationHours || e.mental?.sleepHours || 7), 0) / recent.length;
+  const avgStress = recent.reduce((sum, e) => sum + (e.mental?.stressLevel || 5), 0) / recent.length;
   const today = recent[recent.length - 1];
-  const todaySleep = today?.sleep?.hours || 7;
-  const todayStress = today?.sleep?.stress || 5;
+  const todaySleep = today?.sleep?.durationHours || today?.mental?.sleepHours || 7;
+  const todayStress = today?.mental?.stressLevel || 5;
   const todayCaffeine = today?.nutrition?.caffeineMg || 0;
 
   const predictions: Prediction[] = [];
@@ -189,8 +189,8 @@ export default function PredictionsPage() {
     const recent = lastNDays(entries, 7);
     return recent.map((e) => ({
       date: new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      sleep: e.sleep?.hours || 0,
-      stress: e.sleep?.stress || 0,
+      sleep: e.sleep?.durationHours || e.mental?.sleepHours || 0,
+      stress: e.mental?.stressLevel || 0,
       caffeine: e.nutrition?.caffeineMg || 0,
       workouts: e.exercise?.workouts?.length || 0
     }));
@@ -201,8 +201,8 @@ export default function PredictionsPage() {
     const recent = lastNDays(entries, 30);
     const data: { factor: string; reflux: number; migraine: number; ibs: number }[] = [];
     
-    const lowSleep = recent.filter((e) => (e.sleep?.hours || 7) < 6).length;
-    const highStress = recent.filter((e) => (e.sleep?.stress || 5) > 7).length;
+    const lowSleep = recent.filter((e) => (e.sleep?.durationHours || e.mental?.sleepHours || 7) < 6).length;
+    const highStress = recent.filter((e) => (e.mental?.stressLevel || 5) > 7).length;
     const highCaffeine = recent.filter((e) => (e.nutrition?.caffeineMg || 0) > 200).length;
     const hasExercise = recent.filter((e) => e.exercise?.workouts && e.exercise.workouts.length > 0).length;
 

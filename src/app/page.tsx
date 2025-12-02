@@ -222,7 +222,12 @@ export default function HomePage() {
       };
     }
 
-    const updated = upsertEntry(entryToSave);
+    if (!entryToSave.date) {
+      console.error("Date is missing, cannot save entry");
+      return;
+    }
+    
+    const updated = upsertEntry(entryToSave as HealthEntry);
     setEntries(updated);
   }
 

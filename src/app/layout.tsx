@@ -5,7 +5,6 @@ import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import SwRegister from "@/components/pwa/sw-register";
 import { MobileTabs } from "@/components/mobile-tabs";
-import { AppSidebar } from "@/components/app-sidebar";
 
 export const metadata: Metadata = {
   title: "Health Helper",
@@ -13,13 +12,21 @@ export const metadata: Metadata = {
   applicationName: "Health Helper",
   manifest: "/manifest.json",
   themeColor: "#a855f7",
+  // Apple specific install experience
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Health Helper",
   },
   icons: {
-    icon: [{ url: "/favicon.ico" }],
+    // Using external icon URL instead of missing favicon.ico
+    icon: [
+      { 
+        url: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/2c387a36-22e8-4090-af90-b8a7e04d1517/generated_images/minimal%2c-flat-health-app-logo%3a-round-95d912f4-20250920040847.jpg",
+        sizes: "192x192"
+      }
+    ],
+    // Add apple-touch-icon (iOS homescreen)
     apple: [
       {
         url:
@@ -27,6 +34,7 @@ export const metadata: Metadata = {
         sizes: "180x180",
       },
     ],
+    // Safari pinned tab mask icon (uses monochrome SVG)
     other: [
       { rel: "mask-icon", url: "/next.svg", color: "#a855f7" },
     ],
@@ -40,7 +48,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased overflow-hidden bg-background">
+      <body className="antialiased">
         <ErrorReporter />
         <Script
           src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"
@@ -52,22 +60,8 @@ export default function RootLayout({
           data-debug="true"
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
-        
-        <div className="flex h-screen w-full overflow-hidden">
-          {/* Fixed Sidebar for Desktop */}
-          <AppSidebar />
-          
-          {/* Main Scrollable Content Area */}
-          <main className="flex-1 overflow-y-auto h-full w-full pb-20 md:pb-0 p-0 md:p-4">
-            <div className="md:max-w-[1600px] mx-auto h-full">
-               {children}
-            </div>
-          </main>
-        </div>
-
-        {/* Mobile Navigation (visible only on small screens) */}
+        <div className="pb-16 md:pb-0">{children}</div>
         <MobileTabs />
-        
         <SwRegister />
         <VisualEditsMessenger />
       </body>

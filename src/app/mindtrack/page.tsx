@@ -1,6 +1,8 @@
 "use client"
 
+// MindTrack: Mental health tracking with mood, stress, sleep analytics
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +15,7 @@ import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { generateMindResponse } from "@/lib/chat/mind-chat"
-import { Pill, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { Pill, CheckCircle2, XCircle, Clock, ArrowLeft } from "lucide-react"
 
 // MindTrack - local storage + lightweight analytics
 const PROFILE_KEY = "orchids.profile.v1"
@@ -215,7 +217,6 @@ export default function MindTrackPage() {
         setSymptom(String(rec[0]).toLowerCase())
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // remove separate profile save; Profile is managed via shared ProfileMenu
@@ -346,7 +347,7 @@ export default function MindTrackPage() {
       } catch {
         // graceful fallback to local keyword responder
         const reply = respond(userText, profile, entries)
-        const next = [...base, { role: "assistant", text: reply, time: new Date().toISOString() }]
+        const next: ChatMessage[] = [...base, { role: "assistant" as const, text: reply, time: new Date().toISOString() }]
         setChat(next)
         saveChat(next)
       }
@@ -386,11 +387,11 @@ export default function MindTrackPage() {
     doc.setFontSize(16); doc.text("MindTrack Report", pageWidth/2, y, { align: "center" }); y += 10
     doc.setFontSize(11); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
 
-    doc.setFont(undefined, "bold"); doc.text("Profile", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); doc.text("Profile", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const profileLine = `Name: ${profile.name || '-'} • Age: ${profile.age ?? '-'} • Gender: ${profile.gender || '-'}`
     doc.text(doc.splitTextToSize(profileLine, pageWidth - 28), 14, y); y += 6
 
-    doc.setFont(undefined, "bold"); doc.text("Recent Entries", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); doc.text("Recent Entries", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const recent = entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-12)
     for (const e of recent) {
       if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }
@@ -493,11 +494,22 @@ export default function MindTrackPage() {
   }, [medications])
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100/30 to-pink-50 relative">
+      {/* Intense orange glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-orange-200/60 via-orange-300/50 to-orange-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">MindTrack</h1>
-          <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">MindMap</h1>
+            <p className="text-muted-foreground">Profile, symptoms, routines, and a lightweight chat assistant</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />
@@ -824,7 +836,7 @@ export default function MindTrackPage() {
                 <YAxis yAxisId="left" domain={[0, 10]} tick={{ fontSize: 12 }} label={{ value: "Mood/Stress (0-10)", angle: -90, position: "insideLeft", style: { fontSize: 11 } }} />
                 <YAxis yAxisId="right" orientation="right" domain={[0, 'auto']} tick={{ fontSize: 12 }} label={{ value: "Journal Entries", angle: 90, position: "insideRight", style: { fontSize: 11 } }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line yAxisId="right" type="monotone" dataKey="journalCount" stroke="var(--color-journalCount)" strokeWidth={3} dot={{ r: 4 }} name="Journal Entries" />
                 <Line yAxisId="left" type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} name="Mood" />
                 <Line yAxisId="left" type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} name="Stress" />
@@ -850,7 +862,7 @@ export default function MindTrackPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="energy" stroke="var(--color-energy)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
@@ -1008,6 +1020,7 @@ export default function MindTrackPage() {
           setInput={setChatInput}
           onSend={askAssistant}
         />
+      </div>
       </div>
     </div>
   )

@@ -12,14 +12,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, Bar, BarChart } from "recharts";
-import { loadEntries, todayISO, lastNDays, analyzeNutritionPatterns, type NutritionEntry } from "@/lib/health";
+import { loadEntries, todayISO, lastNDays, analyzeNutritionPatterns, type NutritionEntry, type MealEntry } from "@/lib/health";
 import { ArrowLeft, Plus, Trash2, Sparkles, AlertCircle, TrendingUp, Apple } from "lucide-react";
 
 export default function NutritionPage() {
   const [entries, setEntries] = React.useState(() => loadEntries());
   const [date, setDate] = React.useState(todayISO());
   
-  const [meals, setMeals] = React.useState<NutritionEntry["meals"]>([]);
+  const [meals, setMeals] = React.useState<Array<{ time: string; type: string; foods: string[]; notes: string }>>([]);
   const [newMeal, setNewMeal] = React.useState({
     time: "",
     type: "breakfast" as "breakfast" | "lunch" | "dinner" | "snack",
@@ -88,11 +88,18 @@ export default function NutritionPage() {
     const allEntries = loadEntries();
     const existingEntry = allEntries.find((e) => e.date === date);
     
+    const mealEntry: MealEntry = {
+      date,
+      meals: meals.map(m => ({
+        name: m.foods.join(", "),
+        portion: "1 serving",
+        time: m.time,
+      })) as any
+    };
+    
     const nutritionEntry: NutritionEntry = {
       date,
-      meals,
-      hydration: 0,
-      supplements: []
+      meals: mealEntry
     };
 
     const updatedEntry = {
@@ -126,22 +133,22 @@ export default function NutritionPage() {
   }, [entries]);
 
   const symptomCorrelationData = React.useMemo(() => {
-    if (!nutritionAnalysis?.foodSymptomCorrelations) {
-      return [];
-    }
-    return nutritionAnalysis.foodSymptomCorrelations.slice(0, 6).map(corr => ({
-      food: corr.food,
-      score: Math.abs(corr.correlation) * 100
-    }));
+    // TODO: Implement food-symptom correlation analysis
+    // For now, return empty array as analyzeNutritionPatterns returns Insight[] not correlation data
+    return [];
   }, [nutritionAnalysis]);
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-yellow-100/30 to-pink-50 relative">
+      {/* Intense yellow glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-yellow-200/60 via-yellow-300/50 to-yellow-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
             <Link href="/">
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
             </Link>
           </Button>
           <div className="space-y-1">
@@ -156,25 +163,20 @@ export default function NutritionPage() {
       </header>
 
       {/* AI Insights */}
-      {nutritionAnalysis?.foodSymptomCorrelations?.length > 0 && (
+      {nutritionAnalysis && nutritionAnalysis.length > 0 && (
         <Alert className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-900/50">
           <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           <AlertTitle className="text-purple-800 dark:text-purple-300 font-semibold">AI Nutrition Insights</AlertTitle>
           <AlertDescription className="text-purple-700 dark:text-purple-400">
             <div className="space-y-2 mt-2">
-              <p className="font-medium">Potential Trigger Foods:</p>
-              <div className="flex flex-wrap gap-2">
-                {nutritionAnalysis.foodSymptomCorrelations.slice(0, 5).map((corr, i) => (
-                  <Badge key={i} variant={Math.abs(corr.correlation) > 0.6 ? "destructive" : "default"}>
-                    {corr.food} ({(Math.abs(corr.correlation) * 100).toFixed(0)}%)
-                  </Badge>
+              <p className="font-medium">Pattern Insights:</p>
+              <div className="space-y-1">
+                {nutritionAnalysis.slice(0, 3).map((insight, i) => (
+                  <p key={i} className="text-sm">
+                    • {insight.description}
+                  </p>
                 ))}
               </div>
-              {nutritionAnalysis?.recommendations?.length > 0 && (
-                <p className="mt-3 text-sm">
-                  💡 <span className="font-medium">Recommendations:</span> {nutritionAnalysis.recommendations.slice(0, 2).join(" • ")}
-                </p>
-              )}
             </div>
           </AlertDescription>
         </Alert>
@@ -396,6 +398,7 @@ export default function NutritionPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

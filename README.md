@@ -1,213 +1,220 @@
-# 🌟 Health Helper: Your Complete Wellness Companion
+# Health Helper
 
-Welcome to **Health Helper**, the most comprehensive, intelligent health tracking platform that brings together nutrition, exercise, sleep, mental health, and symptom management in one beautiful, easy-to-use application! Built with cutting-edge technology and powered by machine learning, Health Helper transforms how you understand and optimize your wellbeing.
+A comprehensive health tracking and AI-powered analysis platform built with Next.js 15 and React 19.
 
-## ✨ What Makes Health Helper Special?
+## Features
 
-Health Helper is not just another health app. It's your personal health intelligence system that learns from your patterns, predicts potential issues before they arise, and provides actionable insights tailored specifically to you. Whether you're managing chronic conditions, optimizing your fitness, or simply wanting to feel your best every day, Health Helper is here to support your journey.
+- 🏥 **Multi-Domain Health Tracking**: Track nutrition, sleep, stress, skin conditions, and gastrointestinal health
+- 🤖 **AI-Powered Insights**: Machine learning models for health predictions and personalized recommendations
+- 📊 **Advanced Analytics**: Visualize health trends and patterns over time
+- 💬 **Specialized Chat Interfaces**: Domain-specific AI chat assistants (Gastro, Mind, Skin)
+- 📱 **Progressive Web App**: Installable on mobile and desktop with offline support
+- 🎨 **Modern UI**: Beautiful interface built with Tailwind CSS and Radix UI components
 
-### 🎯 Perfect For Everyone
+## Tech Stack
 
-**For Health-Conscious Individuals:**
-- Track everything that matters in one place
-- Get AI-powered predictions about your health risks
-- Discover patterns you never noticed before
-- Make data-driven decisions about your lifestyle
+### Frontend
+- **Framework**: Next.js 15.3.5 with App Router
+- **React**: 19.0.0
+- **Styling**: Tailwind CSS 4 + Tailwind Animate
+- **UI Components**: Radix UI, shadcn/ui
+- **Animations**: Framer Motion
+- **Charts**: Recharts
+- **3D Graphics**: React Three Fiber, Three.js
+- **Forms**: React Hook Form + Zod validation
+- **State Management**: React hooks & Context
 
-**For Healthcare Professionals:**
-- Comprehensive patient data visualization
-- Evidence-based prediction algorithms
-- Export capabilities for clinical review
-- Multi-domain health tracking for holistic care
+### Backend
+- **API Routes**: Next.js API routes (TypeScript)
+- **Python Backend**: Separate Python backend for ML models (see `python-backend/`)
+- **ML Framework**: scikit-learn, TensorFlow (in Python backend)
 
-## 🚀 Amazing Features
+## Getting Started
 
-### 🍎 Nutrition & Symptom Tracking
-Log your meals with incredible detail! Track everything from macronutrients to micronutrients, caffeine intake, and food timing. Health Helper automatically correlates your nutrition with digestive flare-ups, skin reactions, and energy changes. See exactly how what you eat affects how you feel!
+### Prerequisites
+- Node.js 20+ 
+- npm or bun
+- Python 3.9+ (for ML backend, optional for frontend development)
 
-### 🤖 AI-Powered Health Predictions
-Our advanced machine learning models analyze your lifestyle patterns to forecast health risks up to 48 hours in advance! Get real-time risk assessments for:
-- **Acid Reflux** - Know when coffee + low sleep = trouble
-- **Migraines** - Predict triggers before they strike
-- **IBS Symptoms** - Understand stress and lifestyle impacts
-- **Skin Issues** - Track flare-up patterns and triggers
+### Installation
 
-Example prediction: "Coffee (200mg) + Less than 6 hours sleep = 50% chance of reflux today"
-
-### 💪 Exercise & Recovery Tracker
-Log workouts with complete details: type, duration, intensity, calories burned, heart rate, and how you felt afterward. Import data from your Fitbit, Apple Watch, or other wearables via CSV. Monitor how exercise impacts your symptoms and recovery. Health Helper shows you the protective effects of regular activity!
-
-### 📊 Advanced Analytics & Visualizations
-Beautiful charts and graphs reveal trends you never noticed. See 7-day patterns, factor correlations, and long-term health trends. Visualize how sleep, stress, exercise, and nutrition all interconnect to affect your wellbeing.
-
-### 💊 Personalized Remedy Recommender
-Track the effectiveness of medications, supplements, lifestyle changes, and foods. Rate remedies with simple feedback, and Health Helper automatically calculates effectiveness scores. Sort by what works best for YOU, not generic recommendations. Multi-condition support for IBS, migraines, skin issues, and reflux.
-
-### 😴 Sleep & Stress Monitoring
-Comprehensive sleep tracking with quality scores, stress levels, and pattern analysis. See how sleep affects every aspect of your health. Get personalized recommendations for better rest.
-
-### 🧠 Mental Health Tracking
-Journal your mood, track anxiety levels, monitor stress, and log energy. Sentiment analysis provides deeper insights into your emotional health trends over time.
-
-### 🏥 Multi-Domain Health Modules
-- **GastroGuard** - GI health tracking with symptom scales and trigger identification
-- **SkinTrack+** - Skin condition monitoring with body map visualization
-- **MindMap** - Mental health journaling and mood analysis
-- **SleepTrack** - Detailed sleep quality and pattern analysis
-
-### 💬 Specialized AI Chat Assistants
-Domain-specific AI chat interfaces for Gastro, Mind, and Skin health. Get instant, personalized advice based on your health data.
-
-### 📱 Progressive Web App
-Install Health Helper on your phone or desktop! Works offline, syncs when online, and provides a native app experience. Your data stays private and secure.
-
-## 🛠️ Built With Modern Technology
-
-### Frontend Excellence
-- **Next.js 15.3.5** with App Router for lightning-fast performance
-- **React 19** for the most responsive user experience
-- **Tailwind CSS 4** for beautiful, modern design
-- **Radix UI & shadcn/ui** for accessible, polished components
-- **Framer Motion** for smooth, delightful animations
-- **Recharts** for stunning data visualizations
-- **TypeScript** for rock-solid reliability
-
-### Backend Power
-- **Next.js API Routes** for seamless server-side functionality
-- **Python FastAPI Backend** for advanced ML models (optional)
-- **Machine Learning** with scikit-learn and TensorFlow
-- **LocalStorage** for privacy-first data storage
-- **Export/Import** capabilities for data portability
-
-## 🎬 Getting Started is Super Easy!
-
-### Quick Setup
-
-1. **Clone and Install**
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/jonnyterrero/HealthHelper.git
-   cd HealthHelper
-   npm install
+   git clone <repository-url>
+   cd HealthHelper-codebase
    ```
 
-2. **Start the App**
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   Edit `.env.local` with your configuration.
+
+4. **Run the development server**
    ```bash
    npm run dev
+   # or
+   bun dev
    ```
 
-3. **Open Your Browser**
-   Navigate to [http://localhost:3000](http://localhost:3000) and start tracking!
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-### Optional: Python Backend for Advanced ML
+### Python Backend Setup (Optional)
 
-The Python backend provides even more powerful machine learning features:
+The Python backend provides ML-powered features. It can be run separately:
+
+1. **Navigate to python-backend**
+   ```bash
+   cd python-backend
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run the API server**
+   ```bash
+   python api_server.py
+   ```
+
+The Python API will be available at `http://localhost:8000`
+
+## Deployment
+
+### Deploying to Vercel (Frontend)
+
+1. **Install Vercel CLI**
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Deploy**
+   ```bash
+   vercel
+   ```
+
+3. **Set environment variables in Vercel**
+   - Go to your project settings
+   - Add `PYTHON_API_URL` pointing to your deployed Python backend
+   - Add any other required environment variables
+
+### Deploying Python Backend
+
+The Python backend needs to be deployed separately. Recommended platforms:
+
+- **Railway**: [railway.app](https://railway.app)
+- **Render**: [render.com](https://render.com)
+- **Fly.io**: [fly.io](https://fly.io)
+- **AWS Lambda** with API Gateway (for serverless)
+
+See `python-backend/README.md` for detailed instructions.
+
+## Project Structure
+
+```
+HealthHelper-codebase/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── api/               # API routes
+│   │   ├── analytics/         # Analytics dashboard
+│   │   ├── gastro/           # GI health tracking
+│   │   ├── mindtrack/        # Mental health tracking
+│   │   ├── nutrition/        # Nutrition tracking
+│   │   ├── skintrack/        # Skin health tracking
+│   │   └── sleeptrack/       # Sleep tracking
+│   ├── components/            # React components
+│   │   ├── chat/             # Chat interfaces
+│   │   ├── ui/               # shadcn/ui components
+│   │   └── pwa/              # PWA components
+│   ├── lib/                   # Utilities and helpers
+│   │   └── chat/             # Chat logic
+│   └── hooks/                 # Custom React hooks
+├── python-backend/            # Python ML backend (separate deployment)
+│   ├── api_server.py         # FastAPI server
+│   ├── ml_models.py          # ML model definitions
+│   ├── unified_health_ai.py  # Unified AI logic
+│   └── requirements.txt      # Python dependencies
+├── public/                    # Static assets
+├── .vercelignore             # Files to exclude from Vercel
+├── vercel.json               # Vercel configuration
+└── next.config.ts            # Next.js configuration
+```
+
+## Environment Variables
+
+Required environment variables:
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `PYTHON_API_URL` | URL of deployed Python backend | No (optional for frontend-only features) |
+| `NEXT_PUBLIC_APP_URL` | Public URL of your app | Yes (for production) |
+| `NODE_ENV` | Environment mode | Auto-set by Vercel |
+
+See `.env.example` for a complete list.
+
+## Features & Routes
+
+- `/` - Home dashboard
+- `/analytics` - Health analytics and insights
+- `/nutrition` - Nutrition tracking
+- `/sleeptrack` - Sleep tracking
+- `/mindtrack` - Mental health tracking
+- `/skintrack` - Skin health tracking
+- `/gastro` - GI health tracking
+- `/remedies` - Health remedies and tips
+- `/integrations` - Third-party integrations
+
+## Development
+
+### Scripts
 
 ```bash
-cd python-backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python api_server.py
+npm run dev      # Start development server (with Turbopack)
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
 ```
 
-The Python API runs at `http://localhost:8000` and enhances predictions with advanced ML models.
+### Adding New Features
 
-## 📍 All Your Health Routes
+1. Create new pages in `src/app/`
+2. Add components in `src/components/`
+3. Add utilities in `src/lib/`
+4. Add API routes in `src/app/api/`
 
-- **/** - Beautiful home dashboard with quick stats
-- **/analytics** - Comprehensive health analytics and insights
-- **/nutrition** - Detailed nutrition and meal tracking
-- **/exercise** - Workout logging with CSV import support
-- **/predictions** - AI-powered health risk predictions
-- **/sleeptrack** - Sleep quality and pattern analysis
-- **/mindtrack** - Mental health and mood tracking
-- **/skintrack** - Skin condition monitoring
-- **/gastro** - GI health and digestive symptom tracking
-- **/remedies** - Personalized remedy effectiveness tracking
-- **/integrations** - Third-party device integrations
+## Contributing
 
-## 🚢 Deploy to Production
-
-### Deploy Frontend to Vercel
-
-1. Install Vercel CLI: `npm i -g vercel`
-2. Run: `vercel`
-3. Add environment variables in Vercel dashboard
-
-### Deploy Python Backend
-
-Deploy separately to:
-- **Railway** - [railway.app](https://railway.app)
-- **Render** - [render.com](https://render.com)
-- **Fly.io** - [fly.io](https://fly.io)
-- **AWS Lambda** - Serverless option
-
-See `python-backend/README.md` for detailed deployment instructions.
-
-## 📁 Project Structure
-
-```
-HealthHelper/
-├── src/
-│   ├── app/                    # Next.js pages and routes
-│   │   ├── api/               # API endpoints
-│   │   ├── analytics/         # Analytics dashboard
-│   │   ├── exercise/          # Exercise tracking (NEW!)
-│   │   ├── predictions/       # AI predictions (NEW!)
-│   │   ├── nutrition/         # Nutrition tracking
-│   │   ├── gastro/            # GI health
-│   │   ├── mindtrack/         # Mental health
-│   │   ├── skintrack/         # Skin health
-│   │   └── sleeptrack/        # Sleep tracking
-│   ├── components/            # React components
-│   │   ├── chat/              # AI chat interfaces
-│   │   ├── ui/                # Beautiful UI components
-│   │   └── pwa/               # PWA features
-│   └── lib/                   # Utilities and helpers
-├── python-backend/            # Advanced ML backend
-│   ├── api_server.py          # FastAPI server
-│   ├── ml_models.py           # ML model definitions
-│   └── unified_health_ai.py   # Core AI logic
-└── public/                    # Static assets
-```
-
-## 🔐 Privacy & Security
-
-Your health data is YOURS. Health Helper stores everything locally in your browser by default. No data is sent to external servers unless you explicitly enable cloud sync. Export your data anytime in standard formats. Your privacy is our priority.
-
-## 🎨 Beautiful, Intuitive Design
-
-Health Helper features a modern, colorful interface that makes tracking your health actually enjoyable! Gradient backgrounds, smooth animations, and thoughtful UX design create an experience you'll want to use every day.
-
-## 🤝 Contributing
-
-We love contributions! Health Helper is built for the community, by the community. Whether you're fixing bugs, adding features, or improving documentation, your help makes Health Helper better for everyone.
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your amazing changes
-4. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## License
 
-This project is open source and available under the MIT License.
+This project is private and proprietary.
 
-## 💬 Support & Community
+## Support
 
-Have questions? Found a bug? Want to suggest a feature? Open an issue on GitHub and we'll help you out!
-
-## 🌈 The Future of Health Tracking
-
-Health Helper is constantly evolving! Coming soon:
-- Direct wearable API integrations (Fitbit, Apple Watch, Whoop, Aura, Flo)
-- Advanced collaborative filtering for community insights
-- Food image recognition
-- PDF report generation
-- Dark mode support
-- And so much more!
+For questions or issues, please open an issue on the repository.
 
 ---
 
-**Built with ❤️, powered by AI, designed for you.**
-
-*Transform your health journey with Health Helper today!*
+Built with ❤️ using Next.js and modern web technologies.

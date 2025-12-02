@@ -245,8 +245,8 @@ export default function RemediesPage() {
       }
       if (entry.mental) {
         if (entry.mental.anxiety > 7) symptoms.add("anxiety");
-        if (entry.mental.sleepHours < 6) symptoms.add("sleep_issues");
-        if (entry.mental.stressLevel > 7) symptoms.add("stress");
+        if (entry.mental.sleepHours !== undefined && entry.mental.sleepHours < 6) symptoms.add("sleep_issues");
+        if (entry.mental.stressLevel !== undefined && entry.mental.stressLevel > 7) symptoms.add("stress");
       }
     });
 
@@ -310,12 +310,16 @@ export default function RemediesPage() {
     : recommendations.filter(r => r.remedy.category === activeCategory);
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-pink-50 relative">
+      {/* Intense emerald glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-emerald-200/60 via-emerald-300/50 to-emerald-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
             <Link href="/">
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
             </Link>
           </Button>
           <div className="space-y-1">
@@ -516,6 +520,7 @@ export default function RemediesPage() {
           </Alert>
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -82,6 +82,19 @@ export type SymptomEntry = {
   notes?: string
 }
 
+// Workout tracking for exercise monitoring
+export type WorkoutEntry = {
+  date: string
+  type: "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other"
+  duration: number // in minutes
+  intensity: number // 0-10
+  caloriesBurned?: number
+  heartRateAvg?: number
+  notes?: string
+  feeling: "energized" | "tired" | "normal" | "sore"
+  location: "gym" | "home" | "outdoors" | "other"
+}
+
 // Nutrition tracking types
 export type FoodItem = {
   name: string
@@ -111,20 +124,6 @@ export type NutritionEntry = {
   correlations?: string[] // detected food-symptom correlations
 }
 
-export type ExerciseEntry = {
-  date: string
-  workouts?: Array<{
-    type: string
-    duration: number
-    intensity: number
-    caloriesBurned?: number
-    heartRateAvg?: number
-    notes?: string
-    feeling?: "energized" | "tired" | "normal" | "sore"
-    location?: string
-  }>
-}
-
 export type HealthEntry = {
   date: string
   stomach?: StomachEntry
@@ -133,7 +132,7 @@ export type HealthEntry = {
   sleep?: SleepEntry
   symptoms?: SymptomEntry
   nutrition?: NutritionEntry
-  exercise?: ExerciseEntry
+  workout?: WorkoutEntry
 }
 
 // Advanced ML prediction types
@@ -202,38 +201,23 @@ export function saveEntries(entries: HealthEntry[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
 }
 
-export function saveEntry(entry: HealthEntry) {
-  if (typeof window === "undefined") return
+export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): HealthEntry[] {
   const entries = loadEntries()
-  const idx = entries.findIndex((e) => e.date === entry.date)
-  if (idx >= 0) {
-    entries[idx] = entry
-  } else {
-    entries.push(entry)
-  }
-  saveEntries(entries)
-}
-
-export function upsertEntry(partial: Partial<HealthEntry>): HealthEntry[] {
-  const entries = loadEntries()
-  if (!partial.date) {
-    throw new Error("Date is required to upsert an entry.");
-  }
   const idx = entries.findIndex((e) => e.date === partial.date)
   if (idx >= 0) {
     entries[idx] = {
       ...entries[idx],
       ...partial,
-      stomach: partial.stomach ? { ...entries[idx].stomach, ...partial.stomach } : entries[idx].stomach,
-      skin: partial.skin ? { ...entries[idx].skin, ...partial.skin } : entries[idx].skin,
-      mental: partial.mental ? { ...entries[idx].mental, ...partial.mental } : entries[idx].mental,
-      sleep: partial.sleep ? { ...entries[idx].sleep, ...partial.sleep } : entries[idx].sleep,
-      symptoms: partial.symptoms ? { ...entries[idx].symptoms, ...partial.symptoms } : entries[idx].symptoms,
-      nutrition: partial.nutrition ? { ...entries[idx].nutrition, ...partial.nutrition } : entries[idx].nutrition,
-      exercise: partial.exercise ? { ...entries[idx].exercise, ...partial.exercise } : entries[idx].exercise,
+      stomach: { ...entries[idx].stomach, ...partial.stomach } as StomachEntry,
+      skin: { ...entries[idx].skin, ...partial.skin } as SkinEntry,
+      mental: { ...entries[idx].mental, ...partial.mental } as MentalEntry,
+      sleep: { ...entries[idx].sleep, ...partial.sleep } as SleepEntry,
+      symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomEntry,
+      nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
+      workout: { ...entries[idx].workout, ...partial.workout } as WorkoutEntry,
     }
   } else {
-    entries.push({ date: partial.date, ...partial })
+    entries.push({ ...partial } as HealthEntry)
   }
   saveEntries(entries)
   return entries

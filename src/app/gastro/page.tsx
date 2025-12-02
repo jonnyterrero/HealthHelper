@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateGastroResponse } from "@/lib/chat/gastro-chat"
+import { ArrowLeft } from "lucide-react"
 
 // GastroGuard Enhanced v3 - minimal local implementation
 const STORAGE_KEY = "orchids.gastro.logs.v1"
@@ -198,7 +200,6 @@ export default function GastroPage() {
         if (map[k as keyof typeof map]) { setCondition(map[k as keyof typeof map]); break }
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // exports
@@ -236,13 +237,13 @@ export default function GastroPage() {
     doc.setFontSize(16); doc.text("GastroGuard Report", pageWidth/2, y, { align: "center" }); y += 10
     doc.setFontSize(11); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
 
-    doc.setFont(undefined, "bold"); doc.text("Top Remedies", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); doc.text("Top Remedies", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const tops = effectivenessByRemedy(logs)
     if (tops.length === 0) { doc.text("No remedy data yet.", 14, y); y += 8 } else {
       for (const r of tops) { doc.text(`${r.remedy}: ${(r.effectiveness*100).toFixed(0)}% (${r.uses} uses)`, 14, y); y += 6 }
     }
 
-    doc.setFont(undefined, "bold"); y += 4; doc.text("Recent Logs", 14, y); doc.setFont(undefined, "normal"); y += 6
+    doc.setFont("helvetica", "bold"); y += 4; doc.text("Recent Logs", 14, y); doc.setFont("helvetica", "normal"); y += 6
     const recent = logs.slice().sort((a,b)=>a.datetime.localeCompare(b.datetime)).slice(-12)
     for (const l of recent) {
       if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }
@@ -383,17 +384,28 @@ export default function GastroPage() {
       } catch {
         // fallback to local responder
         const reply = generateGastroResponse(q)
-        setChat(prev => [...base, { role: "assistant", text: reply, time: new Date().toISOString() }])
+        setChat(prev => [...base, { role: "assistant" as const, text: reply, time: new Date().toISOString() }])
       }
     })()
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-red-100/30 to-pink-50 relative">
+      {/* Intense red glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-red-200/60 via-red-300/50 to-red-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
-          <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">GastroGuard Enhanced</h1>
+            <p className="text-muted-foreground">Meal logging, symptoms, and remedy insights</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />
@@ -872,6 +884,7 @@ export default function GastroPage() {
             </div>
           }
         />
+      </div>
       </div>
     </div>
   )

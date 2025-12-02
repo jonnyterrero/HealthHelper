@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { loadEntries, toTimeSeries, generateInsights, lastNDays } from "@/lib/health"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +9,7 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { exportCSV, exportPDF } from "@/lib/export"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft, Activity, TrendingUp } from "lucide-react"
 
 export default function AnalyticsPage() {
   const [entries, setEntries] = React.useState(() => loadEntries())
@@ -98,11 +100,22 @@ export default function AnalyticsPage() {
   }, [gastroSeries, mindSeries, skinSeries])
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100/30 to-purple-50 relative">
+      {/* Intense blue glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-200/60 via-blue-300/50 to-blue-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-6 space-y-6 relative z-10">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">Analytics</h1>
-          <p className="text-muted-foreground">Trends, correlations, and exports</p>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">Analytics</h1>
+            <p className="text-muted-foreground">Trends, correlations, and exports</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportCSV(entries)}>Export CSV</Button>
@@ -228,7 +241,7 @@ export default function AnalyticsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="stomach" stroke="var(--color-stomach)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="skin" stroke="var(--color-skin)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="mood" stroke="var(--color-mood)" />
@@ -250,7 +263,7 @@ export default function AnalyticsPage() {
               <XAxis dataKey="time" tick={{ fontSize: 12 }} />
               <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line type="monotone" dataKey="pain" stroke="var(--color-pain)" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
             </LineChart>
@@ -271,7 +284,7 @@ export default function AnalyticsPage() {
               <YAxis yAxisId="left" domain={[0,10]} tick={{ fontSize: 12 }} />
               <YAxis yAxisId="right" orientation="right" domain={[0,24]} tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line yAxisId="left" type="monotone" dataKey="mood" stroke="var(--color-mood)" strokeWidth={2} dot={false} />
               <Line yAxisId="left" type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
               <Line yAxisId="right" type="monotone" dataKey="sleep" stroke="var(--color-skin)" strokeWidth={2} dot={false} />
@@ -315,7 +328,7 @@ export default function AnalyticsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis domain={[0,10]} tick={{ fontSize: 12 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="gastroPain" stroke="var(--color-stomach)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="mindStress" stroke="var(--color-anxiety)" />
               <Line type="monotone" dot={false} strokeWidth={2} dataKey="mood" stroke="var(--color-mood)" />
@@ -344,6 +357,7 @@ export default function AnalyticsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

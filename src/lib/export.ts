@@ -83,9 +83,9 @@ export async function exportPDF(entries: HealthEntry[], insights: Insight[]) {
   y += 8
 
   // Insights
-  doc.setFont(undefined, "bold")
+  doc.setFont("helvetica", "bold")
   doc.text("Insights", 14, y)
-  doc.setFont(undefined, "normal")
+  doc.setFont("helvetica", "normal")
   y += 6
 
   if (insights.length === 0) {
@@ -106,9 +106,9 @@ export async function exportPDF(entries: HealthEntry[], insights: Insight[]) {
   const header = ["Date", "Stomach", "Skin", "Mood", "Anxiety", "Sleep"]
   const colX = [14, 40, 70, 100, 130, 160]
 
-  doc.setFont(undefined, "bold"); y += 6
+  doc.setFont("helvetica", "bold"); y += 6
   doc.text("Recent Summary", 14, y); y += 4
-  doc.setFont(undefined, "normal")
+  doc.setFont("helvetica", "normal")
 
   doc.text(header[0], colX[0], y)
   doc.text(header[1], colX[1], y)

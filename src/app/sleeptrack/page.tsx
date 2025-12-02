@@ -132,12 +132,16 @@ export default function SleepTrackPage() {
   }));
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-purple-50 relative">
+      {/* Intense indigo glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-200/60 via-indigo-300/50 to-indigo-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-4 md:p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
             <Link href="/">
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
             </Link>
           </Button>
           <div className="space-y-1">
@@ -377,7 +381,7 @@ export default function SleepTrackPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
                 <Line type="monotone" dataKey="sleep" stroke="var(--color-sleep)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="stress" stroke="var(--color-stress)" strokeWidth={2} dot={false} />
               </LineChart>
@@ -411,6 +415,7 @@ export default function SleepTrackPage() {
           </ul>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

@@ -36,3 +36,43 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python backend (keep in repo but don't deploy to Vercel)
+# python-backend/ - commented out to keep in repo
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Python files outside python-backend directory
+/src/**/*.py
+/lib/**/*.py
+
+# Local env files
+.env*.local
+.env.development
+.env.test
+.env.production
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db

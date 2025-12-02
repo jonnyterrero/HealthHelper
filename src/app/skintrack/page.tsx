@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +17,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatPanel, ChatMessage } from "@/components/chat/chat-panel"
 import { generateSkinResponse } from "@/lib/chat/skin-chat"
+import { ArrowLeft } from "lucide-react"
 
 // Simple local storage helpers for SkinTrack+
 const STORAGE_KEY = "orchids.skintrack.lesions.v1"
@@ -174,7 +176,6 @@ export default function SkinTrackPage() {
         setMedsTaken((v) => v || meds[0])
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // exports
@@ -210,8 +211,8 @@ export default function SkinTrackPage() {
     doc.setFontSize(11)
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8
 
-    doc.setFont(undefined, "bold");
-    doc.text("Recent Records", 14, y); y += 6; doc.setFont(undefined, "normal")
+    doc.setFont("helvetica", "bold");
+    doc.text("Recent Records", 14, y); y += 6; doc.setFont("helvetica", "normal")
     const recent = lesions.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-10)
     for (const r of recent) {
       if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 14 }
@@ -297,7 +298,7 @@ export default function SkinTrackPage() {
       } catch {
         // Fallback to local rule-based responder
         const reply = generateSkinResponse(q)
-        setChat([...base, { role: "assistant", text: reply, time: new Date().toISOString() }])
+        setChat([...base, { role: "assistant" as const, text: reply, time: new Date().toISOString() }])
       }
     })()
   }
@@ -545,11 +546,22 @@ export default function SkinTrackPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100/30 to-pink-50 relative">
+      {/* Intense purple glass morphism overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-200/60 via-purple-300/50 to-purple-100/70 backdrop-blur-md pointer-events-none z-0"></div>
+      <div className="container mx-auto max-w-6xl p-6 space-y-6 relative z-10">
       <header className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
-          <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
+            <Link href="/">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold">SkinTrack+ (Lesion & Imaging)</h1>
+            <p className="text-muted-foreground">Capture images, track symptoms, and simulate healing</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <ProfileMenu />
@@ -832,7 +844,6 @@ export default function SkinTrackPage() {
             {imageDataUrl && (
               <div className="rounded border overflow-hidden">
                 {/* Preview only */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageDataUrl} alt="Lesion" className="w-full h-48 object-cover" />
               </div>
             )}
@@ -999,7 +1010,6 @@ export default function SkinTrackPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {recent.map((r) => (
                 <div key={r.id} className="rounded border overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {r.imageDataUrl ? (
                     <img src={r.imageDataUrl} alt={r.label} className="w-full h-28 object-cover" />
                   ) : (
@@ -1031,6 +1041,7 @@ export default function SkinTrackPage() {
           </div>
         }
       />
+      </div>
     </div>
   )
 }

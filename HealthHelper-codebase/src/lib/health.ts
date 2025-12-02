@@ -208,16 +208,16 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
     entries[idx] = {
       ...entries[idx],
       ...partial,
-      stomach: { ...entries[idx].stomach, ...partial.stomach } as StomachEntry,
-      skin: { ...entries[idx].skin, ...partial.skin } as SkinEntry,
-      mental: { ...entries[idx].mental, ...partial.mental } as MentalEntry,
-      sleep: { ...entries[idx].sleep, ...partial.sleep } as SleepEntry,
-      symptoms: { ...entries[idx].symptoms, ...partial.symptoms } as SymptomEntry,
-      nutrition: { ...entries[idx].nutrition, ...partial.nutrition } as NutritionEntry,
-      workout: { ...entries[idx].workout, ...partial.workout } as WorkoutEntry,
+      stomach: partial.stomach ? { ...entries[idx].stomach, ...partial.stomach } : entries[idx].stomach,
+      skin: partial.skin ? { ...entries[idx].skin, ...partial.skin } : entries[idx].skin,
+      mental: partial.mental ? { ...entries[idx].mental, ...partial.mental } : entries[idx].mental,
+      sleep: partial.sleep ? { ...entries[idx].sleep, ...partial.sleep } : entries[idx].sleep,
+      symptoms: partial.symptoms ? { ...entries[idx].symptoms, ...partial.symptoms } : entries[idx].symptoms,
+      nutrition: partial.nutrition ? { ...entries[idx].nutrition, ...partial.nutrition } : entries[idx].nutrition,
+      workout: partial.workout ? { ...entries[idx].workout, ...partial.workout } as WorkoutEntry : entries[idx].workout,
     }
   } else {
-    entries.push({ ...partial } as HealthEntry)
+    entries.push({ date: partial.date, ...partial })
   }
   saveEntries(entries)
   return entries

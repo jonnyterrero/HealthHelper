@@ -220,13 +220,13 @@ export function upsertEntry(partial: Partial<HealthEntry> & { date: string }): H
     entries[idx] = {
       ...entries[idx],
       ...partial,
-      stomach: { ...entries[idx].stomach, ...partial.stomach },
-      skin: { ...entries[idx].skin, ...partial.skin },
-      mental: { ...entries[idx].mental, ...partial.mental },
-      sleep: { ...entries[idx].sleep, ...partial.sleep },
-      symptoms: { ...entries[idx].symptoms, ...partial.symptoms },
-      nutrition: { ...entries[idx].nutrition, ...partial.nutrition },
-      exercise: { ...entries[idx].exercise, ...partial.exercise },
+      stomach: partial.stomach ? { ...entries[idx].stomach, ...partial.stomach } : entries[idx].stomach,
+      skin: partial.skin ? { ...entries[idx].skin, ...partial.skin } : entries[idx].skin,
+      mental: partial.mental ? { ...entries[idx].mental, ...partial.mental } : entries[idx].mental,
+      sleep: partial.sleep ? { ...entries[idx].sleep, ...partial.sleep } : entries[idx].sleep,
+      symptoms: partial.symptoms ? { ...entries[idx].symptoms, ...partial.symptoms } : entries[idx].symptoms,
+      nutrition: partial.nutrition ? { ...entries[idx].nutrition, ...partial.nutrition } : entries[idx].nutrition,
+      exercise: partial.exercise ? { ...entries[idx].exercise, ...partial.exercise } : entries[idx].exercise,
     }
   } else {
     entries.push({ date: partial.date, ...partial })

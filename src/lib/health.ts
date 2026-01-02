@@ -111,6 +111,19 @@ export type NutritionEntry = {
   correlations?: string[] // detected food-symptom correlations
 }
 
+// Workout tracking for exercise monitoring
+export type WorkoutEntry = {
+  date: string
+  type: "cardio" | "strength" | "yoga" | "stretching" | "sports" | "walking" | "running" | "cycling" | "swimming" | "hiit" | "other"
+  duration: number // in minutes
+  intensity: number // 0-10
+  caloriesBurned?: number
+  heartRateAvg?: number
+  notes?: string
+  feeling: "energized" | "tired" | "normal" | "sore"
+  location: "gym" | "home" | "outdoors" | "other"
+}
+
 export type HealthEntry = {
   date: string
   stomach?: StomachEntry
@@ -119,6 +132,7 @@ export type HealthEntry = {
   sleep?: SleepEntry
   symptoms?: SymptomEntry
   nutrition?: NutritionEntry
+  workout?: WorkoutEntry
 }
 
 // Advanced ML prediction types
@@ -220,6 +234,30 @@ export function lastNDays(entries: HealthEntry[], days = 14): HealthEntry[] {
   return entries
     .filter((e) => new Date(e.date) >= cutoff)
     .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function customDateRange(entries: HealthEntry[], fromDate: Date, toDate: Date): HealthEntry[] {
+  return entries
+    .filter((e) => {
+      const entryDate = new Date(e.date)
+      return entryDate >= fromDate && entryDate <= toDate
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function getDateRangeEntries(
+  entries: HealthEntry[], 
+  rangeType: number | "custom",
+  customFrom?: Date,
+  customTo?: Date
+): HealthEntry[] {
+  if (rangeType === "custom" && customFrom && customTo) {
+    return customDateRange(entries, customFrom, customTo)
+  }
+  if (typeof rangeType === "number") {
+    return lastNDays(entries, rangeType)
+  }
+  return entries
 }
 
 // Simple pattern mining: correlation between numeric severity and boolean triggers
